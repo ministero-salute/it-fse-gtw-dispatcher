@@ -41,6 +41,9 @@ public class IniEdsInvocationETY {
 	@Field(name = "data")
 	private org.bson.Document data;
 	
+	@Field(name = "issuer")
+	private String issuer;
+	
 	@Field(name = "metadata")
 	private List<org.bson.Document> metadata;
 	
