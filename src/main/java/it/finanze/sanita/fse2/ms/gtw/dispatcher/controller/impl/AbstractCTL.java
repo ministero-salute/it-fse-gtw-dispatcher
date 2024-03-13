@@ -11,28 +11,17 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
-import brave.Tracer;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.CDACFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import lombok.extern.slf4j.Slf4j;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,24 +31,46 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.CDACFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *	Abstract controller.
  */
 @Slf4j
 public abstract class AbstractCTL {
-	 
-	@Autowired
-	private Tracer tracer;
 
     @Autowired
 	private IValidatorClient validatorClient;
@@ -75,16 +86,41 @@ public abstract class AbstractCTL {
 	
 	@Autowired
 	private IJwtSRV jwtSRV;
-
+	
+	@Autowired
+	private org.springframework.cloud.sleuth.Tracer tracer;
 	protected LogTraceInfoDTO getLogTraceInfo() {
 		LogTraceInfoDTO out = new LogTraceInfoDTO(null, null);
 		if (tracer.currentSpan() != null) {
 			out = new LogTraceInfoDTO(
-					tracer.currentSpan().context().spanIdString(), 
-					tracer.currentSpan().context().traceIdString());
+					tracer.currentSpan().context().spanId(),
+					tracer.currentSpan().context().traceId());
+//					tracer.currentSpan().context().spanIdString(), 
+//					tracer.currentSpan().context().traceIdString());
 		}
 		return out;
 	}
+	
+//	protected LogTraceInfoDTO getLogTraceInfo() {
+//		LogTraceInfoDTO out = new LogTraceInfoDTO(null, null);
+//		Tracer tracer = GlobalOpenTelemetry.getTracer("gtw-tracer");
+////
+////		// Inizia un nuovo span
+////		Span span = tracer.spanBuilder("gtw-span").startSpan();
+////
+////		String traceId = "";
+////		String spanId = "";
+////		try (Scope scope = span.makeCurrent()) {
+////			// Esegui le operazioni che desideri tracciare
+////			// Includi il traceId nel tuo output
+////			traceId = span.getSpanContext().getTraceId();
+////			spanId = span.getSpanContext().getSpanId();
+////		} finally {
+////			span.end();
+////		}
+////		out = new LogTraceInfoDTO(spanId,traceId);
+//		return out;
+//	}
 
 	protected ValidationCDAReqDTO getAndValidateValidationReq(final String jsonREQ) {
 		

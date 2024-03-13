@@ -11,15 +11,6 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 
-import brave.Tracer;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +23,24 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ServerResponseException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationErrorException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationPublicationErrorException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  *	Exceptions Handler.
  */
@@ -39,11 +48,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
-	/**
-	 * Tracker log.
-	 */
-	@Autowired
-	private Tracer tracer;
+//	/**
+//	 * Tracker log.
+//	 */
+//	@Autowired
+//	private Tracer tracer;
 
 	/**
 	 * Management validation exception.
@@ -268,8 +277,9 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
 	private LogTraceInfoDTO getLogTraceInfo() {
 		return new LogTraceInfoDTO(
-				tracer.currentSpan().context().spanIdString(),
-				tracer.currentSpan().context().traceIdString());
+				"","");
+//				tracer.currentSpan().context().spanIdString(),
+//				tracer.currentSpan().context().traceIdString());
 	}
 
 	/**
