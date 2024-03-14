@@ -58,4 +58,6 @@ public interface IJwtSRV {
 	 * @return The specific system
 	 */
 	SystemTypeEnum getSystemByIssuer(String issuer);
+	
+	void checkFiscalCode(String givenValue, String fieldName);
 }

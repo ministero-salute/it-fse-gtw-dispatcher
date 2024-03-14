@@ -22,6 +22,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -110,7 +111,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	private void validateFiscalCodes(JWTPayloadDTO payload) {
 		checkFiscalCode(payload.getSub(), "sub");
-		checkFiscalCode(payload.getPerson_id(), "person_id");
+//		checkFiscalCode(payload.getPerson_id(), "person_id");
 	}
 
 	private void validateFieldsValue(JWTPayloadDTO payload) {
@@ -208,7 +209,8 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		}
 	}
 
-	private void checkFiscalCode(String givenValue, String fieldName) {
+	@Override
+	public void checkFiscalCode(String givenValue, String fieldName) {
 		if (!isValidOid(givenValue)) {
 			ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.type(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getType())
@@ -220,42 +222,25 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 			throw new ValidationException(error);
 		}
 	}
-
+ 
+	
 	private boolean isValidOid(String oid) {
-		if (oid == null) return false;
+		if (oid == null) 
+			return false;
 
-		final String[] chunks = oid.split("\\^\\^\\^");
-		if (chunks.length == 0) return false;
-		if (chunks.length == 1) return utilitySrv.isValidCf(chunks[0]);
+			final String[] chunks = oid.split("\\^\\^\\^");
+			if (chunks.length == 0) 
+				return false;
+			if (chunks.length == 1) 
+				return utilitySrv.isValidCf(chunks[0]);
 
-		final String[] chunkedInfo = chunks[1].split("&");
-		if (chunkedInfo.length > 1 && Constants.OIDS.OID_MEF.equals(chunkedInfo[1])) {
-			return utilitySrv.isValidCf(chunks[0]);
-		}
+			final String[] chunkedInfo = chunks[1].split("&");
+			if (chunkedInfo.length > 1 && Constants.OIDS.OID_MEF.equals(chunkedInfo[1])) {
+				return utilitySrv.isValidCf(chunks[0]);
+			}
 
 		return true;
 	}
-
-	//	private boolean isValidOid(String rawOid) {
-	//		boolean out = false;
-	//
-	//		if (rawOid != null) {
-	//			final String[] chunks = rawOid.split("\\^\\^\\^");
-	//			if (chunks.length > 1) {
-	//				final String[] chunkedInfo = chunks[1].split("&");
-	//				if (chunkedInfo.length > 1 && Constants.OIDS.OID_MEF.equals(chunkedInfo[1])) {
-	//						out = utilitySrv.isValidCf(chunks[0]);
-	//				} else {
-	//					out = true;
-	//				}
-	//			} else {
-	//				out = utilitySrv.isValidCf(chunks[0]);
-	//			}
-	//		} else {
-	//			out = false;
-	//		}
-	//
-	//		return out;
-	//	}
+ 
 
 }
