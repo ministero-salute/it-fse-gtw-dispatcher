@@ -22,6 +22,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,7 +70,9 @@ public class PublicationMetadataReqDTO {
     @ArraySchema(schema = @Schema(maxLength = 1000, description = "Descriptions"))
 	private List<String> descriptions;
 
-	@Schema(description = "Administrative")
+	@Schema(description = "Administrative request")
+	@Size(min = 0, max = 1000)
+	@ArraySchema(minItems = 0, maxItems = 1000, schema = @Schema(implementation = AdministrativeReqEnum.class))
 	private List<AdministrativeReqEnum> administrativeRequest;
  
 
