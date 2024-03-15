@@ -15,11 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import brave.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.CDACFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App;
@@ -80,9 +75,6 @@ public abstract class AbstractCTL {
 	
 	private static final String TEAM_OID = "2.16.840.1.113883.2.9.4.3.7";
 	 
-	@Autowired
-	private Tracer tracer;
-
     @Autowired
 	private IValidatorClient validatorClient;
 
