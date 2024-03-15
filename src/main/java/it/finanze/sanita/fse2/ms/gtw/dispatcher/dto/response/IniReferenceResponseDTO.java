@@ -11,6 +11,8 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +28,7 @@ public class IniReferenceResponseDTO extends ResponseDTO {
 
 	private String errorMessage;
 	
-	private String administrativeRequest;
+	private List<String> administrativeRequest;
 	
 	private String authorInstitution;
 

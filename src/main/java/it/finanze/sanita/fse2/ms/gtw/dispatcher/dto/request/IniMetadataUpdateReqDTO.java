@@ -11,6 +11,8 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
+import java.util.List;
+
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,7 +29,7 @@ public class IniMetadataUpdateReqDTO {
     
     private String workflow_instance_id;
     
-    private String administrative_request;
+    private List<String> administrative_request;
     
     private String author_institution;
 }

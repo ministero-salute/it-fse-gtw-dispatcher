@@ -24,7 +24,7 @@ public class DocumentEntryDTO {
 	private String creationTime;
 	private String hash;
 	private Integer size;
-	private String administrativeRequest;
+	private List<String> administrativeRequest;
 	private String author;
 	private String authorRole;
 	private String authorInstitution;

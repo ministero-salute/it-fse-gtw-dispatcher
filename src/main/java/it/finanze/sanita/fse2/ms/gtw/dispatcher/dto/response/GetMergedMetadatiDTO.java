@@ -11,6 +11,8 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -21,5 +23,8 @@ public class GetMergedMetadatiDTO {
 	private String marshallResponse;
 	
 	private String documentType;
+	
 	private String authorInstitution;
+	
+	private List<String> administrativeRequest;
 }

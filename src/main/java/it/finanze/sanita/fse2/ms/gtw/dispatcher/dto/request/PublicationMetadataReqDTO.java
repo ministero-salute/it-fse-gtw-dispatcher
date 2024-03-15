@@ -70,7 +70,7 @@ public class PublicationMetadataReqDTO {
 	private List<String> descriptions;
 
 	@Schema(description = "Administrative")
-	private AdministrativeReqEnum administrativeRequest;
+	private List<AdministrativeReqEnum> administrativeRequest;
  
 
 }
