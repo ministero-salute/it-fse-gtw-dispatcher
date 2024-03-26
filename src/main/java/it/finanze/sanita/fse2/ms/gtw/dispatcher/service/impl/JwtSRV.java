@@ -11,7 +11,9 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,11 +22,15 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.JwtCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PurposeOfUseEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RoleEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-
-import static org.apache.commons.lang3.StringUtils.*;
 
 @Service
 public class JwtSRV extends AbstractService implements IJwtSRV {
@@ -59,7 +65,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 	@Override
 	public void validatePayloadForCreate(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		checkNull(payload.getPatient_consent(), "patient_consent");
 		checkNull(payload.getResource_hl7_type(), "resource_hl7_type"); 
 		validateActionCoherence(payload, ActionEnum.CREATE);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.TREATMENT);
@@ -68,7 +73,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 	@Override
 	public void validatePayloadForReplace(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		checkNull(payload.getPatient_consent(), "patient_consent");
 		checkNull(payload.getResource_hl7_type(), "resource_hl7_type"); 
 		validateActionCoherence(payload, ActionEnum.CREATE);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.TREATMENT);
@@ -77,7 +81,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 	@Override
 	public void validatePayloadForUpdate(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		checkNull(payload.getPatient_consent(), "patient_consent"); 
 		validateActionCoherence(payload, ActionEnum.UPDATE);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
 	}
@@ -97,6 +100,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	public void validateMandatoryFields(JWTPayloadDTO payload) {
 		checkNull(payload, "jwt payload");
+		checkNull(payload.getPatient_consent(), "patient_consent");
 		checkNull(payload.getAction_id(), "action_id");
 		checkNull(payload.getLocality(), "locality");
 		checkNull(payload.getPerson_id(), "person_id");
@@ -111,7 +115,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	private void validateFiscalCodes(JWTPayloadDTO payload) {
 		checkFiscalCode(payload.getSub(), "sub");
-//		checkFiscalCode(payload.getPerson_id(), "person_id");
 	}
 
 	private void validateFieldsValue(JWTPayloadDTO payload) {
