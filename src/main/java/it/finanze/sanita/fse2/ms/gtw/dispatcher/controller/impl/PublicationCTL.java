@@ -680,7 +680,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
 		try {
 			//Valido request e jwt come se fosse una pubblicazione
-			validationResult = publicationAndReplaceValidation(file, request, false,idDoc,traceInfoDTO,EventTypeEnum.VALIDATION_FOR_REPLACE);
+			validationResult = publicationAndReplaceValidation(file, request, true,idDoc,traceInfoDTO,EventTypeEnum.VALIDATION_FOR_REPLACE);
 
 			docT = Jsoup.parse(validationResult.getCda());
 			workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);
