@@ -40,6 +40,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.LowLevelDocEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IFhirSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.DateUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FhirSRV implements IFhirSRV {
 
-	private static final String PATH_CUSTODIAN_ID = "ClinicalDocument > custodian > assignedCustodian > representedCustodianOrganization > id";
+	private static final String PATH_ID = "ClinicalDocument > id";
 	private static final String PATH_PATIENT_ID = "ClinicalDocument > recordTarget > patientRole> id";
 	private static final String EXTENSION_ATTRIBUTE = "extension";
 
@@ -140,12 +141,11 @@ public class FhirSRV implements IFhirSRV {
 		sse.setAuthorRole(authorSlotDTO.getAuthorRole());
 		sse.setPatientId(buildPatient(docCDA));
 		String sourceIdRoot = "";
-		final Element custodianPath = docCDA.select(PATH_CUSTODIAN_ID).first();
-		if (custodianPath != null) {
-			sourceIdRoot = custodianPath.attr("root");
+		final Element idPath = docCDA.select(PATH_ID).first();
+		if (idPath != null) {
+			sourceIdRoot = idPath.attr("root");
+			sse.setSourceId(sourceIdRoot.substring(0, sourceIdRoot.length()-4));
 		}
-
-		sse.setSourceId(sourceIdRoot);
 		sse.setUniqueID(identificativoSottomissione);
 
 		sse.setSubmissionTime(new SimpleDateFormat(Constants.Misc.INI_DATE_PATTERN).format(new Date()));
@@ -158,7 +158,8 @@ public class FhirSRV implements IFhirSRV {
 		}
 		return sse;
 	}
-
+ 
+ 
 
 	private DocumentEntryDTO createDocumentEntry(final org.jsoup.nodes.Document docCDA,
 			final PublicationCreateReplaceMetadataDTO requestBody, final Integer size, final String hash,
@@ -205,7 +206,7 @@ public class FhirSRV implements IFhirSRV {
 					administrativeRequestList.add(en.getCode() + "^" + en.getDescription());	
 				}
 				de.setAdministrativeRequest(administrativeRequestList);
-				
+
 			}
 
 			de.setAuthorRole(authorSlotDTO.getAuthorRole());
@@ -231,14 +232,13 @@ public class FhirSRV implements IFhirSRV {
 			de.setPracticeSettingCode(requestBody.getAssettoOrganizzativo().name());
 			de.setPracticeSettingCodeName(requestBody.getAssettoOrganizzativo().getDescription());
 
-			final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 
-			if (requestBody.getDataInizioPrestazione() != null) {
-				de.setServiceStartTime(sdf.parse(requestBody.getDataInizioPrestazione()).toString());
+			if (requestBody.getDataInizioPrestazione() != null && DateUtility.isValidDateFormat(requestBody.getDataInizioPrestazione(), "yyyyMMddHHmmss")) {
+				de.setServiceStartTime(requestBody.getDataInizioPrestazione());
 			}
 
-			if (requestBody.getDataFinePrestazione() != null) {
-				de.setServiceStopTime(sdf.parse(requestBody.getDataFinePrestazione()).toString());
+			if (requestBody.getDataFinePrestazione() != null && DateUtility.isValidDateFormat(requestBody.getDataFinePrestazione(), "yyyyMMddHHmmss")) {
+				de.setServiceStopTime(requestBody.getDataFinePrestazione());
 			}
 		} catch(final Exception ex) {
 			log.error("Error while create document entry : " , ex);
