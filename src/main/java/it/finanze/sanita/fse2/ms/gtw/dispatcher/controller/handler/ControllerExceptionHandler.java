@@ -205,6 +205,9 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 			detail = ex.getError().getDetail(); 
 		}
 		ErrorResponseDTO out = new ErrorResponseDTO(getLogTraceInfo(), RestExecutionResultEnum.RECORD_NOT_FOUND.getType(), RestExecutionResultEnum.RECORD_NOT_FOUND.getTitle(), detail , status, ErrorInstanceEnum.RECORD_NOT_FOUND.getInstance());
+		if(ex.getError()!=null) {
+			out = ex.getError();
+		} 
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
@@ -238,8 +241,12 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<ErrorResponseDTO> handleBusinessException(final BusinessException ex, final WebRequest request) {
 		int status = 500;
 
-		ErrorResponseDTO out = new ErrorResponseDTO(getLogTraceInfo(), RestExecutionResultEnum.GENERIC_ERROR.getType(), RestExecutionResultEnum.GENERIC_ERROR.getTitle(), ex.getMessage(), status, ErrorInstanceEnum.NO_INFO.getInstance());
-
+		LogTraceInfoDTO traceInfo = getLogTraceInfo();
+		ErrorResponseDTO out = new ErrorResponseDTO(traceInfo, RestExecutionResultEnum.GENERIC_ERROR.getType(), RestExecutionResultEnum.GENERIC_ERROR.getTitle(), 
+				ex.getMessage(), status, ErrorInstanceEnum.NO_INFO.getInstance());
+		if(ex.getError()!=null) {
+			out = ex.getError();
+		}
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 

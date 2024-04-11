@@ -90,7 +90,7 @@ public class StatusCheckClient implements IStatusCheckClient {
 		// 404 Not found.
 		if (HttpStatus.NOT_FOUND.equals(e1.getStatusCode())) {
 			ErrorResponseDTO error = ErrorResponseDTO.builder().detail("No Record Found").build();
-			throw new NoRecordFoundException(error,e1.getStatusCode().value());
+			throw new NoRecordFoundException(error);
 		}
 		
 		// 500 Internal Server Error.

@@ -11,6 +11,22 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.DELETE_PATH;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.REFERENCE_PATH;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.UPDATE_PATH;
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
+
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.base.AbstractClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.IniClientRoutes;
@@ -21,16 +37,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiReques
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestTemplate;
-
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.*;
-import static org.springframework.http.HttpMethod.*;
 
 @Slf4j
 @Component
@@ -41,6 +49,10 @@ public class IniClient extends AbstractClient implements IIniClient {
 
 	@Autowired
 	private IniClientRoutes routes;
+	
+	@Autowired
+	@Qualifier("restTemplateIni")
+	private RestTemplate restTemplateIni;
 
 	@Override
 	public IniTraceResponseDTO delete(final DeleteRequestDTO request) {
@@ -102,6 +114,7 @@ public class IniClient extends AbstractClient implements IIniClient {
 		return output;
 	}
 
+	
 	@Override
 	public GetMergedMetadatiDTO metadata(final MergedMetadatiRequestDTO request) {
 
@@ -111,14 +124,14 @@ public class IniClient extends AbstractClient implements IIniClient {
 		log.debug("{} - Executing request: {}", routes.identifier(), endpoint);
 
 		try {
-			// Execute request
-			ResponseEntity<GetMergedMetadatiDTO> response = client.exchange(endpoint,PUT,new HttpEntity<>(request),GetMergedMetadatiDTO.class);
-			// Retrieve body
+			ResponseEntity<GetMergedMetadatiDTO> response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),GetMergedMetadatiDTO.class);
 			output = response.getBody();
-		} catch (RestClientResponseException ex) {
-			toServerResponseEx(routes.identifier(), routes.microservice(), ex, METADATA_PATH);
+		} catch (ResourceAccessException ex) {
+			throw new BusinessException("Timeout error while call merge metadati"); 
 		}
 
 		return output;
 	}
+	
+ 
 }

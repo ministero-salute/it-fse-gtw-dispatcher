@@ -11,6 +11,9 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import lombok.Getter;
+
 /**
  * Generic business exception.
  */
@@ -20,7 +23,11 @@ public class BusinessException extends RuntimeException {
 	 * 
 	 */
 	private static final long serialVersionUID = 4420700371354323215L;
-
+	
+	@Getter
+	private ErrorResponseDTO error;
+	
+	
 	/**
 	 * Message constructor.
 	 * 
@@ -49,4 +56,8 @@ public class BusinessException extends RuntimeException {
 		super(e);
 	}
 	
+	public BusinessException(ErrorResponseDTO inError) {
+		error = inError;
+	}
+
 }

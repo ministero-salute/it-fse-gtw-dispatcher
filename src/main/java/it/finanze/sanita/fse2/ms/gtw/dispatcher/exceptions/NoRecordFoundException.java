@@ -24,12 +24,9 @@ public class NoRecordFoundException extends RuntimeException {
 	@Getter
 	private ErrorResponseDTO error;
 	
-	@Getter
-	private Integer status;
 	
-	public NoRecordFoundException(ErrorResponseDTO inError, Integer inStatus) {
+	public NoRecordFoundException(ErrorResponseDTO inError) {
 		error = inError;
-		status = inStatus;
 	}
 
 }

@@ -70,15 +70,6 @@ class ExceptionTest {
 		assertEquals(edsError, exc.getEdsErrorMessage());
 	} 
 	
-	@Test
-	void noRecordFoundExceptionTest() {
-		ErrorResponseDTO error = new ErrorResponseDTO(new LogTraceInfoDTO("traceId","spanId"));
-		NoRecordFoundException exc = new NoRecordFoundException(error, HttpStatus.SC_NOT_FOUND); 
-		
-		assertEquals(NoRecordFoundException.class, exc.getClass());
-		assertEquals(HttpStatus.SC_NOT_FOUND, exc.getStatus());
-	}
-	
-	
+ 
 	
 } 

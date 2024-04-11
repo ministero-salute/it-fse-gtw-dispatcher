@@ -49,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FhirSRV implements IFhirSRV {
 
-	private static final String PATH_ID = "ClinicalDocument > id";
+	private static final String SOURCE_ID_PREFIX = "2.16.840.1.113883.2.9.2.";
 	private static final String PATH_PATIENT_ID = "ClinicalDocument > recordTarget > patientRole> id";
 	private static final String EXTENSION_ATTRIBUTE = "extension";
 
@@ -58,7 +58,7 @@ public class FhirSRV implements IFhirSRV {
 
 	@Override
 	public ResourceDTO createFhirResources(final String cda, String authorRole,final PublicationCreateReplaceMetadataDTO requestBody,
-			final Integer size, final String hash, String transformId, String engineId) {
+			final Integer size, final String hash, String transformId, String engineId, String organizationId) {
 
 		final ResourceDTO output = new ResourceDTO();
 		final org.jsoup.nodes.Document docCDA = Jsoup.parse(cda);
@@ -77,7 +77,7 @@ public class FhirSRV implements IFhirSRV {
 
 			try {
 				final SubmissionSetEntryDTO submissionSetEntryDTO = createSubmissionSetEntry(docCDA, requestBody.getTipoAttivitaClinica().getCode(),
-						requestBody.getIdentificativoSottomissione(),authorSlot);
+						requestBody.getIdentificativoSottomissione(),authorSlot,organizationId);
 				output.setSubmissionSetEntryJson(StringUtility.toJSON(submissionSetEntryDTO));
 			} catch(final Exception ex) {
 				output.setErrorMessage(ex.getCause().getCause().getMessage());
@@ -130,9 +130,8 @@ public class FhirSRV implements IFhirSRV {
 	}
 
 
-	private SubmissionSetEntryDTO createSubmissionSetEntry(final org.jsoup.nodes.Document docCDA, 
-			final String contentTypeCode, final String identificativoSottomissione,
-			AuthorSlotDTO authorSlotDTO) {
+	private SubmissionSetEntryDTO createSubmissionSetEntry(final org.jsoup.nodes.Document docCDA, final String contentTypeCode, final String identificativoSottomissione,
+			AuthorSlotDTO authorSlotDTO, String organizationId) {
 
 		SubmissionSetEntryDTO sse = new SubmissionSetEntryDTO();
 
@@ -140,12 +139,7 @@ public class FhirSRV implements IFhirSRV {
 		sse.setAuthorInstitution(authorSlotDTO.getAuthorInstitution());
 		sse.setAuthorRole(authorSlotDTO.getAuthorRole());
 		sse.setPatientId(buildPatient(docCDA));
-		String sourceIdRoot = "";
-		final Element idPath = docCDA.select(PATH_ID).first();
-		if (idPath != null) {
-			sourceIdRoot = idPath.attr("root");
-			sse.setSourceId(sourceIdRoot.substring(0, sourceIdRoot.length()-4));
-		}
+		sse.setSourceId(SOURCE_ID_PREFIX+organizationId);
 		sse.setUniqueID(identificativoSottomissione);
 
 		sse.setSubmissionTime(new SimpleDateFormat(Constants.Misc.INI_DATE_PATTERN).format(new Date()));
@@ -195,7 +189,6 @@ public class FhirSRV implements IFhirSRV {
 			}
 
 			de.setUniqueId(requestBody.getIdentificativoDoc());
-
 			de.setMimeType("application/pdf+text/x-cda-r2+xml");
 			de.setCreationTime(new SimpleDateFormat(Constants.Misc.INI_DATE_PATTERN).format(new Date()));
 			de.setHash(hash);
@@ -206,13 +199,11 @@ public class FhirSRV implements IFhirSRV {
 					administrativeRequestList.add(en.getCode() + "^" + en.getDescription());	
 				}
 				de.setAdministrativeRequest(administrativeRequestList);
-
 			}
 
 			de.setAuthorRole(authorSlotDTO.getAuthorRole());
 			de.setAuthorInstitution(authorSlotDTO.getAuthorInstitution());
 			de.setAuthor(authorSlotDTO.getAuthor());
-
 
 			ValidationUtility.repositoryUniqueIdValidation(requestBody.getIdentificativoRep());
 			de.setRepositoryUniqueId(requestBody.getIdentificativoRep());
