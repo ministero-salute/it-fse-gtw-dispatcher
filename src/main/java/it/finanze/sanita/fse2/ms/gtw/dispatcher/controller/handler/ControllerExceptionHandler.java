@@ -199,15 +199,15 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<ErrorResponseDTO> handleRecordNotFoundException(NoRecordFoundException ex, final WebRequest request) {
 		log.error("" , ex);  
 		Integer status = 404;
-
+		LogTraceInfoDTO traceInfoDto = getLogTraceInfo();
 		String detail = ExceptionUtils.getMessage(ex);
-		if(ex.getError()!=null) {
-			detail = ex.getError().getDetail(); 
-		}
-		ErrorResponseDTO out = new ErrorResponseDTO(getLogTraceInfo(), RestExecutionResultEnum.RECORD_NOT_FOUND.getType(), RestExecutionResultEnum.RECORD_NOT_FOUND.getTitle(), detail , status, ErrorInstanceEnum.RECORD_NOT_FOUND.getInstance());
+		ErrorResponseDTO out = new ErrorResponseDTO(traceInfoDto, RestExecutionResultEnum.RECORD_NOT_FOUND.getType(), RestExecutionResultEnum.RECORD_NOT_FOUND.getTitle(), detail , status, ErrorInstanceEnum.RECORD_NOT_FOUND.getInstance());
 		if(ex.getError()!=null) {
 			out = ex.getError();
+			detail = ex.getError().getDetail(); 
 		} 
+		out.setSpanID(traceInfoDto.getSpanID());
+		out.setTraceID(traceInfoDto.getTraceID());
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);

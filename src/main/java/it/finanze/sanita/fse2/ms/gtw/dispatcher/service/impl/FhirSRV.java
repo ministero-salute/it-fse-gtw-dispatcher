@@ -139,7 +139,12 @@ public class FhirSRV implements IFhirSRV {
 		sse.setAuthorInstitution(authorSlotDTO.getAuthorInstitution());
 		sse.setAuthorRole(authorSlotDTO.getAuthorRole());
 		sse.setPatientId(buildPatient(docCDA));
-		sse.setSourceId(SOURCE_ID_PREFIX+organizationId);
+		
+		String org = organizationId; 
+		if(organizationId.startsWith("0")) {
+			org = organizationId.substring(1, organizationId.length());
+		}
+		sse.setSourceId(SOURCE_ID_PREFIX+org);
 		sse.setUniqueID(identificativoSottomissione);
 
 		sse.setSubmissionTime(new SimpleDateFormat(Constants.Misc.INI_DATE_PATTERN).format(new Date()));
@@ -275,4 +280,5 @@ public class FhirSRV implements IFhirSRV {
 		return author;
 	}
 
+	 
 }

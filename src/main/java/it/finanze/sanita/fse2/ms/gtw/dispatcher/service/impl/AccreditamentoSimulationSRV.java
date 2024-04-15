@@ -58,7 +58,7 @@ public class AccreditamentoSimulationSRV implements IAccreditamentoSimulationSRV
 	public AccreditamentoSimulationDTO runSimulation(final String idDocumento, final byte[] pdf, final EventTypeEnum eventType) {
 		AccreditamentoSimulationDTO output = null;
 		
-		if(EventTypeEnum.REPLACE.equals(eventType)) {
+		if(EventTypeEnum.REPLACE.equals(eventType) && !idDocumento.equals("TRIAL_ID_SKIP_ACCREDITATIONCHECK")) {
 			statusCheckClient.callSearchEventByIdDocumento(idDocumento);
 		}
 		

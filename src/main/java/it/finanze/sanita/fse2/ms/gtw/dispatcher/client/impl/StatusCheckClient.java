@@ -21,6 +21,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusCheckClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +91,11 @@ public class StatusCheckClient implements IStatusCheckClient {
 		
 		// 404 Not found.
 		if (HttpStatus.NOT_FOUND.equals(e1.getStatusCode())) {
-			ErrorResponseDTO error = ErrorResponseDTO.builder().detail("No Record Found").build();
+			ErrorResponseDTO error = ErrorResponseDTO.builder().
+					type(RestExecutionResultEnum.RECORD_NOT_FOUND.getType()).
+					title(RestExecutionResultEnum.RECORD_NOT_FOUND.getTitle()).
+					instance(ErrorInstanceEnum.RECORD_NOT_FOUND.getInstance()).
+					detail("No Record Found").build();
 			throw new NoRecordFoundException(error);
 		}
 		
