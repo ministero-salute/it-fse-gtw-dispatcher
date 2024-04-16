@@ -326,7 +326,7 @@ class ReplaceTest extends AbstractTest {
 				response.setSpanID(StringUtility.generateUUID());
 				response.setTraceID(StringUtility.generateUUID());
 				response.setEsito(true);
-				response.setErrorMessage(null);
+				response.setMessage(null);
 				referenceResponse.setSpanID(StringUtility.generateUUID());
 				referenceResponse.setTraceID(StringUtility.generateUUID());
 				referenceResponse.setErrorMessage(null);
@@ -349,7 +349,7 @@ class ReplaceTest extends AbstractTest {
 				response.setSpanID(StringUtility.generateUUID());
 				response.setTraceID(StringUtility.generateUUID());
 				response.setEsito(false);
-				response.setErrorMessage("Generic error from INI");
+				response.setMessage("Generic error from INI");
 				Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
 				Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
 				Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));

@@ -546,19 +546,18 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			IniTraceResponseDTO iniResponse = iniClient.delete(deleteRequestDTO);
 
 			// Check mock errors
-			boolean iniMockMessage = !isNullOrEmpty(iniResponse.getErrorMessage()) && iniResponse.getErrorMessage().contains("Invalid region ip");
+			boolean iniMockMessage = !isNullOrEmpty(iniResponse.getMessage()) && iniResponse.getMessage().contains("Invalid region ip");
 			// Exit if necessary
 			if (iniMockMessage) {
-				throw new MockEnabledException(iniResponse.getErrorMessage(), edsResponse.getMessageError());
+				throw new MockEnabledException(iniResponse.getMessage(), edsResponse.getMessageError());
 			}
 
 			// Check response errors
-			if(!isNullOrEmpty(iniResponse.getErrorMessage())) {
+			if(Boolean.FALSE.equals(iniResponse.getEsito())) {
 				// Send to indexer
 				kafkaSRV.sendDeleteRequest(workflowInstanceId, deleteRequestDTO);
 				// Update transaction status
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Transazione presa in carico", EventStatusEnum.ASYNC_RETRY, jwtPayloadToken,
-						INI_DELETE);
+				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Transazione presa in carico", EventStatusEnum.ASYNC_RETRY, jwtPayloadToken,INI_DELETE);
 				warning = Misc.WARN_ASYNC_TRANSACTION;
 			} else {
 				// Update transaction status

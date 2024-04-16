@@ -63,10 +63,10 @@ class IniClientTest {
     @DisplayName("Update - updateRecordGenericErrorTest")
     void updateRecordGenericErrorTest() {
         IniTraceResponseDTO responseMock = new IniTraceResponseDTO();
-        responseMock.setErrorMessage("Failed to update on INI");
+        responseMock.setMessage("Failed to update on INI");
         Mockito.doReturn(new ResponseEntity<>(responseMock, HttpStatus.OK))
                 .when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
-        assertEquals("Failed to update on INI", iniClient.update(requestBody).getErrorMessage());
+        assertEquals("Failed to update on INI", iniClient.update(requestBody).getMessage());
     }
 
     @Test
@@ -112,7 +112,7 @@ class IniClientTest {
         responseMock.setEsito(true);
         Mockito.doReturn(new ResponseEntity<>(responseMock, HttpStatus.BAD_GATEWAY)).when(restTemplate)
                 .exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
-        assertNull(iniClient.update(requestBody).getErrorMessage());
+        assertNull(iniClient.update(requestBody).getMessage());
     }
 
     @Test
