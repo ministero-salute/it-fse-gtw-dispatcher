@@ -140,11 +140,8 @@ public class FhirSRV implements IFhirSRV {
 		sse.setAuthorRole(authorSlotDTO.getAuthorRole());
 		sse.setPatientId(buildPatient(docCDA));
 		
-		String org = organizationId; 
-		if(organizationId.startsWith("0")) {
-			org = organizationId.substring(1, organizationId.length());
-		}
-		sse.setSourceId(SOURCE_ID_PREFIX+org);
+		String sourceId = StringUtility.sanitizeSourceId(organizationId);
+		sse.setSourceId(SOURCE_ID_PREFIX+sourceId);
 		sse.setUniqueID(identificativoSottomissione);
 
 		sse.setSubmissionTime(new SimpleDateFormat(Constants.Misc.INI_DATE_PATTERN).format(new Date()));

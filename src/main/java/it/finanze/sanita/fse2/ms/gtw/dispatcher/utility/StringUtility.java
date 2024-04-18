@@ -212,4 +212,12 @@ public final class StringUtility {
 	public static String sanitizeMessage(final String message) {
 		return message.replace("<script>", "").replace("</script>", "");
 	}
+	
+	public static String sanitizeSourceId(final String organizationId) {
+		String sourceId = organizationId; 
+		if(sourceId.startsWith("0")) {
+			sourceId = sourceId.substring(1, sourceId.length());
+		}
+		return sourceId;
+	}
 }
