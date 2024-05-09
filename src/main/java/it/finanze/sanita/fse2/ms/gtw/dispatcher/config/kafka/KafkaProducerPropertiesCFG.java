@@ -70,5 +70,13 @@ public class KafkaProducerPropertiesCFG {
 	 */
 	@Value("${kafka.producer.ack}")
 	private String ack;   
+
+	/**
+	 * Producer max request size in bytes.
+	 */
+	@Value("${kafka.producer.max.request.size:1048576}")
+	private Integer maxRequestSize; 
+
+	
 	 
 }

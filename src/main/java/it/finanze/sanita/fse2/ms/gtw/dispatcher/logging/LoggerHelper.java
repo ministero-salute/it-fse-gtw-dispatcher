@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IConfigClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaProducerPropertiesCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.LogDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ILogEnum;
@@ -50,6 +51,9 @@ public class LoggerHelper {
 
 	@Value("${spring.application.name}")
 	private String msName;
+	
+	@Autowired
+	private KafkaProducerPropertiesCFG kafkaProducerCFG;
 
 	/* 
 	 * Specify here the format for the dates 
@@ -95,7 +99,7 @@ public class LoggerHelper {
 			log.trace(logMessage);
 
 			if (Boolean.TRUE.equals(kafkaLogEnable)) {
-				kafkaLog.trace(logMessage);
+				kafkaLog.trace(truncateLogDtoMessageIfNecessary(logDTO));
 			}
 		}
 		
@@ -136,7 +140,7 @@ public class LoggerHelper {
 			final String logMessage = StringUtility.toJSON(logDTO);
 			log.debug(logMessage);
 			if (Boolean.TRUE.equals(kafkaLogEnable)) {
-				kafkaLog.debug(logMessage);
+				kafkaLog.debug(truncateLogDtoMessageIfNecessary(logDTO));
 			}
 		}
 		
@@ -180,7 +184,7 @@ public class LoggerHelper {
 			log.info(logMessage);
 			
 			if (Boolean.TRUE.equals(kafkaLogEnable)) {
-				kafkaLog.info(logMessage);
+				kafkaLog.info(truncateLogDtoMessageIfNecessary(logDTO));
 			}
 		}
 		
@@ -218,7 +222,7 @@ public class LoggerHelper {
 			final String logMessage = StringUtility.toJSON(logDTO);
 			log.warn(logMessage);
 			if (Boolean.TRUE.equals(kafkaLogEnable)) {
-				kafkaLog.warn(logMessage);
+				kafkaLog.warn(truncateLogDtoMessageIfNecessary(logDTO));
 			}
 		}
 		
@@ -260,7 +264,7 @@ public class LoggerHelper {
 			final String logMessage = StringUtility.toJSON(logDTO);
 			log.error(logMessage);
 			if (Boolean.TRUE.equals(kafkaLogEnable)) {
-				kafkaLog.error(logMessage);
+				kafkaLog.error(truncateLogDtoMessageIfNecessary(logDTO));
 			}
 		}
 		
@@ -277,6 +281,26 @@ public class LoggerHelper {
 			gatewayName = configClient.getGatewayName();
 		}
 		return gatewayName;
+	}
+
+	/**
+	 * tronca il campo message di logDTO se logDTO risulta maggiore di 1 MB (max
+	 * kafka producer request size)
+	 * 
+	 * @param logDTO
+	 * @return
+	 */
+	private String truncateLogDtoMessageIfNecessary(LogDTO logDTO) {
+
+		String logMessage = StringUtility.toJSON(logDTO);
+		int maxProducerSize = kafkaProducerCFG.getMaxRequestSize();
+		if (logMessage.length() >= maxProducerSize) {
+			int newTruncatedSize = maxProducerSize / 1024;
+			String truncatedMessage = logDTO.getMessage().substring(0, newTruncatedSize);
+			logDTO.setMessage(truncatedMessage);
+			logMessage = StringUtility.toJSON(logDTO);
+		}
+		return logMessage;
 	}
 
 }

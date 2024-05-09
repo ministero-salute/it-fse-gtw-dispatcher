@@ -137,10 +137,10 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, errorEventStatus, errorMessage, jwtPayloadToken);
 
         if (RestExecutionResultEnum.VOCABULARY_ERROR != RestExecutionResultEnum.get(capturedErrorType)) {
-        	logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,e.getError().getDetail() + " " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType, 
+        	logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, errorMessage + " " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType, 
         			jwtPayloadToken);
         }
-        throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(e.getError().getDetail()), workflowInstanceId, errorInstance);
+        throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(errorMessage), workflowInstanceId, errorInstance);
     }
     
     @Override

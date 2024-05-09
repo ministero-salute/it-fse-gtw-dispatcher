@@ -226,7 +226,7 @@ public class KafkaSRV implements IKafkaSRV {
 	private void sendStatusMessage(final String traceId,final String workflowInstanceId, final EventTypeEnum eventType,
 								   final EventStatusEnum eventStatus, final String message, final String documentId,
 								   final JWTPayloadDTO jwtClaimDTO, AttivitaClinicaEnum tipoAttivita) {
-		try {
+		try { 
 			KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder().
 					issuer(jwtClaimDTO != null ? jwtClaimDTO.getIss() : Constants.App.JWT_MISSING_ISSUER_PLACEHOLDER).
 					traceId(traceId).
@@ -240,8 +240,9 @@ public class KafkaSRV implements IKafkaSRV {
 					organizzazione(jwtClaimDTO != null ? jwtClaimDTO.getSubject_organization_id() : null).
 					microserviceName(msName).
 					build();
+			
+			String json = truncateMessageIfNecessary(statusManagerMessage);
 
-			String json = StringUtility.toJSONJackson(statusManagerMessage);
 			if(StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
 				log.info("PRODUCER NON TRANSAZIONALE");
 				sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, false);
@@ -253,6 +254,26 @@ public class KafkaSRV implements IKafkaSRV {
 			log.error("Error while send status message : " , ex);
 			throw new BusinessException(ex);
 		}
+	}
+
+	/**
+	 * tronca il campo message di KafkaStatusManagerDTO se risulta maggiore di 1 MB
+	 * (max
+	 * kafka producer request size)
+	 * 
+	 * @param dto
+	 * @return
+	 */
+	private String truncateMessageIfNecessary(KafkaStatusManagerDTO dto) {
+		String json = StringUtility.toJSON(dto);
+		int maxProducerSize = kafkaProducerCFG.getMaxRequestSize();
+		if (json.length() >= maxProducerSize) {
+			int newTruncatedSize = maxProducerSize / 1024;
+			String truncatedMessage = dto.getMessage().substring(0, newTruncatedSize);
+			dto.setMessage(truncatedMessage);
+			json = StringUtility.toJSON(dto);
+		}
+		return json;
 	}
  
 }

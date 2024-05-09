@@ -17,13 +17,13 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 
 /**
  * Content of a Kafka message
  */
-@Getter
 @Builder
+@Data
 public class KafkaStatusManagerDTO {
 
 	private String traceId;
