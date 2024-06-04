@@ -37,21 +37,13 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.tags.Tag;
 
-@Configuration 
-@SecuritySchemes( {
-	@SecurityScheme(
-			name = "bearerAuth", 
-			type = SecuritySchemeType.HTTP, 
-			bearerFormat = "JWT", 
-			scheme = "bearer", 
-			description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token} [RFC8725](https://tools.ietf.org/html/RFC8725).\""),
-	@SecurityScheme(
-			name = "FSE-JWT-Signature", 
-			type = SecuritySchemeType.APIKEY,
-			in = SecuritySchemeIn.HEADER)
-    }
-)
+@Configuration
+@SecuritySchemes({
+		@SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer", description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token} [RFC8725](https://tools.ietf.org/html/RFC8725).\""),
+		@SecurityScheme(name = "FSE-JWT-Signature", type = SecuritySchemeType.APIKEY, in = SecuritySchemeIn.HEADER)
+})
 public class OpenApiCFG {
 
 	@Autowired
@@ -60,7 +52,7 @@ public class OpenApiCFG {
 	public OpenApiCFG() {
 		// Empty constructor.
 	}
-	
+
 	@Bean
 	public OpenApiCustomiser openApiCustomiser() {
 
@@ -75,6 +67,13 @@ public class OpenApiCFG {
 			openApi.getInfo().setVersion(customOpenapi.getVersion());
 			openApi.getInfo().setDescription(customOpenapi.getDescription());
 			openApi.getInfo().setTermsOfService(customOpenapi.getTermsOfService());
+
+			List<Tag> tags = new ArrayList<>();
+			tags.add(new Tag().name("Servizio ispezione transazioni"));
+			tags.add(new Tag().name("Servizio validazione documenti"));
+			tags.add(new Tag().name("Servizio pubblicazione documenti"));
+			tags.add(new Tag().name("Health check Status Actuator"));
+			openApi.setTags(tags);
 
 			// Adding contact to info section
 			final Contact contact = new Contact();
@@ -98,14 +97,14 @@ public class OpenApiCFG {
 			});
 
 			openApi.getPaths().values()
-			.stream()
-			.map(item -> getFileSchema(item))
-			.filter(Objects::nonNull)
-			.forEach(schema -> {
-				schema.additionalProperties(false);
-				schema.getProperties().get("file").setMaxLength(customOpenapi.getFileMaxLength());
-				schema.required(required);
-			});
+					.stream()
+					.map(item -> getFileSchema(item))
+					.filter(Objects::nonNull)
+					.forEach(schema -> {
+						schema.additionalProperties(false);
+						schema.getProperties().get("file").setMaxLength(customOpenapi.getFileMaxLength());
+						schema.required(required);
+					});
 		};
 	}
 
@@ -138,24 +137,31 @@ public class OpenApiCFG {
 
 	private Schema<?> getFileSchema(PathItem item) {
 		MediaType mediaType = getMultipartFile(item);
-		if (mediaType == null) return null;
+		if (mediaType == null)
+			return null;
 		return mediaType.getSchema();
 	}
-	
+
 	private Operation getOperation(PathItem item) {
-		if (item.getPost() != null) return item.getPost();
-		if (item.getPatch() != null) return item.getPatch();
-		if (item.getPut() != null) return item.getPut();
+		if (item.getPost() != null)
+			return item.getPost();
+		if (item.getPatch() != null)
+			return item.getPatch();
+		if (item.getPut() != null)
+			return item.getPut();
 		return null;
 	}
-	
+
 	private MediaType getMultipartFile(PathItem item) {
 		Operation operation = getOperation(item);
-		if (operation == null) return null;
+		if (operation == null)
+			return null;
 		RequestBody body = operation.getRequestBody();
-		if (body == null) return null;
+		if (body == null)
+			return null;
 		Content content = body.getContent();
-		if (content == null) return null;
+		if (content == null)
+			return null;
 		MediaType mediaType = content.get(org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE);
 		return mediaType;
 	}

@@ -21,14 +21,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-
 /**
  * The Class ErrorResponseDTO.
  */
 @Data
 @Builder
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper=false)
+@EqualsAndHashCode(callSuper = false)
 public class ErrorResponseDTO {
 
 	/**
@@ -37,7 +36,7 @@ public class ErrorResponseDTO {
 	@Schema(description = "Indentificativo univoco della richiesta dell'utente")
 	@Size(min = 0, max = 100)
 	private String traceID;
-	
+
 	/**
 	 * Span id log.
 	 */
@@ -48,25 +47,26 @@ public class ErrorResponseDTO {
 	@Schema(description = "URI da utilizzare come identificativo del problema che si è verificato")
 	@Size(min = 0, max = 100)
 	private String type;
-	
-	@Schema(description = "Descrizione sintetica della tipologia d’errore")
+
+	@Schema(description = "Descrizione sintetica della tipologia d'errore")
 	@Size(min = 0, max = 1000)
 	private String title;
 
-	@Schema(description = "Dettaglio della tipologia d’errore")
-	@Size(min = 0, max = 200000)
+	@Schema(description = "Dettaglio della tipologia d'errore")
+	@Size(min = 0, max = Integer.MAX_VALUE)
 	private String detail;
 
 	@Schema(description = "Stato http")
 	@Min(value = 100)
 	@Max(value = 599)
 	private Integer status;
-	
+
 	@Schema(description = "URI che identifica la specifica occorrenza del problema")
 	@Size(min = 0, max = 100)
 	private String instance;
 
-	public ErrorResponseDTO(final LogTraceInfoDTO traceInfo, final String inType, final String inTitle, final String inDetail, final Integer inStatus, final String inInstance) {
+	public ErrorResponseDTO(final LogTraceInfoDTO traceInfo, final String inType, final String inTitle,
+			final String inDetail, final Integer inStatus, final String inInstance) {
 		traceID = traceInfo.getTraceID();
 		spanID = traceInfo.getSpanID();
 		type = inType;
@@ -78,7 +78,7 @@ public class ErrorResponseDTO {
 
 	public ErrorResponseDTO(final LogTraceInfoDTO traceInfo) {
 		traceID = traceInfo.getTraceID();
-		spanID = traceInfo.getSpanID(); 
+		spanID = traceInfo.getSpanID();
 	}
 
 }

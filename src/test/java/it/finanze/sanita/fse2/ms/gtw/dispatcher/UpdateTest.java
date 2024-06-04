@@ -31,6 +31,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -66,6 +67,10 @@ class UpdateTest extends AbstractTest {
 
 	@Autowired
 	MockMvc mvc;
+
+	@SpyBean
+	@Qualifier("restTemplateIni")
+	RestTemplate restTemplateIni;
 
 	@SpyBean
 	RestTemplate restTemplate;
@@ -147,18 +152,18 @@ class UpdateTest extends AbstractTest {
 		if (status.is2xxSuccessful() && esito) {
 			response.setMarshallResponse("response");
 			response.setErrorMessage(null);
-			Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplateIni).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
 		} else if (status.equals(HttpStatus.NOT_FOUND) && !esito) {
 			response.setMarshallResponse(null);
 			response.setErrorMessage("Record not found");
-			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplateIni).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
 		} else if (status.equals(HttpStatus.BAD_REQUEST) && !esito) {
 			response.setErrorMessage("Generic error from INI");
-			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplateIni).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
 		} else if (status.is4xxClientError()) {
-			Mockito.doThrow(new RestClientException("")).when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
+			Mockito.doThrow(new RestClientException("")).when(restTemplateIni).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(GetMergedMetadatiDTO.class));
 		} else {
-			Mockito.doThrow(new BusinessException("")).when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
+			Mockito.doThrow(new BusinessException("")).when(restTemplateIni).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
 		}
 	}
 

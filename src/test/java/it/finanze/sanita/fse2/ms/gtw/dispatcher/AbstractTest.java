@@ -12,6 +12,7 @@
 
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
@@ -19,6 +20,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
@@ -43,15 +45,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthDataFormatEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CfUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.JsonUtility;
@@ -110,7 +103,7 @@ public abstract class AbstractTest {
 				if (fromGovway) {
 					headers.set(Constants.Headers.JWT_GOVWAY_HEADER, generateJwtGovwayPayload(fileByte));
 				} else {
-					headers.set(Constants.Headers.JWT_HEADER, generateJwt(fileByte, isValidMultipart, EventTypeEnum.VALIDATION));
+					headers.set(Constants.Headers.JWT_HEADER, generateJwt(fileByte, isValidMultipart, VALIDATION));
 				}
 			} 
 			String urlValidation = getBaseUrl() + "/v1/documents/validation";
@@ -207,14 +200,21 @@ public abstract class AbstractTest {
 	}
 
 	protected String generateJwtPayload(final String documentHash, final String personId, final String subject, final String docType, EventTypeEnum eventType) {
-		String action = "CREATE";
-		String purposeOfUse = "TREATMENT";
-		if (EventTypeEnum.UPDATE.equals(eventType)) {
-			action = "UPDATE";
-			purposeOfUse = "UPDATE";
-		} else if (EventTypeEnum.DELETE.equals(eventType)) {
-			action = "DELETE";
-			purposeOfUse = "UPDATE";
+		String action = ActionEnum.CREATE.name();
+		String purposeOfUse = PurposeOfUseEnum.TREATMENT.name();
+		if (UPDATE.equals(eventType)) {
+			action = ActionEnum.UPDATE.name();
+			purposeOfUse = PurposeOfUseEnum.UPDATE.name();
+		} else if (DELETE.equals(eventType)) {
+			action = ActionEnum.DELETE.name();
+			purposeOfUse = PurposeOfUseEnum.UPDATE.name();
+		}
+		else if (REPLACE.equals(eventType)){
+			action = ActionEnum.UPDATE.name();
+			purposeOfUse = PurposeOfUseEnum.UPDATE.name();
+		}
+		else if(VALIDATION.equals(eventType)){
+
 		}
 
 		String applicationId = "ApplicationId";
