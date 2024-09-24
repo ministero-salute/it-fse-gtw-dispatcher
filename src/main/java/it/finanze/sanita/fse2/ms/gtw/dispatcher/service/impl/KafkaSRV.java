@@ -11,20 +11,11 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaProducerPropertiesCFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaTopicCFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.KafkaStatusManagerDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PriorityUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +24,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
+import org.springframework.util.concurrent.SettableListenableFuture;
 
-import java.util.Date;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaProducerPropertiesCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaTopicCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.KafkaStatusManagerDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PriorityTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PriorityUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Kafka management service.
@@ -68,88 +79,83 @@ public class KafkaSRV implements IKafkaSRV {
 
 	@Autowired
 	private KafkaProducerPropertiesCFG kafkaProducerCFG;
-
-	@Override
-	public RecordMetadata sendMessage(String topic, String key, String value, boolean trans) {
-		RecordMetadata out = null;
-		ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, key, value);
-		try {
-			out = kafkaSend(producerRecord, trans);
-		} catch (Exception e) {
-			log.error("Send failed.", e);
-			throw new BusinessException(e);
-		}
-		return out;
-	}
+ 
 
 	@SuppressWarnings("unchecked")
-	private RecordMetadata kafkaSend(ProducerRecord<String, String> producerRecord, boolean trans) {
-		RecordMetadata out = null;
-		Object result = null;
+	@Override
+	public void kafkaSendNonInTransaction(ProducerRecord<String, String> producerRecord) {
+		notxKafkaTemplate.send(producerRecord);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private List<RecordMetadata> kafkaSendInTransaction(List<ProducerRecord<String, String>> producerRecords) {
+	    List<RecordMetadata> out = new ArrayList<>();
+	    
+	    txKafkaTemplate.executeInTransaction(t -> {
+	        try {
+	            for (ProducerRecord<String, String> producerRecord : producerRecords) {
+	                SendResult<String, String> sendResult = t.send(producerRecord).get();
+	                if (sendResult != null) {
+	                    out.add(sendResult.getRecordMetadata());
+	                    log.debug("Message sent successfully: {}", sendResult.getRecordMetadata());
+	                }
+	            }
+	        } catch (InterruptedException e) {
+	            log.error("InterruptedException caught. Interrupting thread...");
+	            Thread.currentThread().interrupt();
+	            throw new BusinessException(e);
+	        } catch (Exception e) {
+	            throw new BusinessException(e);
+	        }
+	        return null;
+	    });
 
-		if (trans) {
-			result = txKafkaTemplate.executeInTransaction(t -> {
-				try {
-					return t.send(producerRecord).get();
-				} catch (InterruptedException e) {
-					log.error("InterruptedException caught. Interrupting thread...");
-					Thread.currentThread().interrupt();
-					throw new BusinessException(e);
-				} catch (Exception e) {
-					throw new BusinessException(e);
-				}
-			});
-		} else {
-			notxKafkaTemplate.send(producerRecord);
-		}
-
-		if (result != null) {
-			SendResult<String, String> sendResult = (SendResult<String, String>) result;
-			out = sendResult.getRecordMetadata();
-			log.debug("Message sent successfully");
-		}
-		return out;
+	    return out;
+	}
+	
+	@Override
+	public void notifyIndexerAndStatusInTransaction(final String key, final String kafkaValue, PriorityTypeEnum priorityFromRequest,
+			TipoDocAltoLivEnum documentType, 
+			String traceId, String workflowInstanceId,
+			EventStatusEnum eventStatus, String message,
+			PublicationCreateReplaceMetadataDTO publicationReq, JWTPayloadDTO jwtClaimDTO,
+			EventTypeEnum eventTypeEnum) {
+		ProducerRecord<String, String> indexerValue = notifyIndexerChannel(key, kafkaValue, priorityFromRequest, documentType, DestinationTypeEnum.INDEXER);
+		ProducerRecord<String, String> statusValue = getStatus(traceId, workflowInstanceId, eventStatus, message, publicationReq, jwtClaimDTO,eventTypeEnum);
+		kafkaSendInTransaction(Arrays.asList(indexerValue,statusValue));
 	}
 
-	@Override
-	public void notifyChannel(final String key, final String kafkaValue, PriorityTypeEnum priorityFromRequest,
+	private ProducerRecord<String, String> notifyIndexerChannel(final String key, final String kafkaValue, PriorityTypeEnum priorityFromRequest,
 			TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType) {
 		log.debug("Destination: {}", destinationType.name());
-		try {
-			String destTopic = priorityUtility.computeTopic(priorityFromRequest, destinationType, documentType);
+		String destTopic = priorityUtility.computeTopic(priorityFromRequest, destinationType, documentType);
 
-			if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
-				log.info("PRODUCER NON TRANSAZIONALE");
-				sendMessage(destTopic, key, kafkaValue, false);
-			} else {
-				log.info("PRODUCER TRANSAZIONALE");
-				sendMessage(destTopic, key, kafkaValue, true);
-			}
-		} catch (Exception e) {
-			log.error("Error sending kafka message", e);
-			throw new BusinessException(e);
-		}
+		return getProducerRecord(destTopic, key, kafkaValue);
+	 
 	}
 
 	@Override
 	public void sendValidationStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
 			final JWTPayloadDTO jwtClaimDTO) {
-		sendStatusMessage(traceId, workflowInstanceId, EventTypeEnum.VALIDATION, eventStatus, message, null,
+		ProducerRecord<String, String> status = getStatusMessage(traceId, workflowInstanceId, EventTypeEnum.VALIDATION, eventStatus, message, null,
 				jwtClaimDTO, null);
+		kafkaSendNonInTransaction(status);
 	}
 
 	@Override
 	public void sendValidationStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
 			final JWTPayloadDTO jwtClaimDTO, EventTypeEnum eventTypeEnum) {
-		sendStatusMessage(traceId, workflowInstanceId, eventTypeEnum, eventStatus, message, null, jwtClaimDTO, null);
+		ProducerRecord<String, String> status = getStatusMessage(traceId, workflowInstanceId, eventTypeEnum, eventStatus, message, null, jwtClaimDTO, null);
+		kafkaSendNonInTransaction(status);
 	}
 
 	@Override
-	public void sendPublicationStatus(final String traceId, final String workflowInstanceId,
+	public ProducerRecord<String, String> getStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
-			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO) {
+			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO,
+			EventTypeEnum eventTypeEnum) {
 
 		String identificativoDocumento = null;
 		AttivitaClinicaEnum tipoAttivita = null;
@@ -161,54 +167,36 @@ public class KafkaSRV implements IKafkaSRV {
 				tipoAttivita = publicationReq.getTipoAttivitaClinica();
 			}
 		}
-		sendStatusMessage(traceId, workflowInstanceId, EventTypeEnum.PUBLICATION, eventStatus, message,
-				identificativoDocumento, jwtClaimDTO, tipoAttivita);
+		return getStatusMessage(traceId, workflowInstanceId, eventTypeEnum, eventStatus, message, identificativoDocumento, jwtClaimDTO, tipoAttivita);
 	}
 
-	@Override
-	public void sendReplaceStatus(final String traceId, final String workflowInstanceId,
-			final EventStatusEnum eventStatus, final String message,
-			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO) {
-
-		String identificativoDocumento = null;
-		AttivitaClinicaEnum tipoAttivita = null;
-		if (publicationReq != null) {
-			if (publicationReq.getIdentificativoDoc() != null) {
-				identificativoDocumento = publicationReq.getIdentificativoDoc();
-			}
-			if (publicationReq.getTipoAttivitaClinica() != null) {
-				tipoAttivita = publicationReq.getTipoAttivitaClinica();
-			}
-		}
-		sendStatusMessage(traceId, workflowInstanceId, EventTypeEnum.REPLACE, eventStatus, message,
-				identificativoDocumento, jwtClaimDTO, tipoAttivita);
-	}
-
+	 
 	@Override
 	public void sendDeleteStatus(String traceId, String workflowInstanceId, String idDoc, String message,
 			EventStatusEnum eventStatus, JWTPayloadDTO jwt,
 			EventTypeEnum eventType) {
-		sendStatusMessage(traceId, workflowInstanceId, eventType, eventStatus, message, idDoc, jwt,
+		ProducerRecord<String, String> status = getStatusMessage(traceId, workflowInstanceId, eventType, eventStatus, message, idDoc, jwt,
 				AttivitaClinicaEnum.PHR);
+		kafkaSendNonInTransaction(status);
 	}
 
 	@Override
 	public void sendDeleteRequest(String workflowInstanceId, Object request) {
-		sendIndexerRetryMessage(workflowInstanceId, sendObjectAsJson(request),
-				kafkaTopicCFG.getDispatcherIndexerRetryDeleteTopic());
+		ProducerRecord<String, String> status = getIndexerRetryMessage(workflowInstanceId, sendObjectAsJson(request), kafkaTopicCFG.getDispatcherIndexerRetryDeleteTopic());
+		kafkaSendNonInTransaction(status);
 	}
 
 	@Override
 	public void sendUpdateRequest(String workflowInstanceId, Object request) {
-		sendIndexerRetryMessage(workflowInstanceId, sendObjectAsJson(request),
-				kafkaTopicCFG.getDispatcherIndexerRetryUpdateTopic());
+		ProducerRecord<String, String> status = getIndexerRetryMessage(workflowInstanceId, sendObjectAsJson(request), kafkaTopicCFG.getDispatcherIndexerRetryUpdateTopic());
+		kafkaSendNonInTransaction(status);
 	}
 
 	@Override
 	public void sendUpdateStatus(String traceId, String workflowInstanceId, String idDoc, EventStatusEnum eventStatus,
 			JWTPayloadDTO jwt,
 			String message, EventTypeEnum event) {
-		sendStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null);
+		getStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null);
 	}
 
 	private String sendObjectAsJson(Object o) {
@@ -222,43 +210,24 @@ public class KafkaSRV implements IKafkaSRV {
 		return json;
 	}
 
-	private void sendIndexerRetryMessage(final String workflowInstanceId, final String json,
-			final String topic) {
-
-		if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
-			log.info("PRODUCER NON TRANSAZIONALE");
-			sendMessage(topic, workflowInstanceId, json, false);
-		} else {
-			log.info("PRODUCER TRANSAZIONALE");
-			sendMessage(topic, workflowInstanceId, json, true);
-		}
+	private ProducerRecord<String, String> getIndexerRetryMessage(final String workflowInstanceId, final String json, final String topic) {
+		return getProducerRecord(topic, workflowInstanceId, json);
 	}
 
-	private void sendStatusMessage(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
+	private ProducerRecord<String, String> getStatusMessage(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
 			final EventStatusEnum eventStatus, final String message, final String documentId,
 			final JWTPayloadDTO jwtClaimDTO, AttivitaClinicaEnum tipoAttivita) {
-		try {
-			KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder()
-					.issuer(jwtClaimDTO != null ? jwtClaimDTO.getIss() : Constants.App.JWT_MISSING_ISSUER_PLACEHOLDER)
-					.traceId(traceId).eventType(eventType).eventDate(new Date()).eventStatus(eventStatus)
-					.message(message).identificativoDocumento(documentId).tipoAttivita(tipoAttivita)
-					.subject(jwtClaimDTO != null ? jwtClaimDTO.getSub() : null)
-					.organizzazione(jwtClaimDTO != null ? jwtClaimDTO.getSubject_organization_id() : null)
-					.microserviceName(msName).build();
+		KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder()
+				.issuer(jwtClaimDTO != null ? jwtClaimDTO.getIss() : Constants.App.JWT_MISSING_ISSUER_PLACEHOLDER)
+				.traceId(traceId).eventType(eventType).eventDate(new Date()).eventStatus(eventStatus)
+				.message(message).identificativoDocumento(documentId).tipoAttivita(tipoAttivita)
+				.subject(jwtClaimDTO != null ? jwtClaimDTO.getSub() : null)
+				.organizzazione(jwtClaimDTO != null ? jwtClaimDTO.getSubject_organization_id() : null)
+				.microserviceName(msName).build();
 
-			String json = truncateMessageIfNecessary(statusManagerMessage);
+		String json = truncateMessageIfNecessary(statusManagerMessage);
+		return getProducerRecord(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json);
 
-			if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
-				log.info("PRODUCER NON TRANSAZIONALE");
-				sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, false);
-			} else {
-				log.info("PRODUCER TRANSAZIONALE");
-				sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, true);
-			}
-		} catch (Exception ex) {
-			log.error("Error while send status message : ", ex);
-			throw new BusinessException(ex);
-		}
 	}
 
 	/**
@@ -280,5 +249,12 @@ public class KafkaSRV implements IKafkaSRV {
 		}
 		return json;
 	}
+	
+
+
+	private ProducerRecord<String, String> getProducerRecord(String topic, String key, String value) {
+		return new ProducerRecord<>(topic, key, value);
+	}
+
 
 }

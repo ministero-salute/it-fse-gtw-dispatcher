@@ -26,6 +26,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ICdaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -59,8 +61,10 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         
         EventStatusEnum errorEventStatus = RestExecutionResultEnum.GENERIC_TIMEOUT.getEventStatusEnum();
 
-        kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-                errorMessage, jsonObj, jwtPayloadToken);
+        EventTypeEnum eventType = isPublication ? EventTypeEnum.PUBLICATION : EventTypeEnum.REPLACE;
+        ProducerRecord<String, String> status = kafkaSRV.getStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus, 
+        		errorMessage, jsonObj, jwtPayloadToken, eventType);
+        kafkaSRV.kafkaSendNonInTransaction(status);
 
         final RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
 
@@ -96,14 +100,11 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
             errorEventStatus = RestExecutionResultEnum.get(capturedErrorType).getEventStatusEnum();
         }
 
-        if(isPublication) {
-        	kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-        			errorMessage, jsonObj, jwtPayloadToken);
-        } else {
-        	kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-        			errorMessage, jsonObj, jwtPayloadToken);
-        }
         
+        EventTypeEnum eventType = isPublication ? EventTypeEnum.PUBLICATION : EventTypeEnum.REPLACE;
+        ProducerRecord<String, String> status = kafkaSRV.getStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus, 
+        		errorMessage, jsonObj, jwtPayloadToken, eventType);
+        kafkaSRV.kafkaSendNonInTransaction(status);
 
         final RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
 

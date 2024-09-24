@@ -38,6 +38,7 @@ import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Size;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,7 +84,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -218,9 +218,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		kafkaValue.setIdDoc(idDoc);
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
-		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), priorityType, validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
-
+		
+		kafkaSRV.notifyIndexerAndStatusInTransaction(idDoc, new Gson().toJson(kafkaValue), priorityType, 
+				validationInfo.getJsonObj().getTipoDocumentoLivAlto(), traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), 
+				SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken(),EventTypeEnum.PUBLICATION);
+		
 		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
 	}
 
@@ -256,8 +258,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setIdDoc(idDoc);
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
-			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), PriorityTypeEnum.LOW, validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+			
+			kafkaSRV.notifyIndexerAndStatusInTransaction(idDoc, new Gson().toJson(kafkaValue), PriorityTypeEnum.LOW, 
+					validationInfo.getJsonObj().getTipoDocumentoLivAlto(), traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), 
+					SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken(), EventTypeEnum.REPLACE);
+			
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
 					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
@@ -403,7 +408,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 				try {
 					simulatedResult = accreditamentoSimulationSRV.runSimulation(idToCheck, bytePDF, isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION);
 				} catch(NoRecordFoundException noRecordFound) {
-					kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), "", EventStatusEnum.BLOCKING_ERROR, "Id documento non presente", jsonObj, jwtPayloadToken);
+//					kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), "", EventStatusEnum.BLOCKING_ERROR, "Id documento non presente", jsonObj, jwtPayloadToken);
+					ProducerRecord<String,String> status = kafkaSRV.getStatus(traceInfoDTO.getTraceID(), "", EventStatusEnum.BLOCKING_ERROR, "Id documento non presente", jsonObj, jwtPayloadToken, eventTypeEnum);
+					kafkaSRV.kafkaSendNonInTransaction(status);
 					throw noRecordFound;
 				}
 
@@ -741,9 +748,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setIdDoc(idDoc);
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
-			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), PriorityTypeEnum.LOW, validationResult.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), validationResult.getJwtPayloadToken());
-
+			kafkaSRV.notifyIndexerAndStatusInTransaction(idDoc, new Gson().toJson(kafkaValue), PriorityTypeEnum.LOW, 
+					validationResult.getJsonObj().getTipoDocumentoLivAlto(), 
+					traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), validationResult.getJwtPayloadToken(), EventTypeEnum.REPLACE);
+			
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationResult.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationResult.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateReplacenOperation,
 					getDocumentType(validationResult.getDocument()), validationResult.getJwtPayloadToken(),null);
 		} catch (ConnectionRefusedException ce) {		
