@@ -11,18 +11,24 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc.INI_DATE_PATTERN;
+
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DateUtility {
-
-	private DateUtility() {}
-
+	
 	public static long getDifferenceDays(Date d1, Date d2) {
 		long diff = d2.getTime() - d1.getTime();
 		return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
@@ -53,5 +59,16 @@ public class DateUtility {
 		}
 	}
 
+	public static String convertDateCda(String data) throws ParseException {
+		SimpleDateFormat sdf = new SimpleDateFormat(INI_DATE_PATTERN);
+
+		if (data.length() == INI_DATE_PATTERN.length() + 5) { 
+			sdf = new SimpleDateFormat(INI_DATE_PATTERN + "Z");
+			data = data.substring(0, INI_DATE_PATTERN.length()) + data.substring(INI_DATE_PATTERN.length()).replace(":", ""); //Se nel fusoorario mi vengono passati i : li rimuovo
+		} 
+
+		sdf.setTimeZone(TimeZone.getTimeZone("GMT")); 
+		return new SimpleDateFormat(INI_DATE_PATTERN).format(sdf.parse(data));
+	}
 
 }

@@ -477,7 +477,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final String cda, final String documentSha256) {
 		String sha1 = StringUtility.encodeSHA1(bytePDF);
 		final ResourceDTO fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
-				jwtPayloadToken.getSubject_organization_id(),sha1);
+				jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1);
 
 		if(!isNullOrEmpty(fhirResourcesDTO.getErrorMessage())) {
 			final ErrorResponseDTO error = ErrorResponseDTO.builder()

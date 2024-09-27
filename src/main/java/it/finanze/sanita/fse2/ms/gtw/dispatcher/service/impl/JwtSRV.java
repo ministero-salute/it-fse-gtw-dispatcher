@@ -14,6 +14,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,10 +66,11 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	@Override
 	public void validatePayloadForCreate(JWTPayloadDTO payload) {
-		performCommonValidation(payload);
 		checkNull(payload.getResource_hl7_type(), "resource_hl7_type"); 
 		validateActionCoherence(payload, ActionEnum.CREATE);
+		performCommonValidation(payload);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.TREATMENT);
+		isValidLocality(payload.getLocality());
 	}
 
 	@Override
@@ -76,6 +79,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		checkNull(payload.getResource_hl7_type(), "resource_hl7_type"); 
 		validateActionCoherence(payload, ActionEnum.UPDATE);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
+		isValidLocality(payload.getLocality());
 	}
 
 	@Override
@@ -225,7 +229,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 			throw new ValidationException(error);
 		}
 	}
- 
+	  
 	
 	private boolean isValidOid(String oid) {
 		if (oid == null) 
@@ -244,6 +248,24 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 		return true;
 	}
+
+	private ValidationException buildValidationException() { 
+		ErrorResponseDTO error = ErrorResponseDTO.builder()
+				.type(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getType())
+				.title(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getTitle())
+				.instance(ErrorInstanceEnum.JWT_MALFORMED_FIELD.getInstance())
+				.detail("Il campo Locality non è valorizzato correttamente")
+				.build();
+		return new ValidationException(error);
+	}
  
 
+	public void isValidLocality(String input) {
+		String regex = "^[a-zA-Z0-9]+[^\\^]*\\^\\^\\^\\^\\^\\&[^&]*\\&ISO\\^\\^\\^\\^[^\\^&]*$";
+		boolean isValid = Pattern.matches(regex, input);
+		if (!isValid) {
+			throw buildValidationException();
+		}
+    }
+	 
 }

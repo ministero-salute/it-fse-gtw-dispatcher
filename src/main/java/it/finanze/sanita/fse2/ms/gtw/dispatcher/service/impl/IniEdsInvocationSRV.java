@@ -13,6 +13,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,8 +74,7 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		Document submissionSetEntryDoc = new Document("submissionSetEntry" ,Document.parse(submissionSetEntryJson));
 		Document documentEntryDoc = new Document("documentEntry" ,Document.parse(documentEntryJson));
 		Document tokenEntry = new Document("tokenEntry", new Document("payload",Document.parse(tokenEntryJson)));
-		
-		metadata.add(submissionSetEntryDoc);
+	 	metadata.add(submissionSetEntryDoc);
 		metadata.add(documentEntryDoc);
 		metadata.add(tokenEntry);
 		
@@ -96,5 +97,4 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		}
 		return output; 
 	}
-
 }
