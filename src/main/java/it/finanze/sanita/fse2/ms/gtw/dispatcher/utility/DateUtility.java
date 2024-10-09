@@ -15,6 +15,10 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc.INI
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -58,17 +62,23 @@ public class DateUtility {
 			return false; 
 		}
 	}
-
+	
+ 
 	public static String convertDateCda(String data) throws ParseException {
-		SimpleDateFormat sdf = new SimpleDateFormat(INI_DATE_PATTERN);
+        SimpleDateFormat sdfInput;
+        if (data.contains("+") || data.contains("-")) {
+            sdfInput = new SimpleDateFormat("yyyyMMddHHmmssX");  
+        } else {
+            sdfInput = new SimpleDateFormat(INI_DATE_PATTERN);
+        }
+        sdfInput.setTimeZone(TimeZone.getTimeZone("UTC"));
+        
+        Date parsedDate = sdfInput.parse(data);
+        SimpleDateFormat sdfOutput = new SimpleDateFormat(INI_DATE_PATTERN);
+        sdfOutput.setTimeZone(TimeZone.getTimeZone("UTC"));
+        
+        return sdfOutput.format(parsedDate);
+    }
 
-		if (data.length() == INI_DATE_PATTERN.length() + 5) { 
-			sdf = new SimpleDateFormat(INI_DATE_PATTERN + "Z");
-			data = data.substring(0, INI_DATE_PATTERN.length()) + data.substring(INI_DATE_PATTERN.length()).replace(":", ""); //Se nel fusoorario mi vengono passati i : li rimuovo
-		} 
-
-		sdf.setTimeZone(TimeZone.getTimeZone("GMT")); 
-		return new SimpleDateFormat(INI_DATE_PATTERN).format(sdf.parse(data));
-	}
-
+ 
 }

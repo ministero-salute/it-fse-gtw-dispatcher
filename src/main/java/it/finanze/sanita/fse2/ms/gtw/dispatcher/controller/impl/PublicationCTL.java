@@ -21,6 +21,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_D
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_UPDATE;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.RIFERIMENTI_INI;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.FHIR_MAPPING_ERROR;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.GENERIC_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.INI_EXCEPTION;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.get;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createMasterIdError;
@@ -476,18 +477,32 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final JWTPayloadDTO jwtPayloadToken, PublicationCreateReplaceMetadataDTO jsonObj, final byte[] bytePDF,
 			final String cda, final String documentSha256) {
 		String sha1 = StringUtility.encodeSHA1(bytePDF);
-		final ResourceDTO fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
-				jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1);
+		
+		ResourceDTO fhirResourcesDTO = null;
+		try {
+			fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
+					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1);
 
-		if(!isNullOrEmpty(fhirResourcesDTO.getErrorMessage())) {
-			final ErrorResponseDTO error = ErrorResponseDTO.builder()
-					.type(FHIR_MAPPING_ERROR.getType())
-					.title(FHIR_MAPPING_ERROR.getTitle())
-					.instance(ErrorInstanceEnum.FHIR_RESOURCE_ERROR.getInstance())
-					.detail(fhirResourcesDTO.getErrorMessage()).build();
+			if(!StringUtility.isNullOrEmpty(fhirResourcesDTO.getErrorMessage())){
+					final ErrorResponseDTO error = ErrorResponseDTO.builder()
+							.type(FHIR_MAPPING_ERROR.getType())
+							.title(FHIR_MAPPING_ERROR.getTitle())
+							.instance(ErrorInstanceEnum.FHIR_RESOURCE_ERROR.getInstance())
+							.detail(fhirResourcesDTO.getErrorMessage()).build();
+
+					throw new ValidationException(error);
+				
+			}			
+ 		} catch(Exception ex) {
+ 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(GENERIC_ERROR.getType())
+					.title(GENERIC_ERROR.getTitle())
+					.instance(ErrorInstanceEnum.INVALID_DATE_FORMAT.getInstance())
+					.detail(ex.getCause().getMessage()).build();
 
 			throw new ValidationException(error);
-		}
+
+ 		}
 
 		return fhirResourcesDTO;
 	}
