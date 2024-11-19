@@ -33,11 +33,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.lang.model.util.Elements;
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.ValidationException;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -88,6 +90,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedExce
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
@@ -151,32 +154,10 @@ public abstract class AbstractCTL {
 			out = new LogTraceInfoDTO(
 					tracer.currentSpan().context().spanId(),
 					tracer.currentSpan().context().traceId());
-//					tracer.currentSpan().context().spanIdString(), 
-//					tracer.currentSpan().context().traceIdString());
 		}
 		return out;
 	}
-	
-//	protected LogTraceInfoDTO getLogTraceInfo() {
-//		LogTraceInfoDTO out = new LogTraceInfoDTO(null, null);
-//		Tracer tracer = GlobalOpenTelemetry.getTracer("gtw-tracer");
-////
-////		// Inizia un nuovo span
-////		Span span = tracer.spanBuilder("gtw-span").startSpan();
-////
-////		String traceId = "";
-////		String spanId = "";
-////		try (Scope scope = span.makeCurrent()) {
-////			// Esegui le operazioni che desideri tracciare
-////			// Includi il traceId nel tuo output
-////			traceId = span.getSpanContext().getTraceId();
-////			spanId = span.getSpanContext().getSpanId();
-////		} finally {
-////			span.end();
-////		}
-////		out = new LogTraceInfoDTO(spanId,traceId);
-//		return out;
-//	}
+	 
 
 	protected ValidationCDAReqDTO getAndValidateValidationReq(final String jsonREQ) {
 		
