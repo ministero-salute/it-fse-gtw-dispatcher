@@ -38,6 +38,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
@@ -130,7 +132,7 @@ class DeleteTest extends AbstractTest {
 			referenceResponse.setSpanID(StringUtility.generateUUID());
 			referenceResponse.setTraceID(StringUtility.generateUUID());
 			referenceResponse.setErrorMessage(null);
-			referenceResponse.setUuid(StringUtility.generateUUID());
+			referenceResponse.setUuid(Arrays.asList(StringUtility.generateUUID()));
 			Mockito.doReturn(new ResponseEntity<>(referenceResponse, status)).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
 			Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
 		} else if (status.equals(HttpStatus.NOT_FOUND) && !esito) {
@@ -143,7 +145,7 @@ class DeleteTest extends AbstractTest {
 			referenceResponse.setSpanID(StringUtility.generateUUID());
 			referenceResponse.setTraceID(StringUtility.generateUUID());
 			referenceResponse.setErrorMessage(null);
-			referenceResponse.setUuid(StringUtility.generateUUID());
+			referenceResponse.setUuid(Arrays.asList(StringUtility.generateUUID()));
 			response.setSpanID(StringUtility.generateUUID());
 			response.setTraceID(StringUtility.generateUUID());
 			response.setEsito(false);

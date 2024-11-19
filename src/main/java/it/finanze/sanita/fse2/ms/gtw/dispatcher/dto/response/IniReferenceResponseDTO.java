@@ -22,7 +22,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class IniReferenceResponseDTO extends ResponseDTO {
 
-	private String uuid;
+	private List<String> uuid;
 	
 	private String documentType;
 

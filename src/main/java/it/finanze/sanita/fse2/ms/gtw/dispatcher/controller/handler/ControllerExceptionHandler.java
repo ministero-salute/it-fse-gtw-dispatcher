@@ -226,6 +226,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	 */
 	@ExceptionHandler(value = {Exception.class})
 	protected ResponseEntity<ErrorResponseDTO> handleGenericException(final Exception ex, final WebRequest request) {
+		log.error("Errore generico", ex);		
 		Integer status = 500;
 
 		String msg = StringUtility.isNullOrEmpty(ex.getMessage()) ? "Errore generico" : ex.getMessage();
@@ -239,6 +240,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(value = {BusinessException.class})
 	protected ResponseEntity<ErrorResponseDTO> handleBusinessException(final BusinessException ex, final WebRequest request) {
+		log.error("Errore generico", ex);		
 		int status = 500;
 
 		LogTraceInfoDTO traceInfo = getLogTraceInfo();

@@ -78,6 +78,22 @@ public final class StringUtility {
 	 * @param objectToEncode String to encode.
 	 * @return String Encoded.
 	 */
+	public static String encodeSHA1(final byte[] objectToEncode) {
+		try {
+		    final MessageDigest digest = MessageDigest.getInstance(Constants.App.SHA1_ALGORITHM);
+		    return Hex.encodeHexString(digest.digest(objectToEncode));
+		} catch (final Exception e) {
+			log.error(ERROR_MSG, e);
+			throw new BusinessException(Constants.App.SHA_ERROR, e);
+		}
+	}
+	
+	/**
+	 * Returns the encoded String of the SHA-256 algorithm represented in base 64.
+	 * 
+	 * @param objectToEncode String to encode.
+	 * @return String Encoded.
+	 */
 	public static String encodeSHA256B64(final String objectToEncode) {
 		try {
 		    final MessageDigest digest = MessageDigest.getInstance(Constants.App.SHA_ALGORITHM);
@@ -130,7 +146,7 @@ public final class StringUtility {
 	    return UUID.randomUUID().toString();
 	}
 
-	public static String generateTransactionUID() {
+	public static String generateWii() {
 		return UUID.randomUUID().toString().replace("-", "").substring(0, 10);
 	}
 

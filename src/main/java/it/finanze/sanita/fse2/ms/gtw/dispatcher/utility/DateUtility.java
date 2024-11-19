@@ -11,18 +11,28 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc.INI_DATE_PATTERN;
+
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DateUtility {
-
-	private DateUtility() {}
-
+	
 	public static long getDifferenceDays(Date d1, Date d2) {
 		long diff = d2.getTime() - d1.getTime();
 		return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
@@ -52,6 +62,23 @@ public class DateUtility {
 			return false; 
 		}
 	}
+	
+ 
+	public static String convertDateCda(String data) throws ParseException {
+        SimpleDateFormat sdfInput;
+        if (data.contains("+") || data.contains("-")) {
+            sdfInput = new SimpleDateFormat("yyyyMMddHHmmssX");  
+        } else {
+            sdfInput = new SimpleDateFormat(INI_DATE_PATTERN);
+        }
+        sdfInput.setTimeZone(TimeZone.getTimeZone("UTC"));
+        
+        Date parsedDate = sdfInput.parse(data);
+        SimpleDateFormat sdfOutput = new SimpleDateFormat(INI_DATE_PATTERN);
+        sdfOutput.setTimeZone(TimeZone.getTimeZone("UTC"));
+        
+        return sdfOutput.format(parsedDate);
+    }
 
-
+ 
 }

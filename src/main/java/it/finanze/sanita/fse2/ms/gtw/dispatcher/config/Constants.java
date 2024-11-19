@@ -89,6 +89,7 @@ public final class Constants {
 		public static final String BEARER_PREFIX = "Bearer ";
         public static final String SHA_ERROR = "Errore in fase di calcolo SHA-256";
 		public static final String SHA_ALGORITHM = "SHA-256";
+		public static final String SHA1_ALGORITHM = "SHA-1";
 		public static final String JWT_MISSING_ISSUER_PLACEHOLDER = "UNDEFINED_JWT_ISSUER";
 		public static final String JWT_MISSING_SUBJECT = "UNDEFINED_SUBJECT";
 
@@ -98,6 +99,7 @@ public final class Constants {
 		
 		public static final String LOG_TYPE_CONTROL = "control-structured-log";
 		public static final int MAX_SIZE_WARNING = 200000;
+		public static final String BENCHMARK_ISSUER = "TEST-BENCHMARK";
 		
 		
 		private App() {

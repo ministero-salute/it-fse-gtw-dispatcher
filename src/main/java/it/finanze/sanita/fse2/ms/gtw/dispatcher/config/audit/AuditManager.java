@@ -51,7 +51,9 @@ public class AuditManager {
                 // Retrieve audit
                 AuditETY entity = filter.get().apply(uri, req, body);
                 // Save
-                repository.save(entity);
+                if(entity!=null){
+                    repository.save(entity);
+                }
             } else {
                 log.debug("No filter found matching the request type");
                 log.debug("Skipping audit on path: {}", uri);

@@ -49,6 +49,7 @@ public final class ClientRoutes {
         public static final String PROPS_NAME_AUDIT_ENABLED = "audit-enabled";
         public static final String PROPS_NAME_CONTROL_LOG_ENABLED = "control-log-persistence-enabled";
         public static final String PROPS_NAME_ISSUER_CF = "issuer-cf-cleaning";
+        public static final String PROPS_NAME_AUDIT_INI_ENABLED = "audit-ini-enabled";
         public static final String PROPS_NAME_SUBJECT = "subject-cleaning";
         public static final String PROPS_NAME_REMOVE_EDS_ENABLE = "remove-eds-enabled";
 

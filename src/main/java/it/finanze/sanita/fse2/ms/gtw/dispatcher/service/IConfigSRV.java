@@ -14,4 +14,6 @@ public interface IConfigSRV {
 
     long getRefreshRate();
     
+    Boolean isAuditIniEnable();
+    
 }

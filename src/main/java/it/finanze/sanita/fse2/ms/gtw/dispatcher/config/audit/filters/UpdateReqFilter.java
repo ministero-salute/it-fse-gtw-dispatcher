@@ -11,8 +11,12 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.filters;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.AuditFilter;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.AuditETY;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +24,10 @@ import java.util.Date;
 
 @Component
 public class UpdateReqFilter implements AuditFilter {
+
+    @Autowired
+    private BenchmarkCFG benchmarkCFG;
+
     @Override
     public boolean match(HttpServletRequest req) {
         return req.getAttribute("UPDATE_REQ") != null;
@@ -27,6 +35,12 @@ public class UpdateReqFilter implements AuditFilter {
 
     @Override
     public AuditETY apply(String uri, HttpServletRequest req, Object body) {
+        String issuer = req.getAttribute("JWT_ISSUER")!=null ? (String)req.getAttribute("JWT_ISSUER") : "";
+        
+        if (benchmarkCFG.isBenchmarkEnable() && issuer.contains(Constants.App.BENCHMARK_ISSUER)) {
+            return null;
+        }
+
         AuditETY audit = new AuditETY();
         audit.setServizio(uri);
         audit.setStart_time(new Date());

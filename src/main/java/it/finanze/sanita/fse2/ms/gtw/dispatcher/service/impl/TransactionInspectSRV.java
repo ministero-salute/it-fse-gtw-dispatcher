@@ -11,11 +11,18 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
+import java.util.Comparator;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusCheckClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.StatusCheckDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
 
 @Service
@@ -24,10 +31,23 @@ public class TransactionInspectSRV implements ITransactionInspectSRV {
 	@Autowired
 	private IStatusCheckClient statusCheckClient;
 	 
+	@Autowired
+	private IIniClient iniClient;
+	
+	@Autowired
+	private IConfigSRV configSRV;
 
 	@Override
 	public TransactionInspectResDTO callSearchEventByWorkflowInstanceId(final String workflowInstanceId) {
-		return statusCheckClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
+		TransactionInspectResDTO out = statusCheckClient.callSearchEventByWorkflowInstanceId(workflowInstanceId); 
+		if(configSRV.isAuditIniEnable()) {
+			IniAuditsDto auditsIniDto = iniClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
+			if(auditsIniDto!=null && !auditsIniDto.getAudit().isEmpty()) {
+				out.getTransactionData().addAll(auditsIniDto.getAudit());
+			}
+		}
+		out.setTransactionData(out.getTransactionData().stream().sorted(Comparator.comparing(StatusCheckDTO::getEventDate)).collect(Collectors.toList()));
+		return out;
 	}
 
 	@Override

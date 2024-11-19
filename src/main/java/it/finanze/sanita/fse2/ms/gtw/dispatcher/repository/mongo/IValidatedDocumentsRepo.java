@@ -29,4 +29,10 @@ public interface IValidatedDocumentsRepo {
 	boolean isItemInserted(String hash);
 
 	String updateInsertionDate(String workflowInstanceId, int days);
+
+	void createBenchmark(final ValidatedDocumentsETY ety);
+
+	boolean deleteItemBenchmark(String hash);
+
+
 }

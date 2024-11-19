@@ -48,5 +48,6 @@ public class DocumentEntryDTO {
 	private String typeCode;
 	private String typeCodeName;
 	private String uniqueId;
+	private List<String> referenceIdList;
 	 
 }

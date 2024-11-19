@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Config.*;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfigItemTypeEnum.DISPATCHER;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Config.PROPS_NAME_AUDIT_INI_ENABLED;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Config.PROPS_NAME_REMOVE_EDS_ENABLE;
 
 @Slf4j
@@ -26,6 +27,7 @@ public class ConfigSRV implements IConfigSRV {
 
     @Autowired
     private IConfigClient client;
+    
     @Autowired
     private ProfileUtility profiles;
 
@@ -118,6 +120,19 @@ public class ConfigSRV implements IConfigSRV {
 			props.get(PROPS_NAME_ISSUER_CF).getValue()
 		);
 	}
+    
+    @Override
+	public Boolean isAuditIniEnable() {
+		long lastUpdate = props.get(PROPS_NAME_AUDIT_INI_ENABLED).getKey();
+		if (new Date().getTime() - lastUpdate >= getRefreshRate()) {
+			synchronized(Locks.AUDIT_INI_ENABLED) {
+				if (new Date().getTime() - lastUpdate >= getRefreshRate()) {
+					refresh(PROPS_NAME_AUDIT_INI_ENABLED);
+				}
+			}
+		}
+		return Boolean.parseBoolean(props.get(PROPS_NAME_AUDIT_INI_ENABLED).getValue());
+	}
 
     private void refresh(String name) {
         String previous = props.getOrDefault(name, Pair.of(0L, null)).getValue();
@@ -166,6 +181,7 @@ public class ConfigSRV implements IConfigSRV {
         public static final Object AUDIT_ENABLED = new Object();
         public static final Object ISSUER_CF_CLEANING = new Object();
         public static final Object SUBJECT_CLEANING = new Object();
+        public static final Object AUDIT_INI_ENABLED = new Object();
     }
 
 }

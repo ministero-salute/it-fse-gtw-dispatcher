@@ -40,8 +40,8 @@ public final class IniClientRoutes {
         return base().pathSegment(API_VERSION, DELETE_PATH).build().toUriString();
     }
 
-    public String update() {
-        return base().pathSegment(API_VERSION, UPDATE_PATH).build().toUriString();
+    public String update(String apiVersion) {
+        return base().pathSegment(apiVersion, UPDATE_PATH).build().toUriString();
     }
 
     public String references(String id) {
@@ -49,6 +49,10 @@ public final class IniClientRoutes {
     }
 
     public String metadata() {
+        return base().pathSegment(API_VERSION, METADATA_PATH).build().toUriString();
+    }
+    
+    public String workflowInstanceId() {
         return base().pathSegment(API_VERSION, METADATA_PATH).build().toUriString();
     }
 

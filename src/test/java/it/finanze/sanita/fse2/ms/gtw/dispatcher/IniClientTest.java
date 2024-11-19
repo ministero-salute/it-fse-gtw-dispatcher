@@ -56,7 +56,7 @@ class IniClientTest {
     void updateConnectionRefusedErrorTest() {
         Mockito.doThrow(new ConnectionRefusedException("url", "Error: connection refused")).when(restTemplate)
                 .exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
-        assertThrows(ConnectionRefusedException.class, () -> iniClient.update(requestBody));
+        assertThrows(ConnectionRefusedException.class, () -> iniClient.update(requestBody,false));
     }
 
     @Test
@@ -66,7 +66,7 @@ class IniClientTest {
         responseMock.setMessage("Failed to update on INI");
         Mockito.doReturn(new ResponseEntity<>(responseMock, HttpStatus.OK))
                 .when(restTemplate).exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
-        assertEquals("Failed to update on INI", iniClient.update(requestBody).getMessage());
+        assertEquals("Failed to update on INI", iniClient.update(requestBody,false).getMessage());
     }
 
     @Test
@@ -76,7 +76,7 @@ class IniClientTest {
         responseMock.setEsito(false);
         Mockito.doThrow(new BusinessException("Error")).when(restTemplate)
                 .exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
-        assertThrows(BusinessException.class, () -> iniClient.update(requestBody));
+        assertThrows(BusinessException.class, () -> iniClient.update(requestBody,false));
     }
 
 //    @Test
@@ -101,7 +101,7 @@ class IniClientTest {
         responseMock.setEsito(true);
         Mockito.doReturn(new ResponseEntity<>(responseMock, HttpStatus.OK)).when(restTemplate)
                 .exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
-        IniTraceResponseDTO responseDTO = iniClient.update(requestBody);
+        IniTraceResponseDTO responseDTO = iniClient.update(requestBody,false);
         assertEquals(responseDTO, responseMock);
     }
 
@@ -112,7 +112,7 @@ class IniClientTest {
         responseMock.setEsito(true);
         Mockito.doReturn(new ResponseEntity<>(responseMock, HttpStatus.BAD_GATEWAY)).when(restTemplate)
                 .exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
-        assertNull(iniClient.update(requestBody).getMessage());
+        assertNull(iniClient.update(requestBody,false).getMessage());
     }
 
     @Test
@@ -120,6 +120,6 @@ class IniClientTest {
     void updateRecordHttpBodyNullTest() {
         Mockito.doReturn(new ResponseEntity<>(null, HttpStatus.BAD_GATEWAY)).when(restTemplate)
                 .exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
-        assertNull(iniClient.update(requestBody));
+        assertNull(iniClient.update(requestBody,false));
     }
 }

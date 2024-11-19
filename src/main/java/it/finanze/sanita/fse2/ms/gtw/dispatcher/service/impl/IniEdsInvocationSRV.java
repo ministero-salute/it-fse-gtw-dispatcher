@@ -13,6 +13,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +41,12 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 	public Boolean insert(final String workflowInstanceId, final ResourceDTO fhirResourceDTO, final JWTPayloadDTO jwtPayloadToken) {
 		Boolean output = false;
 		try {
+		 
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
 					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null, jwtPayloadToken.getIss());
+
+			boolean etyPresent = etyToSave!=null;
+			log.info("ETY TO SAVE VALORIZZATO:" + etyPresent);		
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
 		} catch(Exception ex) {
@@ -53,8 +59,12 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 	private IniEdsInvocationETY buildETY(final String workflowInstanceId, final String bundleJson, final String submissionSetEntryJson,
 			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer) {
 		IniEdsInvocationETY out = new IniEdsInvocationETY();
+ 
 		out.setWorkflowInstanceId(workflowInstanceId);
-		out.setData(Document.parse(bundleJson));
+		if(!StringUtility.isNullOrEmpty(bundleJson)) {
+			out.setData(Document.parse(bundleJson));	
+		}
+		
 		out.setIssuer(issuer);
 		if (!StringUtility.isNullOrEmpty(rifIni)) {
 			out.setRiferimentoIni(rifIni);
@@ -64,8 +74,7 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		Document submissionSetEntryDoc = new Document("submissionSetEntry" ,Document.parse(submissionSetEntryJson));
 		Document documentEntryDoc = new Document("documentEntry" ,Document.parse(documentEntryJson));
 		Document tokenEntry = new Document("tokenEntry", new Document("payload",Document.parse(tokenEntryJson)));
-		
-		metadata.add(submissionSetEntryDoc);
+	 	metadata.add(submissionSetEntryDoc);
 		metadata.add(documentEntryDoc);
 		metadata.add(tokenEntry);
 		
@@ -88,5 +97,4 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		}
 		return output; 
 	}
-
 }

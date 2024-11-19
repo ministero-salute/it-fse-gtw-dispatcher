@@ -55,4 +55,8 @@ public interface ICdaFacadeSRV extends Serializable {
 	 * @return {@code true} if deleted, {@code false} otherwise.
 	 */
 	boolean consumeHash(String hashToConsume);
+
+	void createBenchMark(final String hashedCDA, final String wii, String transfID, String engineID);
+
+	boolean consumeHashBenchmark(String hashToConsume);
 }

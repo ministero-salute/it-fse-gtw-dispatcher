@@ -14,6 +14,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 
+import java.util.List;
+
 public interface IIniEdsInvocationSRV {
 	
 	Boolean insert(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken);

@@ -38,14 +38,15 @@ public class ValidatedDocumentsRepo implements IValidatedDocumentsRepo {
 	@Autowired
 	private transient MongoTemplate mongoTemplate;
 
+
 	@Override
 	public void create(final ValidatedDocumentsETY ety) {
 		try {
 			Query query = new Query();
 			query.addCriteria(Criteria.where("hash_cda").is(ety.getHashCda()));
-			
+
 			ValidatedDocumentsETY etyFinded = mongoTemplate.findOne(query, ValidatedDocumentsETY.class);
-			if(etyFinded!=null) {
+			if (etyFinded != null) {
 				etyFinded.setPrimaryKeyTransform(ety.getPrimaryKeyTransform());
 				etyFinded.setWorkflowInstanceId(ety.getWorkflowInstanceId());
 				etyFinded.setInsertionDate(new Date());
@@ -53,7 +54,7 @@ public class ValidatedDocumentsRepo implements IValidatedDocumentsRepo {
 			} else {
 				ety.setInsertionDate(new Date());
 				mongoTemplate.save(ety);
-			} 
+			}
 		} catch (Exception ex) {
 			log.error("Error while insert validated document : ", ex);
 			throw new BusinessException("Error while insert validated document : ", ex);
@@ -160,17 +161,38 @@ public class ValidatedDocumentsRepo implements IValidatedDocumentsRepo {
 			query.addCriteria(Criteria.where("w_id").is(workflowInstanceId));
 
 			ValidatedDocumentsETY ety = mongoTemplate.findOne(query, ValidatedDocumentsETY.class);
-			
-			if(ety!=null) {
+
+			if (ety != null) {
 				Date newDate = DateUtility.addDay(ety.getInsertionDate(), -days);
 				ety.setInsertionDate(newDate);
 				ety = mongoTemplate.save(ety);
 				objectId = ety.getId();
-			}  
+			}
 		} catch (Exception ex) {
 			log.error("Error while update validated document : ", ex);
 			throw new BusinessException("Error while update validated document : ", ex);
 		}
 		return objectId;
+	}
+
+	@Override
+	public void createBenchmark(ValidatedDocumentsETY ety) {
+		ety.setInsertionDate(new Date());
+		mongoTemplate.save(ety);
+	}
+
+	@Override
+	public boolean deleteItemBenchmark(String hash) {
+		DeleteResult output;
+		Query query = new Query();
+		query.addCriteria(where("hash_cda").is(hash));
+		try {
+			ValidatedDocumentsETY ety = mongoTemplate.findOne(query, ValidatedDocumentsETY.class);
+			output = mongoTemplate.remove(ety);
+		} catch (MongoException e) {
+			log.error("Unable to delete the item", e);
+			throw new BusinessException("Unable to delete the item", e);
+		}
+		return output.wasAcknowledged();
 	}
 }

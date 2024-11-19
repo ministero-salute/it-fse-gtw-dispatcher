@@ -22,6 +22,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,7 +49,10 @@ public class FhirMappingClient implements IFhirMappingClient {
 		} catch(ResourceAccessException cex) {
 			log.error("Connect error while call document transform :",cex);
 			throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
-		}  
+		} catch(Exception ex){
+			log.error("Error while convert cda in bundle :",ex);
+			throw new BusinessException("Error while convert cda in bundle :",ex);
+		}
 		return out;
 	}
 }

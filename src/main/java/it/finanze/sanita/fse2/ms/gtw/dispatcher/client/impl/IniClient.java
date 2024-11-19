@@ -18,6 +18,9 @@ import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
@@ -30,6 +33,8 @@ import org.springframework.web.client.RestTemplate;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.base.AbstractClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.IniClientRoutes;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
@@ -45,14 +50,14 @@ import lombok.extern.slf4j.Slf4j;
 public class IniClient extends AbstractClient implements IIniClient {
 
 	@Autowired
-	private RestTemplate client;
-
-	@Autowired
 	private IniClientRoutes routes;
 	
 	@Autowired
 	@Qualifier("restTemplateIni")
 	private RestTemplate restTemplateIni;
+	
+	@Autowired
+	private MicroservicesURLCFG msUrlCfg;
 
 	@Override
 	public IniTraceResponseDTO delete(final DeleteRequestDTO request) {
@@ -64,7 +69,7 @@ public class IniClient extends AbstractClient implements IIniClient {
 
 		try {
 			// Execute request
-			ResponseEntity<IniTraceResponseDTO> response = client.exchange(endpoint,DELETE,new HttpEntity<>(request),IniTraceResponseDTO.class);
+			ResponseEntity<IniTraceResponseDTO> response = restTemplateIni.exchange(endpoint,DELETE,new HttpEntity<>(request),IniTraceResponseDTO.class);
 			// Retrieve body
 			output = response.getBody();
 		} catch (RestClientResponseException ex) {
@@ -75,7 +80,7 @@ public class IniClient extends AbstractClient implements IIniClient {
 	}
 
 	@Override
-	public IniReferenceResponseDTO reference(IniReferenceRequestDTO request) {
+	public IniReferenceResponseDTO reference(IniReferenceRequestDTO request, String workflowInstanceId) {
 
 		String endpoint = routes.references(request.getIdDoc());
 		IniReferenceResponseDTO output = null;
@@ -83,8 +88,11 @@ public class IniClient extends AbstractClient implements IIniClient {
 		log.debug("{} - Executing request: {}", routes.identifier(), endpoint);
 
 		try {
+			Map<String, Object> requestBody = new HashMap<>();
+			requestBody.put("token", request.getToken());
+			requestBody.put("workflowInstanceId", workflowInstanceId);
 			// Execute request
-			ResponseEntity<IniReferenceResponseDTO> response = client.exchange(endpoint,POST,new HttpEntity<>(request.getToken()),IniReferenceResponseDTO.class);
+			ResponseEntity<IniReferenceResponseDTO> response = restTemplateIni.exchange(endpoint,POST,new HttpEntity<>(requestBody),IniReferenceResponseDTO.class);
 			// Retrieve body
 			output = response.getBody();
 		} catch (RestClientResponseException ex) {
@@ -95,16 +103,23 @@ public class IniClient extends AbstractClient implements IIniClient {
 	}
 
 	@Override
-	public IniTraceResponseDTO update(IniMetadataUpdateReqDTO request) {
+	public IniTraceResponseDTO update(IniMetadataUpdateReqDTO request,boolean callUpdateV2) {
 
-		String endpoint = routes.update();
+		String endpoint = "";;
 		IniTraceResponseDTO output = null;
 
 		log.debug("{} - Executing request: {}", routes.identifier(), endpoint);
 
 		try {
-			// Execute request
-			ResponseEntity<IniTraceResponseDTO> response = client.exchange(endpoint,PUT,new HttpEntity<>(request),IniTraceResponseDTO.class);
+			ResponseEntity<IniTraceResponseDTO> response = null;
+			if(callUpdateV2) {
+				endpoint = routes.update("v2");
+				response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),IniTraceResponseDTO.class);
+			} else {
+				endpoint = routes.update("v1");
+				response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),IniTraceResponseDTO.class);	
+			}
+			
 			// Retrieve body
 			output = response.getBody();
 		} catch (RestClientResponseException ex) {
@@ -131,6 +146,19 @@ public class IniClient extends AbstractClient implements IIniClient {
 		}
 
 		return output;
+	}
+	
+	@Override
+	public IniAuditsDto callSearchEventByWorkflowInstanceId(final String workflowInstanceId) {
+		String url =  msUrlCfg.getIniClientHost() + "/v1/" + workflowInstanceId;
+
+		IniAuditsDto out = null;
+		try {
+			out = restTemplateIni.getForObject(url, IniAuditsDto.class);
+		} catch (ResourceAccessException rax) {
+			throw new BusinessException("Timeout error while call search event by worflow instance id");
+		}
+		return out;
 	}
 	
  

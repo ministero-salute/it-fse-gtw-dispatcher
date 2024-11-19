@@ -11,8 +11,12 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.filters;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.AuditFilter;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.AuditETY;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +25,10 @@ import java.util.Date;
 
 @Component
 public class DeleteFilter implements AuditFilter {
+  
+    @Autowired
+    private BenchmarkCFG benchmarkCFG;
+
     @Override
     public boolean match(HttpServletRequest req) {
         return HttpMethod.DELETE.toString().equals(req.getMethod());
@@ -28,6 +36,13 @@ public class DeleteFilter implements AuditFilter {
 
     @Override
     public AuditETY apply(String uri, HttpServletRequest req, Object body) {
+
+        String issuer = req.getAttribute("JWT_ISSUER")!=null ? (String)req.getAttribute("JWT_ISSUER") : "";
+        
+        if (benchmarkCFG.isBenchmarkEnable() && issuer.contains(Constants.App.BENCHMARK_ISSUER)) {
+            return null;
+        }
+
         AuditETY audit = new AuditETY();
         audit.setServizio(uri);
         audit.setStart_time(new Date());

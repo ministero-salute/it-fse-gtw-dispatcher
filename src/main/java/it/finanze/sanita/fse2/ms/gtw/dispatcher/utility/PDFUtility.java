@@ -12,10 +12,12 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,6 +28,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.PDDocumentNameDictionary;
 import org.apache.pdfbox.pdmodel.PDEmbeddedFilesNameTreeNode;
+import org.apache.pdfbox.pdmodel.common.PDNameTreeNode;
 import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification;
 import org.jsoup.Jsoup;
 import org.jsoup.parser.Parser;
@@ -49,9 +52,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PDFUtility {
 
 	
-	public static String extractCDAFromAttachments(final byte[] cda, final String cdaAttachmentName) {
+	public static String extractCDAFromAttachments(final byte[] pdf, final String cdaAttachmentName) {
 	    String out = null;
-	    final Map<String, AttachmentDTO> attachments = extractAttachments(cda);
+	    final Map<String, AttachmentDTO> attachments = extractAttachments(pdf);
 	    if (!attachments.isEmpty()) {
 	        for (Entry<String, AttachmentDTO> att:attachments.entrySet()) {
 	            if (cdaAttachmentName.equals(att.getValue().getName())||cdaAttachmentName.equals(att.getValue().getFileName())) {
@@ -62,29 +65,60 @@ public class PDFUtility {
 	    }
 	    return out;
 	}
+	
 
 	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
-	    Map<String, AttachmentDTO> out = new HashMap<>();
-	    
-	    try (PDDocument pd = PDDocument.load(bytePDF)) {
-	        PDDocumentCatalog catalog = pd.getDocumentCatalog();
+		Map<String,AttachmentDTO> out = new HashMap<>();
+	    try (PDDocument document = PDDocument.load(bytePDF)) {
+	        PDDocumentCatalog catalog = document.getDocumentCatalog();
 	        PDDocumentNameDictionary names = catalog.getNames();
 	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
-	        Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
-	        for (Map.Entry<String, PDComplexFileSpecification> entry : embeddedFileNames.entrySet()) {
-	            AttachmentDTO att = AttachmentDTO.builder().
-	                    fileName(entry.getValue().getFilename()).
-	                    name(entry.getKey()).
-	                    mimeType(entry.getValue().getEmbeddedFile().getSubtype()).
-	                    content(entry.getValue().getEmbeddedFile().toByteArray()).
-	                    build();
-	            out.put(entry.getKey().toLowerCase(), att);
+
+	        if (embeddedFiles != null) {
+	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
+	            if (embeddedFileNames != null) {
+	            	out.putAll(extractFiles(embeddedFileNames));
+	            } else {
+	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
+	            }
 	        }
 	    } catch (Exception e) {
-	        log.warn("Errore in fase di estrazione allegati da pdf.");
+	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
 	    }
+	    
 	    return out;
 	}
+
+	private static Map<String, AttachmentDTO> extractFiles(Map<String, PDComplexFileSpecification> embeddedFileNames) throws IOException {
+	    Map<String, AttachmentDTO> attachments = new HashMap<>();
+	    for (Map.Entry<String, PDComplexFileSpecification> entry : embeddedFileNames.entrySet()) {
+	        AttachmentDTO attachment = createAttachmentDTO(entry);
+	        attachments.put(entry.getKey().toLowerCase(), attachment);
+	    }
+	    return attachments;
+	}
+
+	private static Map<String, AttachmentDTO> extractFilesFromKids(List<PDNameTreeNode<PDComplexFileSpecification>> embeddedFileKids) throws IOException {
+	    Map<String, AttachmentDTO> attachments = new HashMap<>();
+	    for (PDNameTreeNode<PDComplexFileSpecification> kid : embeddedFileKids) {
+	        Map<String, PDComplexFileSpecification> kidFiles = kid.getNames();
+	        if (kidFiles != null) {
+	            attachments.putAll(extractFiles(kidFiles));
+	        }
+	    }
+	    return attachments;
+	}
+
+	private static AttachmentDTO createAttachmentDTO(Map.Entry<String, PDComplexFileSpecification> entry) throws IOException {
+	    PDComplexFileSpecification fileSpec = entry.getValue();
+	    return AttachmentDTO.builder()
+	            .fileName(fileSpec.getFilename())
+	            .name(entry.getKey())
+	            .mimeType(fileSpec.getEmbeddedFile().getSubtype())
+	            .content(fileSpec.getEmbeddedFile().toByteArray())
+	            .build();
+	}
+
 
 
 	public static String unenvelopeA2(byte[] pdf) {

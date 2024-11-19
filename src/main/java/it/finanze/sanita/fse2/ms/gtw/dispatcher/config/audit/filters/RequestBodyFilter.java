@@ -11,6 +11,8 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.filters;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.AuditFilter;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.AuditETY;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
@@ -27,6 +29,9 @@ public class RequestBodyFilter implements AuditFilter {
     @Autowired
     private IConfigSRV config;
 
+    @Autowired
+    private BenchmarkCFG benchmarkCFG;
+
     @Override
     public boolean match(HttpServletRequest req) {
         return req.getParameterMap().get("requestBody") != null;
@@ -35,17 +40,27 @@ public class RequestBodyFilter implements AuditFilter {
     @Override
     public AuditETY apply(String uri, HttpServletRequest req, Object body) {
         String[] requestBody = req.getParameterMap().get("requestBody");
+  
+        String issuer = req.getAttribute("JWT_ISSUER")!=null ? (String)req.getAttribute("JWT_ISSUER") : "";
+        
+        if (benchmarkCFG.isBenchmarkEnable() && issuer.contains(Constants.App.BENCHMARK_ISSUER)) {
+            return null;
+        }
+
         AuditETY audit = new AuditETY();
         audit.setServizio(uri);
-        audit.setStart_time((Date)req.getAttribute("START_TIME"));
+        audit.setStart_time((Date) req.getAttribute("START_TIME"));
         audit.setEnd_time(new Date());
         audit.setRequest(StringUtility.fromJSON(requestBody[0], Object.class));
         audit.setResponse(body);
-        String issuer = (String)req.getAttribute("JWT_ISSUER");
-        if(config.isCfOnIssuerNotAllowed()) issuer = clearIssuer(issuer);
+
+        if (config.isCfOnIssuerNotAllowed())
+            issuer = clearIssuer(issuer);
         audit.setJwt_issuer(issuer);
         audit.setHttpMethod(req.getMethod());
+
         req.removeAttribute("JWT_ISSUER");
+
         return audit;
     }
 
