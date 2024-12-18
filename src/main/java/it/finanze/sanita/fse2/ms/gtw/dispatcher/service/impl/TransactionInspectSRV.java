@@ -12,6 +12,7 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +44,10 @@ public class TransactionInspectSRV implements ITransactionInspectSRV {
 		if(configSRV.isAuditIniEnable()) {
 			IniAuditsDto auditsIniDto = iniClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
 			if(auditsIniDto!=null && !auditsIniDto.getAudit().isEmpty()) {
-				out.getTransactionData().addAll(auditsIniDto.getAudit());
+				Objects.requireNonNull(out).getTransactionData().addAll(auditsIniDto.getAudit());
 			}
 		}
-		out.setTransactionData(out.getTransactionData().stream().sorted(Comparator.comparing(StatusCheckDTO::getEventDate)).collect(Collectors.toList()));
+		Objects.requireNonNull(out).setTransactionData(out.getTransactionData().stream().sorted(Comparator.comparing(StatusCheckDTO::getEventDate)).collect(Collectors.toList()));
 		return out;
 	}
 
