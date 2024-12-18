@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -42,7 +43,7 @@ public class StatusCheckClient implements IStatusCheckClient {
 		TransactionInspectResDTO out = null;
 		try {
 			out = restTemplate.getForEntity(url, TransactionInspectResDTO.class).getBody();
-		} catch (ResourceAccessException rax) {
+		} catch (ResourceAccessException | HttpClientErrorException rax) {
 			throw new BusinessException("Timeout error while call search event by worflow instance id");
 		}
 		return out;
@@ -54,7 +55,7 @@ public class StatusCheckClient implements IStatusCheckClient {
 		TransactionInspectResDTO out = null;
 		try {	
 			out = restTemplate.getForEntity(url, TransactionInspectResDTO.class).getBody();
-		} catch (ResourceAccessException e1) {
+		} catch (ResourceAccessException | HttpClientErrorException e1) {
 			throw new BusinessException("Timeout error while call search event by trace id");
 		} 
 
@@ -67,7 +68,7 @@ public class StatusCheckClient implements IStatusCheckClient {
 		TransactionInspectResDTO out = null;
 		try {	
 			out = restTemplate.getForEntity(url, TransactionInspectResDTO.class).getBody();
-		} catch (ResourceAccessException e1) {
+		} catch (ResourceAccessException | HttpClientErrorException e1) {
 			throw new BusinessException("Timeout error while call search event by id documento");
 		} 
 		return out; 
