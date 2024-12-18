@@ -221,7 +221,7 @@ public abstract class AbstractTest {
 		String applicationVendor = "ApplicationVendor";
 		String applicationVersion = "ApplicationVersion";
 		final JWTPayloadDTO jwtPayload = new JWTPayloadDTO("080", 1540890704, 1540918800, "1540918800", 
-		"fse-gateway", subject, "080", "Regione Emilia-Romagna", "080",
+		"fse-gateway", subject, "080", "Regione Emilia-Romagna", "GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE",
 		"APR", personId, true, purposeOfUse, docType, action, documentHash,
 		applicationId,applicationVendor,applicationVersion);
 		return Base64.getEncoder().encodeToString(new Gson().toJson(jwtPayload).getBytes());
@@ -251,7 +251,7 @@ public abstract class AbstractTest {
 		String applicationVersion = "ApplicationVersion";
 
 		final JWTPayloadDTO jwtPayload = new JWTPayloadDTO("201123456", 1540890704, 1540918800, "1540918800", 
-		"fse-gateway", "RSSMRA22A01A399Z", "120", "Regione Lazio", "Regione Lazio",
+		"fse-gateway", "RSSMRA22A01A399Z", "120", "Regione Lazio", "GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE",
 		"AAS", personId, true, "TREATMENT", docType, "CREATE", documentHash,applicationId,applicationVendor,applicationVersion);
 		return Base64.getEncoder().encodeToString(new Gson().toJson(jwtPayload).getBytes());
 	}
@@ -317,7 +317,7 @@ public abstract class AbstractTest {
 					"RSSMRA22A01A399Z",
 					"120",
 					"Regione Lazio",
-					"201123456",
+					"GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE",
 					"AAS",
 					"RSSMRA22A01A399Z",
 					true,

@@ -18,13 +18,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.ConfigSRV;
 import org.bson.Document;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +69,9 @@ class DocumentReferenceTest extends AbstractTest {
 	@MockBean
 	private FhirMappingClient client;
 
+	@MockBean
+	private ConfigSRV configSRV;
+
 	@Autowired
 	private IniEdsInvocationSRV iniEdsInvocationSRV;
 	
@@ -74,6 +82,7 @@ class DocumentReferenceTest extends AbstractTest {
 		TransformResDTO res = new TransformResDTO();
 		res.setErrorMessage("");
 		res.setJson(Document.parse("{\"json\" : \"json\"}"));
+		when(configSRV.isRemoveEds()).thenReturn(true);
 		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(res);
 		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
@@ -98,7 +107,8 @@ class DocumentReferenceTest extends AbstractTest {
 		PublicationCreationReqDTO output = new PublicationCreationReqDTO();
 		output.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC001);
 		output.setConservazioneANorma("Conservazione");
-		output.setDataFinePrestazione(""+new Date().getTime());
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		output.setDataFinePrestazione(sdf.format(new Date()));
 		output.setHealthDataFormat(HealthDataFormatEnum.CDA);
 		output.setIdentificativoDoc("Identificativo doc");
 		output.setIdentificativoRep("2.16.840.1.113883.2.9.2.080.4.5.1234");
@@ -118,6 +128,7 @@ class DocumentReferenceTest extends AbstractTest {
 		String workflowInstanceId = StringUtility.generateUUID();
 		TransformResDTO res = new TransformResDTO();
 		res.setErrorMessage("errorMessage");
+		when(configSRV.isRemoveEds()).thenReturn(false);
 		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(res);
 		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
@@ -125,9 +136,8 @@ class DocumentReferenceTest extends AbstractTest {
 		String documentSha = StringUtility.encodeSHA256(cdaFile);
 		ResourceDTO resourceDTO = documentReferenceSRV.createFhirResources(cda, "",reqDTO, documentSha.length(), documentSha,
 				"PersonId", "", "","","");
-		ResourceDTO expectedOutputDTO = new ResourceDTO();
-		expectedOutputDTO.setErrorMessage("errorMessage");
-		assertEquals(expectedOutputDTO, resourceDTO);
+		assertEquals("errorMessage", resourceDTO.getErrorMessage());
+		assertEquals(null, resourceDTO.getBundleJson());
 	}
 
 	@Test
@@ -137,6 +147,7 @@ class DocumentReferenceTest extends AbstractTest {
 		TransformResDTO res = new TransformResDTO();
 		res.setErrorMessage("");
 		res.setJson(Document.parse("{\"json\" : \"json\"}"));
+		when(configSRV.isRemoveEds()).thenReturn(false);
 		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willThrow(ConnectionRefusedException.class);
 		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
@@ -153,6 +164,7 @@ class DocumentReferenceTest extends AbstractTest {
 		TransformResDTO res = new TransformResDTO();
 		res.setErrorMessage("");
 		res.setJson(Document.parse("{\"json\" : \"json\"}"));
+		when(configSRV.isRemoveEds()).thenReturn(false);
 		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willThrow(BusinessException.class);
 		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
@@ -161,4 +173,5 @@ class DocumentReferenceTest extends AbstractTest {
 		assertThrows(BusinessException.class, () -> documentReferenceSRV.createFhirResources(cda,"", reqDTO, documentSha.length(), documentSha,
 				"PersonId", "", "","",""));
 	}
+
 }

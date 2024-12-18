@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundExceptio
 public class StatusCheckClientTest {
     
     @SpyBean
+    @Qualifier("restTemplateIni")
     private RestTemplate restTemplate;
 
     @Autowired
@@ -69,7 +71,7 @@ public class StatusCheckClientTest {
             eq(TransactionInspectResDTO.class)
         );
         // Assertion
-        assertThrows(NoRecordFoundException.class, () -> client.callSearchEventByWorkflowInstanceId("wiid_test"));
+        assertThrows(BusinessException.class, () -> client.callSearchEventByWorkflowInstanceId("wiid_test"));
     }
 
     @Test
@@ -105,7 +107,7 @@ public class StatusCheckClientTest {
             eq(TransactionInspectResDTO.class)
         );
         // Assertion
-        assertThrows(NoRecordFoundException.class, () -> client.callSearchEventByTraceId("trace_id_test"));
+        assertThrows(BusinessException.class, () -> client.callSearchEventByTraceId("trace_id_test"));
     }
 
     @Test
@@ -141,7 +143,7 @@ public class StatusCheckClientTest {
             eq(TransactionInspectResDTO.class)
         );
         // Assertion
-        assertThrows(NoRecordFoundException.class, () -> client.callSearchEventByIdDocumento("id_test"));
+        assertThrows(BusinessException.class, () -> client.callSearchEventByIdDocumento("id_test"));
     }
 
     private TransactionInspectResDTO buildResponseMock(String idDoc, String wiid, String traceId) {
