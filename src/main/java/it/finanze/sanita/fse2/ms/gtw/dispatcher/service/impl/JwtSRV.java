@@ -260,7 +260,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
  
 
 	public void isValidLocality(String input) {
-		String regex = "[a-zA-Z0-9]+[^\\^\\\\]*\\\\\\^\\^\\^\\^\\^\\&[^\\&]*\\&ISO\\\\\\^\\^\\^\\^\\[^\\^&]*$";
+		String regex = "^[a-zA-Z0-9]+[^\\^]*\\^\\^\\^\\^\\^\\&[^&]*\\&ISO\\^\\^\\^\\^[^\\^&]*$";
 		boolean isValid = Pattern.matches(regex, input);
 		if (!isValid) {
 			throw buildValidationException();
