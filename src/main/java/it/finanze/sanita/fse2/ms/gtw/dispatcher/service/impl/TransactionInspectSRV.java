@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusCheckClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.StatusCheckDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
@@ -38,11 +39,15 @@ public class TransactionInspectSRV implements ITransactionInspectSRV {
 	
 	@Autowired
 	private IConfigSRV configSRV;
+	
 
 	@Override
 	public TransactionInspectResDTO callSearchEventByWorkflowInstanceId(final String workflowInstanceId) {
-		TransactionInspectResDTO out = statusCheckClient.callSearchEventByWorkflowInstanceId(workflowInstanceId); 
-		if(configSRV.isAuditIniEnable()) {
+		TransactionInspectResDTO out = statusCheckClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
+		
+		String issuerBenchmark =  (out!=null && out.getTransactionData()!=null && !out.getTransactionData().isEmpty()) ? out.getTransactionData().get(0).getIssuer() : "";
+		
+		if(configSRV.isAuditIniEnable() && !issuerBenchmark.contains(Constants.App.BENCHMARK_ISSUER)) {
 			IniAuditsDto auditsIniDto = iniClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
 			if(auditsIniDto!=null && !auditsIniDto.getAudit().isEmpty()) {
 				Objects.requireNonNull(out).getTransactionData().addAll(auditsIniDto.getAudit());

@@ -3,11 +3,9 @@
 
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.oauth2;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Arrays;
@@ -34,7 +32,6 @@ import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.IClientCredential;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

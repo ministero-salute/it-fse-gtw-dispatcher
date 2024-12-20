@@ -128,17 +128,17 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-sync</artifactId>
-			<version>4.8.2</version>
+			<version>5.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-core</artifactId>
-			<version>4.8.2</version>
+			<version>5.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>bson</artifactId>
-			<version>4.8.2</version>
+			<version>5.2.1</version>
 		</dependency>
 		
 		<!-- KAFKA -->
@@ -203,6 +203,13 @@
 		      <version>1.6.15</version>
 		      <scope>compile</scope>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.codehaus.janino/janino -->
+		<dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.1.7</version>
+        </dependency>
+
 		 
 	</dependencies>
 
