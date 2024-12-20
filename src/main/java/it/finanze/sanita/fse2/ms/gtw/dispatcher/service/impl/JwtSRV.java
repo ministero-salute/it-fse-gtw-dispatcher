@@ -15,6 +15,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -257,12 +258,17 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 				.build();
 		return new ValidationException(error);
 	}
- 
 
+
+	@SuppressWarnings("squid:S5852")
 	public void isValidLocality(String input) {
-		String regex = "^[a-zA-Z0-9]+[^\\^]*\\^\\^\\^\\^\\^\\&[^&]*\\&ISO\\^\\^\\^\\^[^\\^&]*$";
-		boolean isValid = Pattern.matches(regex, input);
-		if (!isValid) {
+		if (input.length() > 1500) {
+			throw buildValidationException();
+		}
+		String regex = "^[a-zA-Z0-9]+[^\\^]*+\\^\\^\\^\\^\\^\\&[^&]*+\\&ISO\\^\\^\\^\\^[^\\^&]*+$";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(input);
+		if (!matcher.matches()) {
 			throw buildValidationException();
 		}
     }
