@@ -70,7 +70,6 @@ Please check the [AUTHORS](AUTHORS) file for extended reference.
 ## Third-party component licences
 | License |
 |-------|
- |
 | Apache-2.0 |
 | BSD |
 | BSD-2-Clause |
