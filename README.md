@@ -58,36 +58,35 @@ Copyright 2022 (c) XXXX.
 Please check the [AUTHORS](AUTHORS) file for extended reference.
 
 ## Third-party component licences
-| Dependency                                                                 | Version                | License                                                              |
-|----------------------------------------------------------------------------|------------------------|----------------------------------------------------------------------|
-| Spring Boot parent                                                         | 2.7.18                 | Apache License 2.0                                                   |
-| org.springframework.boot:spring-boot-starter-web                           | Managed by Spring Boot | Apache License 2.0                                                   |
-| org.apache.httpcomponents:httpclient                                       | 4.5.14                 | Apache License 2.0                                                   |
-| org.springframework.boot:spring-boot-starter-aop                           | Managed by Spring Boot | Apache License 2.0                                                   |
-| org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j | 2.1.1                  | Apache License 2.0                                                   |
-| org.springframework.boot:spring-boot-starter-actuator                      | Managed by Spring Boot | Apache License 2.0                                                   |
-| io.micrometer:micrometer-registry-prometheus                               | 1.9.17                 | Apache License 2.0                                                   |
-| org.springdoc:springdoc-openapi-ui                                         | 1.6.11                 | Apache License 2.0                                                   |
-| ch.qos.logback.contrib:logback-json-classic                                | 0.1.5                  | (Eclipse Public License - v 1.0) (GNU Lesser General Public License) |
-| ch.qos.logback.contrib:logback-jackson                                     | 0.1.5                  | (Eclipse Public License - v 1.0) (GNU Lesser General Public License) |
-| org.projectlombok:lombok                                                   | 1.18.30                | MIT License                                                          |
-| org.springframework.boot:spring-boot-starter-test                          | Managed by Spring Boot | Apache License 2.0                                                   |
-| org.mockito:mockito-inline                                                 | 5.2.0                  | MIT License                                                          |
-| org.springframework.boot:spring-boot-starter-data-mongodb                  | Managed by Spring Boot | Apache License 2.0                                                   |
-| org.mongodb:mongodb-driver-sync                                            | 5.2.1                  | Apache License 2.0                                                   |
-| org.mongodb:mongodb-driver-core                                            | 5.2.1                  | Apache License 2.0                                                   |
-| org.mongodb:bson                                                           | 5.2.1                  | Apache License 2.0                                                   |
-| org.springframework.kafka:spring-kafka                                     | 2.9.11                 | Apache License 2.0                                                   |
-| org.springframework.kafka:spring-kafka-test                                | 2.9.11                 | Apache License 2.0                                                   |
-| com.google.code.gson:gson                                                  | 2.9.1                  | Apache License 2.0                                                   |
-| org.springframework.cloud:spring-cloud-starter-sleuth                      | 3.1.1                  | Apache License 2.0                                                   |
-| com.github.librepdf:openpdf                                                | 1.3.29                 | MPL2.0 & LGPL2.1                                                     |
-| org.apache.pdfbox:pdfbox                                                   | 2.0.26                 | Apache License 2.0                                                   |
-| org.jsoup:jsoup                                                            | 1.15.3                 | MIT License                                                          |
-| commons-io:commons-io                                                      | 2.14.0                 | Apache License 2.0                                                   |
-| com.microsoft.azure:msal4j                                                 | 1.17.3                 | MIT License                                                          |
-| com.microsoft.azure:azure-client-authentication                            | 1.6.15                 | MIT License                                                          |
-| org.codehaus.janino:janino                                                 | 3.1.7                  | BSD 3-Clause License                                                 |
+| Dependency                                                                 | Version | License              |
+|----------------------------------------------------------------------------|---------|----------------------|
+| org.springframework.boot:spring-boot-starter-web                           | 2.7.18  | Apache License 2.0   |
+| org.apache.httpcomponents:httpclient                                       | 4.5.14  | Apache License 2.0   |
+| org.springframework.boot:spring-boot-starter-aop                           | 2.7.18  | Apache License 2.0   |
+| org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j | 2.1.1   | Apache License 2.0   |
+| org.springframework.boot:spring-boot-starter-actuator                      | 2.7.18  | Apache License 2.0   |
+| io.micrometer:micrometer-registry-prometheus                               | 1.9.17  | Apache License 2.0   |
+| org.springdoc:springdoc-openapi-ui                                         | 1.6.11  | Apache License 2.0   |
+| ch.qos.logback.contrib:logback-json-classic                                | 0.1.5   | EPL1.0 & LGPL2.1     |
+| ch.qos.logback.contrib:logback-jackson                                     | 0.1.5   | EPL1.0 & LGPL2.1     |
+| org.projectlombok:lombok                                                   | 1.18.30 | MIT License          |
+| org.springframework.boot:spring-boot-starter-test                          | 2.7.18  | Apache License 2.0   |
+| org.mockito:mockito-inline                                                 | 5.2.0   | MIT License          |
+| org.springframework.boot:spring-boot-starter-data-mongodb                  | 2.7.18  | Apache License 2.0   |
+| org.mongodb:mongodb-driver-sync                                            | 5.2.1   | Apache License 2.0   |
+| org.mongodb:mongodb-driver-core                                            | 5.2.1   | Apache License 2.0   |
+| org.mongodb:bson                                                           | 5.2.1   | Apache License 2.0   |
+| org.springframework.kafka:spring-kafka                                     | 2.9.11  | Apache License 2.0   |
+| org.springframework.kafka:spring-kafka-test                                | 2.9.11  | Apache License 2.0   |
+| com.google.code.gson:gson                                                  | 2.9.1   | Apache License 2.0   |
+| org.springframework.cloud:spring-cloud-starter-sleuth                      | 3.1.1   | Apache License 2.0   |
+| com.github.librepdf:openpdf                                                | 1.3.29  | MPL2.0 & LGPL2.1     |
+| org.apache.pdfbox:pdfbox                                                   | 2.0.26  | Apache License 2.0   |
+| org.jsoup:jsoup                                                            | 1.15.3  | MIT License          |
+| commons-io:commons-io                                                      | 2.14.0  | Apache License 2.0   |
+| com.microsoft.azure:msal4j                                                 | 1.17.3  | MIT License          |
+| com.microsoft.azure:azure-client-authentication                            | 1.6.15  | MIT License          |
+| org.codehaus.janino:janino                                                 | 3.1.7   | BSD 3-Clause License |
 
 ## Licence details
 
