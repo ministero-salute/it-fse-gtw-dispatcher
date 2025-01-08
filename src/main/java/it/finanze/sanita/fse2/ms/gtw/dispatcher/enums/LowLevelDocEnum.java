@@ -18,12 +18,12 @@ public enum LowLevelDocEnum {
 	TXT("TXT","TXT"),
 	PDF("PDF","PDF"),
 	EROGATO_SISTEMATS("SistemaTS-Prestazione","Erogato SistemaTS"),
-	EROGATO_SISTEMATS_FARMACEUTICA("2.16.840.1.113883.2.9.10.1.13.1.1","Erogato SistemaTS farmaceutica"),
-	EROGATO_SISTEMATS_SPECIALISTICA("2.16.840.1.113883.2.9.10.1.13.1.2","Erogato SistemaTS specialistica"),
+	EROGATO_SISTEMATS_FARMACEUTICA("2.16.840.1.113883.2.9.10.1.13.1.1","Erogato Sistema TS farmaceutica"),
+	EROGATO_SISTEMATS_SPECIALISTICA("2.16.840.1.113883.2.9.10.1.13.1.2","Erogato Sistema TS specialistica"),
 	PRESCRIZIONE_SISTEMATS("SistemaTS-Prescrizione","Prescrizione Sistema TS"),
 	PRESCRIZIONE_FARMACEUTICA_SISTEMATS("2.16.840.1.113883.2.9.10.1.2.1","Prescrizione farmaceutica Sistema TS"),
-	PRESCRIZIONE_SPECIALISTICA_SISTEMATS("2.16.840.1.113883.2.9.10.1.13.1.1","Prescrizione specialistica Sistema TS"),
-	ESENZIONE_REDDITO_SISTEMATS("SistemaTS-Esenzione","Esenzione da reddito SistemaTS"),
+	PRESCRIZIONE_SPECIALISTICA_SISTEMATS("2.16.840.1.113883.2.9.10.1.2.2","Prescrizione specialistica Sistema TS"),
+	ESENZIONE_REDDITO_SISTEMATS("SistemaTS-Esenzione","Esenzione da reddito Sistema TS"),
 	PRESCRIZIONE("2.16.840.1.113883.2.9.10.1.2","Prescrizione"),
 	REFERTO_LABORATORIO("2.16.840.1.113883.2.9.10.1.1","Referto di Laboratorio"),
 	PROFILO_SANITARIO_SINTETICO("2.16.840.1.113883.2.9.10.1.4.1.1","Profilo Sanitario Sintetico"),
@@ -34,7 +34,8 @@ public enum LowLevelDocEnum {
 	CERTIFICATO_VACCINALE("2.16.840.1.113883.2.9.10.1.11.1.2","Certificato Vaccinale"),
 	VERBALE_PRONTO_SOCCORSO("2.16.840.1.113883.2.9.10.1.6.1","Verbale di Pronto Soccorso"),
 	REFERTO_SPECIALISTICA_AMBULATORIALE("2.16.840.1.113883.2.9.10.1.9.1","Referto di Specialistica Ambulatoriale"),
-	DOCUMENTO_GENERICO("2.16.840.1.113883.2.9.10.1.12.1","Documento generico");
+	DOCUMENTO_GENERICO("2.16.840.1.113883.2.9.10.1.12.1","Documento generico"),
+	REFERTO_DI_ANATOMIA_PATOLOGICA("2.16.840.1.113883.2.9.10.1.8.1", "Referto di Anatomia Patologica");
 	
 
 	private String code;
