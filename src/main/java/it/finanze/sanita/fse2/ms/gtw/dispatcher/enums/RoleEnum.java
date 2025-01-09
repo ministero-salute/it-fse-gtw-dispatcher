@@ -32,8 +32,8 @@ public enum RoleEnum {
 	RSA("RSA", "Medico RSA"),
 	MRP("MRP", "Medico Rete di Patologia"),
 	INI("INI", "Infrastruttura Nazionale per l’Interoperabilità"),
-	OGC("OGC", "Operatore per la gestione dei consensi"),
-	OPI("OPI", "Operatore di informativa."),
+	OGC("OGC", "Operatore per la gestione dei consensi. Ruolo per la gestione dei consensi"),
+	OPI("OPI", "Operatore di informativa. Ruolo dell'operatore che può inserire informative regionali e moduli per l'acquisizione dei consensi e delle revoche"),
 	MDS("MDS", "Ruolo del Ministero della Salute per la gestione del DGC"),
 	GTW("GTW", "Ruolo per il Gateway EDS");
 	
