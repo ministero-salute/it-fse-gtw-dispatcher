@@ -13,6 +13,7 @@ import lombok.Getter;
 public enum ConfidentialityCodeEnum {
 
     NORMAL("N","Normal"),
+    RESTRICTED("R", "Restricted"),
     VERY_RESTRICTED("V","Very Restricted");
 
     private final String code;
