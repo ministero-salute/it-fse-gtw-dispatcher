@@ -25,16 +25,17 @@ public enum RoleEnum {
 	OAM("OAM", "Operatore amministrativo"),
 	ASS("ASS", "Assistito"),
 	TUT("TUT", "Tutore"),
-	ING("ING", "Informal giver"),
+	ING("ING", "Informal giver (Delegato volontario)"),
 	GEN("GEN", "Genitore"),
 	NOR("NOR", "Nodo regionale"),
 	DRS("DRS", "Dirigente sanitario"),
 	RSA("RSA", "Medico RSA"),
 	MRP("MRP", "Medico Rete di Patologia"),
 	INI("INI", "Infrastruttura Nazionale per l’Interoperabilità"),
-	OGC("OGC", "Operatore per la gestione dei consensi."),
+	OGC("OGC", "Operatore per la gestione dei consensi"),
 	OPI("OPI", "Operatore di informativa."),
-	MDS("MDS", "Ruolo del Ministero della Salute per la gestione del DGC");
+	MDS("MDS", "Ruolo del Ministero della Salute per la gestione del DGC"),
+	GTW("GTW", "Ruolo per il Gateway EDS");
 	
 	@Getter
 	private String code;
