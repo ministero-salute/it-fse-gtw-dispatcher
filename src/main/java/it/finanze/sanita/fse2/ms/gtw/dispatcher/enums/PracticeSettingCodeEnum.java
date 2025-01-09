@@ -18,7 +18,7 @@ public enum PracticeSettingCodeEnum {
 	AD_PSC001("AD_PSC001", "Allergologia"),
 	AD_PSC002("AD_PSC002", "Day Hospital"),
 	AD_PSC003("AD_PSC003", "Anatomia e Istologia Patologica"),
-	AD_PSC004("AD_PSC004", "Osservazione breve intensiva (OBI)"),
+	AD_PSC004("AD_PSC004", "Osservazione breve intensiva (OBI) e Pronto Soccorso"),
 	AD_PSC005("AD_PSC005", "Angiologia"),
 	AD_PSC006("AD_PSC006", "Cardiochirurgia Pediatrica"),
 	AD_PSC007("AD_PSC007", "Cardiochirurgia"),
