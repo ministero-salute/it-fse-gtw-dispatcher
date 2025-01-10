@@ -44,7 +44,18 @@ public enum DocumentTypeEnum {
     CODE_82593_5("82593-5","Certificato vaccinale"),
     CODE_97499_8("97499-8","Certificato di guarigione da Covid-19"),
     CODE_55750_4("55750-4","Resoconto relativo alla sicurezza del paziente"),
-    CODE_68814_3("68814-3","Bilanci di salute pediatrici");
+    CODE_68814_3("68814-3","Bilanci di salute pediatrici"),
+    CODE_103140_0("103140-0", "Personal health attachment (documento generico inserito dal paziente in caso di taccuino)"),
+    CODE_102033_8("102033-8", "Pathology network list (documento proveniente da reti di patologie"),
+    COE_103144_2("103144-2", "Medical equipment dispensed.brief"),
+    CODE_103145_9("103145-9", "Medical equipment dispensed.extendend"),
+    CODE_103146_7("103146-7", "Specialist care dispensed.brief"),
+    CODE_103147_5("103147-5", "Specialist care dispensed.extended"),
+    CODE_101136_0("101136-0", "Lettera di fine trattamento"),
+    CODE_101134_5("101134-5", "Promemoria di appuntamento"),
+    CODE101133_7("101133-7", "Consenso alla donazione di organo e/o tessuto"),
+    CODE100971_1("100971-1", "Cartella clinica"),
+    LOINC_CODE("[LOINC_CODE]", "Documento contenente dati Taccuino, Bundle di tipo collection");
 
     private final String code;
 
