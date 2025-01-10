@@ -39,7 +39,8 @@ public enum SubjectOrganizationEnum {
 	INI("000", "INI"),
 	SISTEMA_TS("970", "Sistema TS"),
 	SASN("001", "SASN"),
-	MDS("999", "MDS");
+	MDS("999", "MDS"),
+	GTW("950", "GTW");
 
 	
 	@Getter
