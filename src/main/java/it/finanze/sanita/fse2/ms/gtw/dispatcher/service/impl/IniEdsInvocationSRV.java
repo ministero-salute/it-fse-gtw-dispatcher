@@ -13,13 +13,15 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import org.bson.BsonBinary;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.mongo.MongoDatabaseCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.mongo.MongoPropertiesCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
@@ -32,21 +34,25 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
- 
+
 
 	@Autowired
 	private IIniEdsInvocationRepo iniInvocationRepo;
+
+	@Autowired
+	private MongoDatabaseCFG mongoCfg;
 	
+	@Autowired
+	private MongoPropertiesCFG mongoPropsCfg;
+
 	@Override
 	public Boolean insert(final String workflowInstanceId, final ResourceDTO fhirResourceDTO, final JWTPayloadDTO jwtPayloadToken) {
 		Boolean output = false;
 		try {
-		 
+
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
 					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null, jwtPayloadToken.getIss());
 
-			boolean etyPresent = etyToSave!=null;
-			log.info("ETY TO SAVE VALORIZZATO:" + etyPresent);		
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
 		} catch(Exception ex) {
@@ -55,29 +61,43 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		}
 		return output; 
 	}
-	
+
 	private IniEdsInvocationETY buildETY(final String workflowInstanceId, final String bundleJson, final String submissionSetEntryJson,
 			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer) {
 		IniEdsInvocationETY out = new IniEdsInvocationETY();
- 
+
 		out.setWorkflowInstanceId(workflowInstanceId);
 		if(!StringUtility.isNullOrEmpty(bundleJson)) {
 			out.setData(Document.parse(bundleJson));	
 		}
-		
+
 		out.setIssuer(issuer);
 		if (!StringUtility.isNullOrEmpty(rifIni)) {
 			out.setRiferimentoIni(rifIni);
 		}
-		
+
 		List<Document> metadata = new ArrayList<>();
-		Document submissionSetEntryDoc = new Document("submissionSetEntry" ,Document.parse(submissionSetEntryJson));
-		Document documentEntryDoc = new Document("documentEntry" ,Document.parse(documentEntryJson));
-		Document tokenEntry = new Document("tokenEntry", new Document("payload",Document.parse(tokenEntryJson)));
-	 	metadata.add(submissionSetEntryDoc);
+		
+		Document submissionSetEntryDoc = null;
+		Document documentEntryDoc = null;
+		Document tokenEntry = null;
+		if(!mongoPropsCfg.isEncryptionEnabled()){
+			submissionSetEntryDoc = new Document("submissionSetEntry" ,Document.parse(submissionSetEntryJson));
+			documentEntryDoc = new Document("documentEntry" ,Document.parse(documentEntryJson));
+			tokenEntry = new Document("tokenEntry", new Document("payload",Document.parse(tokenEntryJson)));
+		} else {
+			BsonBinary encryptedSubmissionSetEntry = mongoCfg.encrypt(new BsonString(submissionSetEntryJson));
+			submissionSetEntryDoc = new Document("submissionSetEntry", encryptedSubmissionSetEntry);
+			BsonBinary encryptedDocumentEntry = mongoCfg.encrypt(new BsonString(documentEntryJson));
+			documentEntryDoc = new Document("documentEntry" ,encryptedDocumentEntry);
+			BsonBinary encryptedTokenEntry = mongoCfg.encrypt(new BsonString(tokenEntryJson));
+			tokenEntry = new Document("tokenEntry", new Document("payload",encryptedTokenEntry));	
+		}
+		
+		metadata.add(submissionSetEntryDoc);
 		metadata.add(documentEntryDoc);
 		metadata.add(tokenEntry);
-		
+
 		out.setMetadata(metadata);
 		return out;
 	}

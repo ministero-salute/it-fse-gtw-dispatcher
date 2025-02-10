@@ -202,6 +202,12 @@
             <artifactId>janino</artifactId>
             <version>3.1.7</version>
         </dependency>
+        
+        <dependency>
+		  <groupId>org.mongodb</groupId>
+		  <artifactId>mongodb-crypt</artifactId>
+		  <version>5.2.0</version>
+		</dependency>
 
 		 
 	</dependencies>
@@ -214,12 +220,6 @@
 				<version>${spring-cloud.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.xerial.snappy</groupId>
-				<artifactId>snappy-java</artifactId>
-				<version>1.1.10.4</version>
-				<scope>runtime</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
