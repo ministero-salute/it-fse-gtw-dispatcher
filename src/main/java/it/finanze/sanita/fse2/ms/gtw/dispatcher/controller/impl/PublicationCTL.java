@@ -239,7 +239,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
 				log.error("Errore. Nessun riferimento trovato.");
-				throw new IniException(response.getErrorMessage());
+				throw new IniException(response.getErrorMessage(),validationInfo.getValidationData().getWorkflowInstanceId());
 			}
 
 
@@ -448,7 +448,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// Exit if necessary
 			if(!isNullOrEmpty(iniReference.getErrorMessage())) {
 				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, iniReference.getErrorMessage(), BLOCKING_ERROR, jwtPayloadToken, RIFERIMENTI_INI);
-				throw new IniException(iniReference.getErrorMessage());	
+				throw new IniException(iniReference.getErrorMessage(),workflowInstanceId);	
 			} else {
 				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Riferimenti trovati: " +iniReference.getUuid(), SUCCESS, jwtPayloadToken, RIFERIMENTI_INI);
 			}
@@ -654,12 +654,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationResult.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
 			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, validationResult.getJwtPayloadToken());
-			//TODO: verify wii
 			IniReferenceResponseDTO response = iniClient.reference(iniReq, null);
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
 				log.error("Errore. Nessun riferimento trovato.");
-				throw new IniException(response.getErrorMessage());
+				throw new IniException(response.getErrorMessage(),workflowInstanceId);
 			}
 
 

@@ -570,8 +570,6 @@ public abstract class AbstractCTL {
 					}
 					
 				}
-				
-				
 			}
 
 			if (!RawValidationEnum.OK.equals(rawValRes.getResult())) {
@@ -720,7 +718,7 @@ public abstract class AbstractCTL {
 			final GetMergedMetadatiDTO metadatiToUpdate = iniClient.metadata(new MergedMetadatiRequestDTO(idDoc,jwtPayloadToken, requestBody,wif));
 			if(!StringUtility.isNullOrEmpty(metadatiToUpdate.getErrorMessage()) && !metadatiToUpdate.getErrorMessage().contains("Invalid region ip")) {
 				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, metadatiToUpdate.getErrorMessage(), RIFERIMENTI_INI);
-				throw new IniException(metadatiToUpdate.getErrorMessage());
+				throw new IniException(metadatiToUpdate.getErrorMessage(),wif);
 			} else {
 				boolean regimeDiMock = metadatiToUpdate.getMarshallResponse()==null; 
 

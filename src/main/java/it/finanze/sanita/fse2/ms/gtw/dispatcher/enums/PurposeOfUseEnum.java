@@ -22,7 +22,9 @@ public enum PurposeOfUseEnum {
 	PERSONAL("PERSONAL","Consultazione del FSE"),
 	UPDATE("UPDATE","Invalidamento e aggiornamento di un documento"),
 	CONSENT("CONSENT","Comunicazione valori consensi"),
-	ADMINISTRATIVE("ADMINISTRATIVE","Operazioni amministrative");
+	ADMINISTRATIVE("ADMINISTRATIVE","Operazioni amministrative"),
+	ACCESS_UPDATE("ACCESS UPDATE","Operazioni amministrative");
+	
 
 	@Getter
 	private String display;
