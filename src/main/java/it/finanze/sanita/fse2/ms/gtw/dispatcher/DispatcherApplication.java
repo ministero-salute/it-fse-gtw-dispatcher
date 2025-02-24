@@ -45,7 +45,7 @@ public class DispatcherApplication {
      * @return	rest template
      */
     @Bean 
-    @Qualifier("restTemplateIni")
+    @Qualifier("restTemplateWithErrorHandler")
     public RestTemplate restTemplateIni() {
     	RestTemplate rt = new RestTemplate();
     	rt.setErrorHandler(new RestTemplateResponseErrorHandler());

@@ -35,7 +35,7 @@ public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
 		} else if(httpResponse.getStatusCode() == HttpStatus.NOT_FOUND){
 			throw new NoRecordFoundException(error);
 		} else {
-			throw new BusinessException("Generic error");
+			throw new BusinessException(error);
 		}
 	}
 

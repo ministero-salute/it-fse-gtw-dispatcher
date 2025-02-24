@@ -149,6 +149,10 @@ public final class StringUtility {
 	public static String generateWii() {
 		return UUID.randomUUID().toString().replace("-", "").substring(0, 10);
 	}
+	
+	public static String generateWiiFhir() {
+		return UUID.randomUUID().toString().replace("-", "");
+	}
 
 	/**
 	 * Transformation from Json to Object.

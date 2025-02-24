@@ -44,6 +44,7 @@ public final class Constants {
 		}
 	}
 	
+	@NoArgsConstructor
 	public static final class Headers {
 		
 		/**
@@ -57,12 +58,9 @@ public final class Constants {
 		public static final String JWT_GOVWAY_HEADER = "GovWay-ModI-Info";
 		
 
-		private Headers() {
-			//This method is intentionally left blank.
-		}
-
 	}
  
+	@NoArgsConstructor
 	public static final class Profile {
 
 		public static final String TEST = "test";
@@ -73,15 +71,9 @@ public final class Constants {
 
 		public static final String TEST_PREFIX = "test_";
 
-		/** 
-		 * Constructor.
-		 */
-		private Profile() {
-			//This method is intentionally left blank.
-		}
-
 	}
 
+	@NoArgsConstructor
 	public static final class App {
 		
 		public static final String JWT_TOKEN_TYPE = "JWT";
@@ -101,10 +93,9 @@ public final class Constants {
 		public static final int MAX_SIZE_WARNING = 200000;
 		public static final String BENCHMARK_ISSUER = "TEST-BENCHMARK";
 		
-		
-		private App() {
-			//This method is intentionally left blank.
-		}
+		public static final String MASTER_ID_SEPARATOR = "^";
+		public static final String WIF_SUFFIX = "^^^^urn:ihe:iti:xdw:2013:workflowInstanceId";
+		public static final String WIF_SEPARATOR = ".";
 	}
 	
 	public static final class OIDS {

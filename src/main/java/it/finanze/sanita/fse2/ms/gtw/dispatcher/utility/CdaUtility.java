@@ -17,6 +17,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 
@@ -25,21 +27,14 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum.I
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.INVALID_ID_DOC;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.*;
 import static org.apache.commons.lang3.StringUtils.isWhitespace;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MASTER_ID_SEPARATOR;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.WIF_SUFFIX;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.WIF_SEPARATOR;
 
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CdaUtility {
-
-	private static final String MASTER_ID_SEPARATOR = "^";
-
-	private static final String WIF_SUFFIX = "^^^^urn:ihe:iti:xdw:2013:workflowInstanceId";
-	private static final String WIF_SEPARATOR = ".";
-	/**
-	 * Private constructor to avoid instantiation.
-	 */
-	private CdaUtility() {
-		// Constructor intentionally empty.
-	}
-
+ 
 	public static String createWorkflowInstanceId(final String idDoc) {
 		return encodeSHA256Hex(idDoc) + WIF_SEPARATOR + generateWii() + WIF_SUFFIX;
 	}

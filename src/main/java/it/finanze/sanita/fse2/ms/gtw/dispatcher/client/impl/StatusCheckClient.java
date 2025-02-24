@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class StatusCheckClient implements IStatusCheckClient {
 
 	@Autowired
-	@Qualifier("restTemplateIni")
+	@Qualifier("restTemplateWithErrorHandler")
 	private RestTemplate restTemplate;
 	
 	@Autowired

@@ -9,33 +9,32 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
+import com.fasterxml.jackson.databind.annotation.JacksonStdImpl;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
-public enum EventTypeEnum {
+/**
+ *	Request body validazione FHIR.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Jacksonized
+@Builder
+@JacksonStdImpl
+public class ValidationFHIRReqDTO{
 
-	VALIDATION("VALIDATION"),
-	FHIR_VALIDATION("FHIR_VALIDATION"),
-	VALIDATION_FOR_PUBLICATION("VALIDATION_FOR_PUBLICATION"),
-	VALIDATION_FOR_REPLACE("VALIDATION_FOR_REPLACE"),
-	PUBLICATION("PUBLICATION"),
-	REPLACE("REPLACE"),
-	FEEDING("FEEDING"),
-	DELETE("DELETE"),
-	RIFERIMENTI_INI("RIFERIMENTI_INI"),
-	EDS_DELETE("EDS_DELETE"),
-	EDS_UPDATE("EDS_UPDATE"),
-	INI_DELETE("INI_DELETE"),
-	INI_UPDATE("INI_UPDATE"),
-	UPDATE("UPDATE"),
-	GENERIC_ERROR("Generic error from dispatcher");
-
-	@Getter
-	private String name;
-
-	private EventTypeEnum(String inName) {
-		name = inName;
-	}
-
+    @Schema(description = "Attività del gateway", required = true)
+    private ActivityEnum activity;
+    
 }

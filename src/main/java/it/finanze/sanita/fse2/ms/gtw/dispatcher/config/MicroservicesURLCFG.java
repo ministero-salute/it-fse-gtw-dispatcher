@@ -27,6 +27,12 @@ public class MicroservicesURLCFG {
 	private String validatorHost;
 	
 	/**
+	 * Ms gtw-validator host.
+	 */
+	@Value("${ms.url.gtw-fhir-validator-service}")
+	private String fhirValidatorHost;
+	
+	/**
 	 * Ms gtw-fhir-mapping-engine host.
 	 */
 	@Value("${ms.url.gtw-fhir-mapping-engine-service}")

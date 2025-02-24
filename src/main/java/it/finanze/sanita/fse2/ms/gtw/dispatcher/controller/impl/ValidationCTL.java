@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +28,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.IValidationCTL;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
@@ -39,6 +41,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.SignerUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -121,4 +124,45 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		return new ResponseEntity<>(new ValidationResDTO(traceInfoDTO, workflowInstanceId, warning), HttpStatus.OK);
 	}
 
+	@Override
+	public ResponseEntity<ValidationResDTO> fhirValidate(ValidationFHIRReqDTO requestBody, MultipartFile file,
+			HttpServletRequest request) {
+		final Date startDateOperation = new Date();
+		LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
+
+		String workflowInstanceId = Constants.App.MISSING_WORKFLOW_PLACEHOLDER;
+		JWTPayloadDTO jwtPayloadToken = null;
+		ValidationFHIRReqDTO jsonObj = null;
+		String warning = null;
+
+		try {
+			jwtPayloadToken = extractAndValidateJWT(request,EventTypeEnum.FHIR_VALIDATION);
+			jsonObj = getAndValidateValidationFhirReq(request.getParameter("requestBody"));
+			final byte[] bytes = getAndValidateFhirFile(file);
+			String fhirAsString = new String(bytes,StandardCharsets.UTF_8);
+			workflowInstanceId = FhirUtility.getWorkflowInstanceId(fhirAsString);
+
+			log.info("[START] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
+
+			String issuer = jwtPayloadToken.getIss();
+			String result = fhirValidate(fhirAsString, jsonObj.getActivity(), workflowInstanceId, issuer);
+			if (!StringUtility.isNullOrEmpty(result)) {
+			    warning += result;
+			}
+			 
+			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
+		} catch (final ValidationException e) {
+			errorHandlerSRV.validationExceptionHandler(startDateOperation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, null);
+		}
+
+		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
+		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
+			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
+		}
+		
+		log.info("[EXIT] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
+
+		return new ResponseEntity<>(new ValidationResDTO(traceInfoDTO, workflowInstanceId, warning), HttpStatus.OK);
+	}
+ 
 }

@@ -9,33 +9,13 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
-import lombok.Getter;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 
-public enum EventTypeEnum {
-
-	VALIDATION("VALIDATION"),
-	FHIR_VALIDATION("FHIR_VALIDATION"),
-	VALIDATION_FOR_PUBLICATION("VALIDATION_FOR_PUBLICATION"),
-	VALIDATION_FOR_REPLACE("VALIDATION_FOR_REPLACE"),
-	PUBLICATION("PUBLICATION"),
-	REPLACE("REPLACE"),
-	FEEDING("FEEDING"),
-	DELETE("DELETE"),
-	RIFERIMENTI_INI("RIFERIMENTI_INI"),
-	EDS_DELETE("EDS_DELETE"),
-	EDS_UPDATE("EDS_UPDATE"),
-	INI_DELETE("INI_DELETE"),
-	INI_UPDATE("INI_UPDATE"),
-	UPDATE("UPDATE"),
-	GENERIC_ERROR("Generic error from dispatcher");
-
-	@Getter
-	private String name;
-
-	private EventTypeEnum(String inName) {
-		name = inName;
-	}
-
+/**
+ * Interface of Fhir Validator Client.
+ */
+public interface IFhirValidatorClient {
+	ValidationFhirResponseDTO validate(String fhir, String workflowInstanceId);
 }

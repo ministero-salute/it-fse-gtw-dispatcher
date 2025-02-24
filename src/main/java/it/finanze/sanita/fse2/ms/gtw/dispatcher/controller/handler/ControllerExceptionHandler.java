@@ -239,6 +239,9 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 				ex.getMessage(), status, ErrorInstanceEnum.NO_INFO.getInstance());
 		if(ex.getError()!=null) {
 			out = ex.getError();
+			if(out.getStatus()!=null) {
+				status = out.getStatus();
+			}
 		}
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
