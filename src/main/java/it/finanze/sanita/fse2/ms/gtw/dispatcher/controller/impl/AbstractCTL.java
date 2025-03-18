@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -450,8 +451,9 @@ public abstract class AbstractCTL {
 		
 		String[] chunks = jwtPayloadToken.getPerson_id().split("\\^");
 
-		Map<String, String> resultMap = element.stream()
-                .collect(Collectors.toMap(e -> e.attr("extension"), e -> e.attr("root")));
+		Map<String, String> resultMap = new HashMap<>();
+		element.stream()
+		    .forEach(e -> resultMap.putIfAbsent(e.attr("extension"), e.attr("root")));
 		
 		String oid = resultMap.get(chunks[0]);
 		if (StringUtility.isNullOrEmpty(oid)) {
