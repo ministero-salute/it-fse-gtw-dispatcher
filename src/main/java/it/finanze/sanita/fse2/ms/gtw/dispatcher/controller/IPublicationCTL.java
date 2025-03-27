@@ -32,8 +32,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Size;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Size;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO.ValidateAndCreateDTO;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO.*;

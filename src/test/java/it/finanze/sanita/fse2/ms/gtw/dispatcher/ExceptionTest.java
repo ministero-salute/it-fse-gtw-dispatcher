@@ -13,16 +13,12 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 
 
 class ExceptionTest {

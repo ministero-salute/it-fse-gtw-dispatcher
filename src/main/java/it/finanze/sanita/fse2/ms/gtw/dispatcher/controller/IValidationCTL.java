@@ -11,7 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

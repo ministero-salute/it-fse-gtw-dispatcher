@@ -19,7 +19,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.AuditETY;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Date;
 
 @Component

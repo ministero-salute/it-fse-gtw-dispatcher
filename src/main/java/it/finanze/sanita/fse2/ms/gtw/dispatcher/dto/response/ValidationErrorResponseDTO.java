@@ -11,7 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

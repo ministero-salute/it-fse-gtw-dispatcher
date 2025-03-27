@@ -13,7 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
 import java.util.List;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;

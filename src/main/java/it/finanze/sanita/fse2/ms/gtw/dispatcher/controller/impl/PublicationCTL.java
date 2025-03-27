@@ -34,8 +34,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Size;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Size;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -174,8 +174,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
+			//potreiu aggiungere wait qui
 			validationInfo = publicationAndReplace(file, request, false,null,traceInfoDTO);
-
+			
 			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
