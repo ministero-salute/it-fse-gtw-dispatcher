@@ -11,7 +11,10 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
@@ -38,11 +41,13 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -60,6 +65,9 @@ class DeleteTest extends AbstractTest {
 	@MockBean
 	IConfigSRV config;
 
+	@MockBean
+	IIniClient iniClient;
+
 	@BeforeAll
 	void init() {
 		when(config.isAuditEnable()).thenReturn(true);
@@ -72,6 +80,14 @@ class DeleteTest extends AbstractTest {
 		final String idDocument = StringUtility.generateUUID();
 		mockEdsClient(HttpStatus.OK);
 		mockIniClient(HttpStatus.OK, true);
+		IniReferenceResponseDTO mockIniReference = new IniReferenceResponseDTO();
+		mockIniReference.setUuid(new ArrayList<>());
+		mockIniReference.setAdministrativeRequest(new ArrayList<>());
+		mockIniReference.setDocumentType("testDocument");
+		when(iniClient.reference(any(IniReferenceRequestDTO.class), anyString())).thenReturn(mockIniReference);
+		IniTraceResponseDTO mockIniTrace = new IniTraceResponseDTO();
+		mockIniTrace.setMessage("");
+		when(iniClient.delete(any(DeleteRequestDTO.class))).thenReturn(mockIniTrace);
 
 		final ResponseEntity<EdsResponseDTO> response = callDelete(idDocument);
 		final EdsResponseDTO body = response.getBody();

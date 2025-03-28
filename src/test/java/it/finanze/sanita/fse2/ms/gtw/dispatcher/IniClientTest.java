@@ -18,11 +18,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpEntity;
@@ -44,6 +46,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedExce
 class IniClientTest {
 
     @SpyBean
+    @Qualifier("restTemplateIni")
     RestTemplate restTemplate;
 
     @Autowired

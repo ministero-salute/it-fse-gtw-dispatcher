@@ -75,7 +75,7 @@ public class FhirSRV implements IFhirSRV {
 		final DocumentReferenceDTO documentReferenceDTO = buildDocumentReferenceDTO(encodedCDA, requestBody, size, hash);
 		FhirResourceDTO req = buildFhirResourceDTO(documentReferenceDTO, cda, transformId, engineId);
 
-		AuthorSlotDTO authorSlot =  buildAuthorSlotDTO(authorInstitution,authorRole,docCDA);
+		AuthorSlotDTO authorSlot = buildAuthorSlotDTO(authorInstitution,authorRole,docCDA);
 
 			final SubmissionSetEntryDTO submissionSetEntryDTO = createSubmissionSetEntry(docCDA, requestBody.getTipoAttivitaClinica().getCode(),
 					requestBody.getIdentificativoSottomissione(),authorSlot,organizationId);

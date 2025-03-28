@@ -18,12 +18,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IConfigClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import org.bson.Document;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -64,6 +69,9 @@ class DocumentReferenceTest extends AbstractTest {
 	@MockBean
 	private FhirMappingClient client;
 
+	@MockBean
+	private IConfigSRV configSRV;
+
 	@Autowired
 	private IniEdsInvocationSRV iniEdsInvocationSRV;
 	
@@ -75,6 +83,7 @@ class DocumentReferenceTest extends AbstractTest {
 		res.setErrorMessage("");
 		res.setJson(Document.parse("{\"json\" : \"json\"}"));
 		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(res);
+		when(configSRV.isRemoveEds()).thenReturn(true);
 		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
 		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId);
@@ -98,7 +107,7 @@ class DocumentReferenceTest extends AbstractTest {
 		PublicationCreationReqDTO output = new PublicationCreationReqDTO();
 		output.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC001);
 		output.setConservazioneANorma("Conservazione");
-		output.setDataFinePrestazione(""+new Date().getTime());
+		output.setDataFinePrestazione(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 		output.setHealthDataFormat(HealthDataFormatEnum.CDA);
 		output.setIdentificativoDoc("Identificativo doc");
 		output.setIdentificativoRep("2.16.840.1.113883.2.9.2.080.4.5.1234");
