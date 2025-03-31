@@ -59,9 +59,6 @@ public class MicroservicesURLCFG {
 	@Value("${ms.url.ana-service}")
 	private String anaHost;
 
-	@Value("${ms.ana-service.enable-validation}")
-	private Boolean anaEnableValidation;
-	
     @Value("${ms-calls.are-from-govway}")
 	private Boolean fromGovway;
 
