@@ -13,7 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
 import java.util.Date;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

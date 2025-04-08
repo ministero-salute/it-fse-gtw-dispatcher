@@ -13,8 +13,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.audit.exclusions;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.exclusions.SwaggerExclusion;
 import org.junit.jupiter.api.Test;
-import org.springdoc.core.SpringDocConfigProperties;
-import org.springdoc.core.SwaggerUiConfigProperties;
+import org.springdoc.core.properties.SpringDocConfigProperties;
+import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
