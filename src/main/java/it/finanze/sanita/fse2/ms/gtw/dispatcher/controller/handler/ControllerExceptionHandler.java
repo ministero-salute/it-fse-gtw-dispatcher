@@ -11,7 +11,6 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 
-import brave.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
@@ -32,6 +31,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import io.micrometer.tracing.Tracer;
 
 /**
  *	Exceptions Handler.
@@ -276,10 +277,14 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(out, headers, status);
 	}
 
-	private LogTraceInfoDTO getLogTraceInfo() {
-		return new LogTraceInfoDTO(
-				tracer.currentSpan().context().spanIdString(),
-				tracer.currentSpan().context().traceIdString());
+	protected LogTraceInfoDTO getLogTraceInfo() {
+		LogTraceInfoDTO out = new LogTraceInfoDTO(null, null);
+		if (tracer.currentSpan() != null) {
+			out = new LogTraceInfoDTO(
+					tracer.currentSpan().context().spanId(), 
+					tracer.currentSpan().context().traceId());
+		}
+		return out;
 	}
 
 	/**
