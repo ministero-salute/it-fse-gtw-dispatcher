@@ -25,4 +25,16 @@ public class AzureCfg {
 
 	@Value("${azure.kms.key-vault-endpoint}")
 	private String keyVaultEndpoint;
+	
+	@Value("${azure.kms.secret-user}")
+	private String secretUser;
+
+	@Value("${azure.kms.secret-pass}")
+	private String secretPass;
+	
+	@Value("${azure.kms.key-vault-certificate-path}")
+	private String keyVaultCertificatePath;
+	
+	@Value("${azure.kms.key-vault-certificate-pass}")
+	private String keyVaultCertificatePass;
 }
