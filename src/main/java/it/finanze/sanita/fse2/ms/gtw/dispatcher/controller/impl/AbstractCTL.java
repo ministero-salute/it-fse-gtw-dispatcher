@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISSING_DOC_TYPE_PLACEHOLDER;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.BLOCKING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
@@ -41,7 +42,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import io.micrometer.tracing.Tracer;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
@@ -151,14 +153,15 @@ public abstract class AbstractCTL {
 
 	protected LogTraceInfoDTO getLogTraceInfo() {
 		LogTraceInfoDTO out = new LogTraceInfoDTO(null, null);
-		if (tracer.currentSpan() != null) {
+		SpanBuilder spanbuilder = tracer.spanBuilder(MS_NAME);
+		
+		if (spanbuilder != null) {
 			out = new LogTraceInfoDTO(
-					tracer.currentSpan().context().spanId(), 
-					tracer.currentSpan().context().traceId());
+					spanbuilder.startSpan().getSpanContext().getSpanId(), 
+					spanbuilder.startSpan().getSpanContext().getTraceId());
 		}
 		return out;
 	}
-
 	protected ValidationCDAReqDTO getAndValidateValidationReq(final String jsonREQ) {
 		
 		final ValidationCDAReqDTO out = StringUtility.fromJSONJackson(jsonREQ, ValidationCDAReqDTO.class);

@@ -108,10 +108,18 @@
 			</logger>
 		</then>
 	</if>
+	
+	<appender name="OpenTelemetry"
+              class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <captureExperimentalAttributes>true</captureExperimentalAttributes>
+        <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
+        <captureMdcAttributes>*</captureMdcAttributes>
+    </appender>
 
 	<!-- LOG everything at INFO level -->
 	<root level="${APP_LOGGING_ROOT_LEVEL:-INFO}">
 		<appender-ref ref="${log.output.format}" />
+		<appender-ref ref="OpenTelemetry"/>
 	</root>
 
 </configuration>
