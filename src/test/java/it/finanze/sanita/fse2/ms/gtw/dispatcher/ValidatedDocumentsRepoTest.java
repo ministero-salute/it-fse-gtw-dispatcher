@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.web.client.RestTemplate;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
@@ -42,7 +42,7 @@ class ValidatedDocumentsRepoTest extends AbstractTest {
 	@Autowired
 	private MongoTemplate mongoTemplate;
 
-	@SpyBean
+	@MockitoSpyBean
 	private RestTemplate restTemplate;
 
 	@BeforeEach

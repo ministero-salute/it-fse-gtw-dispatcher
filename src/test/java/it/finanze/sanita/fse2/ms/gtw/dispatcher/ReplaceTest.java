@@ -38,8 +38,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -52,6 +50,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -95,19 +95,19 @@ class ReplaceTest extends AbstractTest {
 	@Autowired
 	ServletWebServerApplicationContext webServerAppCtxt;
 
-	@MockBean
+	@MockitoBean
 	private IValidatorClient validatorClient;
 
-	@SpyBean
+	@MockitoSpyBean
 	RestTemplate restTemplate;
 
 	@Autowired
 	MongoTemplate mongoTemplate;
 	
-	@SpyBean
+	@MockitoSpyBean
 	private IIniClient iniClient;
 
-	@MockBean
+	@MockitoBean
 	private ConfigSRV config;
 
 	@BeforeAll

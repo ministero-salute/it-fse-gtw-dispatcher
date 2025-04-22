@@ -40,8 +40,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.PriorityDocumentCFG;
@@ -66,10 +66,10 @@ import lombok.extern.slf4j.Slf4j;
 @ActiveProfiles(Constants.Profile.TEST)
 class UtilityTest extends AbstractTest{
 
-    @MockBean
+	@MockitoSpyBean
     ValidationCFG validationCfg;
     
-    @MockBean
+    @MockitoSpyBean
     PriorityDocumentCFG priorityDocumentCfg;
     
     @Autowired
