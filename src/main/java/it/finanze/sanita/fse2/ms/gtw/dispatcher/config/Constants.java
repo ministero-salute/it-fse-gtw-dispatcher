@@ -15,9 +15,12 @@ import lombok.NoArgsConstructor;
 
 import static lombok.AccessLevel.PRIVATE;
 
+import lombok.AccessLevel;
+
 /**
  * Constants application.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Constants {
  
 	public static final class Collections {
@@ -156,12 +159,11 @@ public final class Constants {
 			public static final String MOCKED_GATEWAY_NAME = "mocked-gateway";
 		}
 	}
-  
-	/**
-	 *	Constants.
-	 */
-	private Constants() {
-
+	
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
+	public static final class Properties {
+		public static final String MS_NAME = "gtw-dispatcher";
+		 
 	}
-
+   
 }
