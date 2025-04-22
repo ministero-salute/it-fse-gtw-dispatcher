@@ -211,6 +211,12 @@
 	      <groupId>io.opentelemetry.instrumentation</groupId>
 	      <artifactId>opentelemetry-spring-boot-starter</artifactId>
 	    </dependency>
+	    
+	    <dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongodb-crypt</artifactId>
+			<version>5.2.0</version>
+		</dependency>
 
 	</dependencies>
 
