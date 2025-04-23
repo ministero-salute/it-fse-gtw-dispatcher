@@ -27,7 +27,7 @@ public final class ConfigClientRoutes {
     private MicroservicesURLCFG msUrlCFG;
 
     public UriComponentsBuilder base() {
-        return UriComponentsBuilder.fromHttpUrl(msUrlCFG.getConfigHost());
+    	return UriComponentsBuilder.fromUriString(msUrlCFG.getConfigHost());
     }
 
     public String identifier() {
