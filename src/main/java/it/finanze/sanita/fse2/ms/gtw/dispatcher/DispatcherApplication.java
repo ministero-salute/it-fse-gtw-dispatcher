@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
@@ -35,9 +36,9 @@ public class DispatcherApplication {
     @Bean 
     @Qualifier("restTemplate")
     @Primary
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    } 
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder.build();
+    }
     
     /**
      * Definizione rest template.
@@ -46,9 +47,8 @@ public class DispatcherApplication {
      */
     @Bean 
     @Qualifier("restTemplateIni")
-    public RestTemplate restTemplateIni() {
-    	RestTemplate rt = new RestTemplate();
-    	rt.setErrorHandler(new RestTemplateResponseErrorHandler());
-        return rt;
-    } 
+    public RestTemplate restTemplateIni(RestTemplateBuilder builder) {
+    	return builder.errorHandler(new RestTemplateResponseErrorHandler()).build();
+    }
+   
 }

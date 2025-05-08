@@ -22,7 +22,8 @@
 		<java.version>21</java.version>
 		<spring-boot.version>3.4.3</spring-boot.version>
 		<spring-cloud.version>2024.0.0</spring-cloud.version>
-		<start-class>it.finanze.sanita.fse2.ms.gtw.dispatcher.DispatcherApplication</start-class>
+		<start-class>
+			it.finanze.sanita.fse2.ms.gtw.dispatcher.DispatcherApplication</start-class>
 		<!-- Build -->
 		<config.infra>${project.basedir}/infrastructure</config.infra>
 		<container.output>target/container</container.output>
@@ -32,7 +33,6 @@
 			src/main/java/it/finanze/sanita/fse2/ms/gtw/dispatcher/config/OpenApiCFG.java,
 			src/main/java/it/finanze/sanita/fse2/ms/gtw/dispatcher/logging/**/*.*
 		</sonar.exclusions>
-		<logback.version>1.5.16</logback.version>
 	</properties>
 
 	<dependencies>
@@ -70,18 +70,6 @@
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.6</version>
-		</dependency>
-
-		<!-- LOGBACK JSON -->
-		<dependency>
-			<groupId>ch.qos.logback.contrib</groupId>
-			<artifactId>logback-json-classic</artifactId>
-			<version>0.1.5</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback.contrib</groupId>
-			<artifactId>logback-jackson</artifactId>
-			<version>0.1.5</version>
 		</dependency>
 
 		<!-- DEVTOOL -->
@@ -188,20 +176,20 @@
 			<artifactId>janino</artifactId>
 			<version>3.1.7</version>
 		</dependency>
-		
-		 <!-- OpenTelemetry - Micrometer -->
-	    <dependency>
-	      <groupId>io.opentelemetry.instrumentation</groupId>
-	      <artifactId>opentelemetry-spring-boot-starter</artifactId>
-	    </dependency>
-	    
-	    <dependency>
+
+		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-crypt</artifactId>
 			<version>5.2.0</version>
 		</dependency>
 
+		<dependency>
+		  <groupId>io.opentelemetry.instrumentation</groupId>
+		  <artifactId>opentelemetry-spring-boot-starter</artifactId>
+		</dependency> 
+		 
 	</dependencies>
+ 
 
 	<dependencyManagement>
 		<dependencies>
@@ -213,12 +201,12 @@
 				<scope>import</scope>
 			</dependency>
 			<dependency>
-		        <groupId>io.opentelemetry.instrumentation</groupId>
-		        <artifactId>opentelemetry-instrumentation-bom</artifactId>
-		        <version>2.15.0</version>
-		        <type>pom</type>
-		        <scope>import</scope>
-		     </dependency>
+				<groupId>io.opentelemetry.instrumentation</groupId>
+				<artifactId>opentelemetry-instrumentation-bom</artifactId>
+				<version>2.15.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
