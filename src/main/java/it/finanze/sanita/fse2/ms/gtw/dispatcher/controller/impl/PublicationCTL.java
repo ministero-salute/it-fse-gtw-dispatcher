@@ -174,7 +174,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
-			//potreiu aggiungere wait qui
 			validationInfo = publicationAndReplace(file, request, false,null,traceInfoDTO);
 			
 			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
