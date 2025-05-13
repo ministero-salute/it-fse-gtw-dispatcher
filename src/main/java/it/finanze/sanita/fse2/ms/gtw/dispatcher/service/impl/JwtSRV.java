@@ -84,6 +84,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		performCommonValidation(payload);
 		validateActionCoherence(payload, ActionEnum.UPDATE);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
+		isValidLocality(payload.getLocality());
 	}
 
 	@Override
@@ -91,6 +92,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		performCommonValidation(payload);
 		validateActionCoherence(payload, ActionEnum.DELETE);
 		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
+		isValidLocality(payload.getLocality());
 	}
 
 	private void performCommonValidation(JWTPayloadDTO payload) {
@@ -256,10 +258,9 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 				.build();
 		return new ValidationException(error);
 	}
- 
 
 	public void isValidLocality(String input) {
-		String regex = "^[a-zA-Z0-9]+[^\\^]*\\^\\^\\^\\^\\^\\&[^&]*\\&ISO\\^\\^\\^\\^[^\\^&]*$";
+		String regex = "^[^\\^]*\\^{5}\\&[^&]*\\&ISO\\^{4}[^\\^&]*$";
 		boolean isValid = Pattern.matches(regex, input);
 		if (!isValid) {
 			throw buildValidationException();
