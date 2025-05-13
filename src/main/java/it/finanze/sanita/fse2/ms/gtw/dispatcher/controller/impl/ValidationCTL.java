@@ -70,19 +70,9 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		ValidationCDAReqDTO jsonObj = null;
 		String warning = null;
 		Document docT = null;
-		
 
 		try {
-			
-			Enumeration<String> headerNames = request.getHeaderNames();
-			while (headerNames.hasMoreElements()) {
-				String name = headerNames.nextElement();
-				String value = request.getHeader(name);
-				log.info("Header: {} = {}", name, value);
-			}
-			
 			jwtPayloadToken = extractAndValidateJWT(request,EventTypeEnum.VALIDATION);
-
 			jsonObj = getAndValidateValidationReq(request.getParameter("requestBody"));
 			final byte[] bytes = getAndValidateFile(file);
 			final String cda = extractCDA(bytes, jsonObj.getMode());
