@@ -127,6 +127,13 @@ public class JWTPayloadDTO {
 	
 	
 	/**
+	 * Tale flag indica che il subject id risulta essere l'author.
+	 * Valore booleano.
+	 */
+	private boolean use_subject_as_author;
+	
+	
+	/**
 	 * Map the object from JSON to object.
 	 * 
 	 * @param json The JWT token raw to map.

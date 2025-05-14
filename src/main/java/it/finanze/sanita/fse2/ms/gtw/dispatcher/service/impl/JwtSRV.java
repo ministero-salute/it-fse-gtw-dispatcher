@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -50,8 +51,8 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		checkNull(payload.getSubject_application_id(), "subject_application_id");
 		checkNull(payload.getSubject_application_vendor(), "subject_application_vendor");
 		checkNull(payload.getSubject_application_version(), "subject_application_version");
-		validateActionCoherence(payload, ActionEnum.CREATE);
-		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.TREATMENT);
+		validateActionCoherence(payload, Set.of(ActionEnum.CREATE, ActionEnum.UPDATE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT));
 	}
 
 	@Override
@@ -66,32 +67,32 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 	@Override
 	public void validatePayloadForCreate(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		validateActionCoherence(payload, ActionEnum.CREATE);
-		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.TREATMENT);
+		validateActionCoherence(payload, Set.of(ActionEnum.CREATE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT));
 		isValidLocality(payload.getLocality());
 	}
 
 	@Override
 	public void validatePayloadForReplace(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		validateActionCoherence(payload, ActionEnum.UPDATE);
-		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
+		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.UPDATE));
 		isValidLocality(payload.getLocality());
 	}
 
 	@Override
 	public void validatePayloadForUpdate(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		validateActionCoherence(payload, ActionEnum.UPDATE);
-		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
+		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.UPDATE,PurposeOfUseEnum.ACCESS_UPDATE));
 		isValidLocality(payload.getLocality());
 	}
 
 	@Override
 	public void validatePayloadForDelete(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
-		validateActionCoherence(payload, ActionEnum.DELETE);
-		validatePurposeOfUseCoherence(payload, PurposeOfUseEnum.UPDATE);
+		validateActionCoherence(payload, Set.of(ActionEnum.DELETE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.UPDATE));
 		isValidLocality(payload.getLocality());
 	}
 
@@ -135,23 +136,23 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		validateSubjectOrganizationCoherence(subjectOrganizationFromId, subjectOrganizationFromDescription);
 	}
 
-	private void validateActionCoherence(JWTPayloadDTO payload, ActionEnum expectedAction) {
+	private void validateActionCoherence(JWTPayloadDTO payload, Set<ActionEnum> expectedActions) {
 		ActionEnum action = ActionEnum.get(payload.getAction_id());
-		if (!expectedAction.equals(action)) {
+		if (!expectedActions.contains(action)) {
 			ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.type(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getType())
 					.title(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getTitle())
 					.instance(ErrorInstanceEnum.JWT_MALFORMED_FIELD.getInstance())
-					.detail(String.format("Il campo action_id non coerente con operazione richiesta"))
+					.detail("Il campo action_id non è coerente con le operazioni richieste")
 					.build();
 
 			throw new ValidationException(error);
 		}
 	}
 
-	private void validatePurposeOfUseCoherence(JWTPayloadDTO payload, PurposeOfUseEnum expectedPurpose) {
+	private void validatePurposeOfUseCoherence(JWTPayloadDTO payload, Set<PurposeOfUseEnum> expectedPurpose) {
 		PurposeOfUseEnum purpose = PurposeOfUseEnum.get(payload.getPurpose_of_use());
-		if (!expectedPurpose.equals(purpose)) {
+		if (!expectedPurpose.contains(purpose)) {
 			ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.type(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getType())
 					.title(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getTitle())
@@ -229,22 +230,22 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 			throw new ValidationException(error);
 		}
 	}
-	  
-	
+
+
 	private boolean isValidOid(String oid) {
 		if (oid == null) 
 			return false;
 
-			final String[] chunks = oid.split("\\^\\^\\^");
-			if (chunks.length == 0) 
-				return false;
-			if (chunks.length == 1) 
-				return utilitySrv.isValidCf(chunks[0]);
+		final String[] chunks = oid.split("\\^\\^\\^");
+		if (chunks.length == 0) 
+			return false;
+		if (chunks.length == 1) 
+			return utilitySrv.isValidCf(chunks[0]);
 
-			final String[] chunkedInfo = chunks[1].split("&");
-			if (chunkedInfo.length > 1 && Constants.OIDS.OID_MEF.equals(chunkedInfo[1])) {
-				return utilitySrv.isValidCf(chunks[0]);
-			}
+		final String[] chunkedInfo = chunks[1].split("&");
+		if (chunkedInfo.length > 1 && Constants.OIDS.OID_MEF.equals(chunkedInfo[1])) {
+			return utilitySrv.isValidCf(chunks[0]);
+		}
 
 		return true;
 	}
@@ -265,6 +266,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		if (!isValid) {
 			throw buildValidationException();
 		}
-    }
-	 
+	}
+
 }
