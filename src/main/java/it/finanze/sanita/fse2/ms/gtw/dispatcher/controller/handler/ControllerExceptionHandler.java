@@ -106,6 +106,10 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		if (RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR_TOKEN.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
 			status = 401;
 		}
+		
+		if (RestExecutionResultEnum.INVALID_TOKEN_FIELD.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+			status = 403;
+		}
 
 		final HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
