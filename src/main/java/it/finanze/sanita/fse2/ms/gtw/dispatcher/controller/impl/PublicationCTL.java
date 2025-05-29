@@ -199,12 +199,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
 		PriorityTypeEnum priorityType = PriorityTypeEnum.NULL;
-		if(validationInfo.getJsonObj() instanceof PublicationCreationReqDTO) {
-			PublicationCreationReqDTO out = (PublicationCreationReqDTO) validationInfo.getJsonObj();
-			if (out.getPriorita() != null) {
-				priorityType = Boolean.TRUE.equals(out.getPriorita()) ? PriorityTypeEnum.HIGH : PriorityTypeEnum.LOW;
-			}
-		}
 		
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
