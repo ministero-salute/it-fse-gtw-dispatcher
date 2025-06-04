@@ -35,8 +35,8 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Size;
 
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO.ValidateAndCreateDTO;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO.*;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndReplaceDTO;
 
 /**
  * Controller publication.

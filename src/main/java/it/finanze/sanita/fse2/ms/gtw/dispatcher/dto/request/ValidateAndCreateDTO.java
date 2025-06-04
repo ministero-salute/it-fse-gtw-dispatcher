@@ -21,6 +21,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PublicationCreationReqDTO extends PublicationCreateReplaceWiiDTO {
+public class ValidateAndCreateDTO extends PublicationCreateReplaceMetadataDTO {
 
 }
