@@ -50,11 +50,9 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		Boolean output = false;
 		try {
 
-			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId,
-					fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
-					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken),
-					null, jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id().substring(0, 16),
-					jwtPayloadToken.getSubject_organization_id());
+			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
+													fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null, 
+													jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(), jwtPayloadToken.getSubject_organization_id());
 
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
