@@ -57,7 +57,7 @@ class EdsClientTest {
 
     @BeforeEach
     void init() {
-        requestBody = new EdsMetadataUpdateReqDTO("idDoc", "workflowInstanceId", new PublicationMetadataReqDTO());
+        requestBody = new EdsMetadataUpdateReqDTO("idDoc", "workflowInstanceId", new PublicationMetadataReqDTO(), "");
     }
 
     @Test

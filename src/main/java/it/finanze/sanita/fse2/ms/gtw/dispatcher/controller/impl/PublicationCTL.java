@@ -66,10 +66,10 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestD
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO.ValidateAndCreateDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO.ValidateAndReplaceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndReplaceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
@@ -174,8 +174,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
-			//potreiu aggiungere wait qui
-			validationInfo = publicationAndReplace(file, request, false,null,traceInfoDTO);
+			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
 			
 			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
 		} catch (ConnectionRefusedException ce) {
@@ -200,12 +199,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
 		PriorityTypeEnum priorityType = PriorityTypeEnum.NULL;
-		if(validationInfo.getJsonObj() instanceof PublicationCreationReqDTO) {
-			PublicationCreationReqDTO out = (PublicationCreationReqDTO) validationInfo.getJsonObj();
-			if (out.getPriorita() != null) {
-				priorityType = Boolean.TRUE.equals(out.getPriorita()) ? PriorityTypeEnum.HIGH : PriorityTypeEnum.LOW;
-			}
-		}
 		
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -459,7 +452,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
 			if(!configSRV.isRemoveEds()) {
-				edsResponse = edsClient.delete(idDoc);
+				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id());
 				// Exit if necessary
 				Objects.requireNonNull(edsResponse, "PublicationCTL returned an error - edsResponse is null!");
 

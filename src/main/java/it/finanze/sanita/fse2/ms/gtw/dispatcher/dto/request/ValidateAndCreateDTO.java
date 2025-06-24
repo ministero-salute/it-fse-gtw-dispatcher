@@ -9,15 +9,18 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public interface IEdsClient {
-
-	EdsResponseDTO delete(String oid, String fiscalCode);
-	
-	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
+/**
+ *	Request body publication creation.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+public class ValidateAndCreateDTO extends PublicationCreateReplaceMetadataDTO {
 
 }

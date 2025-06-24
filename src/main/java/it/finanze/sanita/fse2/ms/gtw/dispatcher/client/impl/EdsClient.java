@@ -39,11 +39,11 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 	private MicroservicesURLCFG msUrlCFG;
 	
 	@Override
-	public EdsResponseDTO delete(final String oid) {
+	public EdsResponseDTO delete(final String oid, final String fiscalCode) {
 		EdsResponseDTO output = null;
 		
 		log.debug("EDS Client - Calling EDS to execute delete operation");
-		String endpoint = msUrlCFG.getEdsClientHost() + Constants.Client.Eds.DELETE_PATH.replace(Constants.Client.Eds.ID_DOC_PLACEHOLDER, oid);
+		String endpoint = msUrlCFG.getEdsClientHost() + "/v1/documents/"+ oid + "/"+fiscalCode;
 		try {
 			ResponseEntity<EdsResponseDTO> restExchange = restTemplate.exchange(endpoint, HttpMethod.DELETE, null, EdsResponseDTO.class);
 			output = restExchange.getBody();

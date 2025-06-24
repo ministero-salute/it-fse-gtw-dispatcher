@@ -46,20 +46,6 @@ public class PriorityUtility {
                 throw new BusinessException("Non e' stata specificata una destinazione valida");
         }
 
-        switch (priorityType) {
-            case NULL:
-                destTopic += this.computePriorityPerDocumentType(documentType);
-                break;
-            case LOW:
-                destTopic += Constants.Misc.LOW_PRIORITY;
-                break;
-            case HIGH:
-                destTopic += Constants.Misc.HIGH_PRIORITY;
-                break;
-            default:
-                throw new BusinessException("Error in computing topic priority for notification");
-        }
-
         return destTopic;
     }
 

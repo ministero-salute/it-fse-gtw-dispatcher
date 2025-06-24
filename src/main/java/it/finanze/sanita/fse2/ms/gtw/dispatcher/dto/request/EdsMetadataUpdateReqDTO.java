@@ -20,4 +20,5 @@ public class EdsMetadataUpdateReqDTO {
     private String idDoc;
     private String workflowInstanceId;
     private PublicationMetadataReqDTO body;
+    private String fiscalCode;
 }

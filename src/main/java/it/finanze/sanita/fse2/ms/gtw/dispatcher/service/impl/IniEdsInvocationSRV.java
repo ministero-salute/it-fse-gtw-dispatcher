@@ -51,7 +51,8 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		try {
 
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
-					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null, jwtPayloadToken.getIss());
+													fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null, 
+													jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(), jwtPayloadToken.getSubject_organization_id());
 
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
@@ -63,18 +64,23 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 	}
 
 	private IniEdsInvocationETY buildETY(final String workflowInstanceId, final String bundleJson, final String submissionSetEntryJson,
-			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer) {
+			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer, final String fiscalCode, final String rde) {
 		IniEdsInvocationETY out = new IniEdsInvocationETY();
 
 		out.setWorkflowInstanceId(workflowInstanceId);
+		
 		if(!StringUtility.isNullOrEmpty(bundleJson)) {
 			out.setData(Document.parse(bundleJson));	
 		}
 
 		out.setIssuer(issuer);
+
 		if (!StringUtility.isNullOrEmpty(rifIni)) {
 			out.setRiferimentoIni(rifIni);
 		}
+
+		out.setFiscalCode(fiscalCode);
+		out.setRde(rde);
 
 		List<Document> metadata = new ArrayList<>();
 		
@@ -107,8 +113,9 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		Boolean output = false;
 		try {
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
-					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), identificativoDocumento,
-					jwtPayloadToken.getIss());
+													fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), identificativoDocumento,
+													jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(), jwtPayloadToken.getSubject_organization_id());
+													
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
 		} catch(Exception ex) {
