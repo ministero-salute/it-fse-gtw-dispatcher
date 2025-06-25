@@ -50,12 +50,6 @@ public class KafkaTopicCFG {
 	private String dispatcherIndexerRetryDeleteTopic;
 
 	/**
-	 * Topic publisher.
-	 */
-	@Value("${kafka.dispatcher-publisher.base-topic}")
-	private String dispatcherPublisherTopic;
-	
-	/**
 	 * Log publisher.
 	 */
 	@Value("${kafka.log.base-topic}")
@@ -74,7 +68,6 @@ public class KafkaTopicCFG {
 			statusManagerTopic = Constants.Profile.TEST_PREFIX + statusManagerTopic;
 			dispatcherIndexerTopic = Constants.Profile.TEST_PREFIX + dispatcherIndexerTopic;
 			dispatcherIndexerRetryDeleteTopic = Constants.Profile.TEST_PREFIX + dispatcherIndexerRetryDeleteTopic;
-			dispatcherPublisherTopic = Constants.Profile.TEST_PREFIX + dispatcherPublisherTopic;
 			logTopic = Constants.Profile.TEST_PREFIX + logTopic;
 			dispatcherIndexerRetryUpdateTopic = Constants.Profile.TEST_PREFIX + dispatcherIndexerRetryUpdateTopic;
 		}
