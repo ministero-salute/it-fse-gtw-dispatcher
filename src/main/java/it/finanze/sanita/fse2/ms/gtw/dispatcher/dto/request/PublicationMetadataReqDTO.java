@@ -13,16 +13,15 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
 import java.util.List;
 
-import jakarta.validation.constraints.Size;
-
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AdministrativeReqEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,17 +33,17 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PublicationMetadataReqDTO {
 
-	@Schema(description = "Tipologia struttura che ha prodotto il documento", required = true)
+	@Schema(description = "Tipologia struttura che ha prodotto il documento", requiredMode = RequiredMode.REQUIRED)
 	private HealthcareFacilityEnum tipologiaStruttura;
 
 	@Size(min = 0, max = 100)
 	@ArraySchema(schema = @Schema(maxLength = 1000, description = "Regola di accesso"))
 	private List<String> attiCliniciRegoleAccesso;
 
-	@Schema(description = "Tipo documento alto livello", required = true)
+	@Schema(description = "Tipo documento alto livello", requiredMode = RequiredMode.REQUIRED)
 	private TipoDocAltoLivEnum tipoDocumentoLivAlto;
 
-	@Schema(description = "Assetto organizzativo che ha portato alla creazione del documento", required = true)
+	@Schema(description = "Assetto organizzativo che ha portato alla creazione del documento", requiredMode = RequiredMode.REQUIRED)
 	private PracticeSettingCodeEnum assettoOrganizzativo;
 
 	@Schema(description = "Data inizio prestazione")
@@ -59,10 +58,10 @@ public class PublicationMetadataReqDTO {
 	@Size(min = 0, max = 100)
 	private String conservazioneANorma;
 
-	@Schema(description = "Tipo attività clinica",required = true)
+	@Schema(description = "Tipo attività clinica", requiredMode = RequiredMode.REQUIRED)
 	private AttivitaClinicaEnum tipoAttivitaClinica;
 
-	@Schema(description = "Identificativo sottomissione",required = true)
+	@Schema(description = "Identificativo sottomissione", requiredMode = RequiredMode.REQUIRED)
 	@Size(min = 0, max = 100)
 	private String identificativoSottomissione;
 	

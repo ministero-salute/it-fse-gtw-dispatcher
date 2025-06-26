@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 import com.fasterxml.jackson.databind.annotation.JacksonStdImpl;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthDataFormatEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
@@ -42,7 +43,7 @@ public class ValidationCDAReqDTO{
     @Schema(description = "Modalità di iniezione del CDA")
     private InjectionModeEnum mode;
 
-    @Schema(description = "Attività del gateway", required = true)
+    @Schema(description = "Attività del gateway", requiredMode = RequiredMode.REQUIRED)
     private ActivityEnum activity;
     
 }
