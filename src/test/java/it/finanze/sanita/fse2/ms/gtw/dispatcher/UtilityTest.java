@@ -41,7 +41,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.PriorityDocumentCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.ValidationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTHeaderDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
@@ -63,10 +62,7 @@ class UtilityTest extends AbstractTest{
 
 	@MockitoSpyBean
     ValidationCFG validationCfg;
-    
-    @MockitoSpyBean
-    PriorityDocumentCFG priorityDocumentCfg;
-    
+     
     @Autowired
     LoggerHelper logger;
     
