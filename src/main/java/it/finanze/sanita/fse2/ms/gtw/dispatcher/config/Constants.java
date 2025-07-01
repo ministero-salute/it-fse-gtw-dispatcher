@@ -103,6 +103,10 @@ public final class Constants {
 		public static final String LOG_TYPE_CONTROL = "control-structured-log";
 		public static final int MAX_SIZE_WARNING = 200000;
 		public static final String BENCHMARK_ISSUER = "TEST-BENCHMARK";
+
+		public static final String MASTER_ID_SEPARATOR = "^";
+		public static final String WIF_SUFFIX = "^^^^urn:ihe:iti:xdw:2013:workflowInstanceId";
+		public static final String WIF_SEPARATOR = ".";
 		
 		
 		private App() {

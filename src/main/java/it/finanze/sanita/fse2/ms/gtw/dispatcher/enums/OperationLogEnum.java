@@ -21,6 +21,8 @@ public enum OperationLogEnum implements ILogEnum {
 	DELETE_CDA2("DELETE-CDA2","Delete CDA2"),
 	UPDATE_METADATA_CDA2("UPDATE-CDA2","Update metadata CDA2"),
 	TRAS_CDA2("TRAS-CDA2", "Trasmissione CDA2"),
+	VAL_FHIR("VAL-FHIR", "Validazione FHIR"),
+	PUB_FHIR("PUB-FHIR", "Pubblicazione FHIR"),
 	KAFKA_SENDING_MESSAGE("KAFKA-SENDING-MESSAGE", "Invio Messaggio su Kafka"),
 	MONGO("MONGO", "Salvataggio/Query su Mongo");
 

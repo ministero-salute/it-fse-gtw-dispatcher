@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
+import java.io.IOException;
 import java.util.Date;
 
 import org.jsoup.Jsoup;
@@ -23,8 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.IValidationCTL;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DirectFhirDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
@@ -37,6 +40,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.SignerUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import jakarta.servlet.http.HttpServletRequest;
@@ -119,4 +123,58 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		return new ResponseEntity<>(new ValidationResDTO(traceInfoDTO, workflowInstanceId, warning), HttpStatus.OK);
 	}
 
+	@Override
+	public ResponseEntity<ValidationResDTO> fhirValidate(ValidationFHIRReqDTO requestBody, MultipartFile file,
+			HttpServletRequest request) {
+		final Date startDateOperation = new Date();
+		LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
+
+		String workflowInstanceId = Constants.App.MISSING_WORKFLOW_PLACEHOLDER;
+		JWTPayloadDTO jwtPayloadToken = null;
+		ValidationFHIRReqDTO jsonObj = null;
+		String warning = null;
+
+		try {
+
+			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.FHIR_VALIDATION);
+			jsonObj = getAndValidateValidationFhirReq(request.getParameter("requestBody"));
+
+			DirectFhirDTO directFhirDTO = getAndValidateFhirFile(file);
+			workflowInstanceId = FhirUtility.getWorkflowInstanceId(directFhirDTO.getFhir());
+
+			log.info("[START] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
+
+			String issuer = jwtPayloadToken.getIss();
+			String result = fhirValidate(directFhirDTO.getFhir(), jsonObj.getActivity(), workflowInstanceId, issuer);
+			if (!StringUtility.isNullOrEmpty(result)) {
+			    warning += result;
+			}
+
+			String message = null;
+			if (jsonObj.getActivity().equals(ActivityEnum.VERIFICA)) {
+				message = "Attenzione - è stato chiamato l'endpoint di validazione con VERIFICA";
+			}
+
+			if (!jsonObj.getActivity().equals(ActivityEnum.VERIFICA)) {
+				kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS, message, jwtPayloadToken);
+				logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation FHIR completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_FHIR, ResultLogEnum.OK, startDateOperation, "TODO documentType",
+						jwtPayloadToken,"TODO typeIdExtension");
+			}
+			 
+			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
+		} catch (final ValidationException e) {
+			errorHandlerSRV.validationExceptionHandler(startDateOperation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, null);
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
+		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
+			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
+		}
+		
+		log.info("[EXIT] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
+
+		return new ResponseEntity<>(new ValidationResDTO(traceInfoDTO, workflowInstanceId, warning), HttpStatus.OK);
+	}
 }

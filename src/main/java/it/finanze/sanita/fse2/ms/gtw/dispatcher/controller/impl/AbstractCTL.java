@@ -23,16 +23,15 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.create
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createWorkflowInstanceId;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -45,6 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
@@ -54,9 +54,11 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DirectFhirDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
@@ -67,24 +69,13 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationR
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
@@ -97,6 +88,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.DirectFhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import jakarta.annotation.Nullable;
@@ -116,6 +108,9 @@ public abstract class AbstractCTL {
 
     @Autowired
 	private IValidatorClient validatorClient;
+
+	@Autowired
+	private IFhirValidatorClient fhirValidatorClient;
 
     @Autowired
 	private ICdaFacadeSRV cdaFacadeSRV;
@@ -149,6 +144,9 @@ public abstract class AbstractCTL {
 	
 	@Autowired
 	private IConfigSRV configSRV;
+
+	@Autowired
+	private DirectFhirUtility directFhirUtility;
 
 
 	protected LogTraceInfoDTO getLogTraceInfo() {
@@ -239,6 +237,16 @@ public abstract class AbstractCTL {
 			out = "Il campo activity deve essere valorizzato.";
 		}  
 		
+		return out;
+	}
+
+		protected String checkFhirValidationMandatoryElements(final ValidationFHIRReqDTO jsonObj) {
+		String out = null;
+
+		if (jsonObj.getActivity() == null) {
+			out = "Il campo activity deve essere valorizzato.";
+		}
+
 		return out;
 	}
  
@@ -780,7 +788,99 @@ public abstract class AbstractCTL {
 
 		return new ResponseWifDTO(wif, logTraceDTO, warning);
 	}
- 
-   
 
+	protected DirectFhirDTO getAndValidateFhirFile(final MultipartFile file) throws IOException {
+
+		try {
+			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
+			if (file != null && file.getBytes().length > 0) {
+				result = null;
+			}
+
+			if (result != null) {
+                String errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
+                final ErrorResponseDTO error = ErrorResponseDTO.builder()
+						.type(result.getType()).title(result.getTitle())
+						.instance(errorInstance).detail(result.getTitle()).build();
+				throw new ValidationException(error);
+			}
+
+			byte[] inputBytes = file.getBytes();
+			String filename = file.getOriginalFilename();
+
+			DirectFhirDTO directFhirDTO = new DirectFhirDTO();
+			if (directFhirUtility.isPdf(inputBytes)) {
+				Optional<String> extractedJson = directFhirUtility.extractJsonFromPdf(inputBytes);
+				if (extractedJson.isEmpty()) {
+					log.error("There is no Bundle attachment to the file.");
+					throw new IllegalArgumentException("There is no Bundle attachment to the file.");
+				}
+				directFhirDTO.setFhir(extractedJson.get());
+				directFhirDTO.setSourceType(DirectFhirSourceEnum.PDF.getSource());
+			} else if (directFhirUtility.isJson(inputBytes, filename)) {
+				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
+				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
+			}
+
+			return directFhirDTO;
+
+		} catch (final ValidationException validationE) {
+			throw validationE;
+		} catch (final IOException e) {
+			log.error("Error in extracting Bundle from file: ", e);
+			throw new BusinessException(e);
+		} catch (final Exception e) {
+			log.error("Generic error io in fhir file :", e);
+			throw new BusinessException(e);
+		}
+	}
+
+	protected String fhirValidate(final String fhir, final ActivityEnum activity, final String workflowInstanceId, final String issuer) {
+		String errorDetail = "";
+		final ValidationFhirResponseDTO rawValRes = fhirValidatorClient.validate(fhir, workflowInstanceId);
+
+		//ValidationFhirResponseDTO rawValRes = new ValidationFhirResponseDTO();
+		//rawValRes.setIssues(new ArrayList<>());
+
+		if (!rawValRes.getIssues().isEmpty()) {
+			final RestExecutionResultEnum result = RestExecutionResultEnum.FHIR_VALIDATOR_ERROR;
+			errorDetail = result.getTitle();
+			List<String> messageDetails = rawValRes.getIssues().stream().map(e-> e.getDetail()).collect(Collectors.toList());
+			errorDetail = String.join(",", messageDetails);
+
+			boolean hasError = rawValRes.getIssues().stream()
+				    .anyMatch(e -> IssueSeverityEnum.ERROR.equals(e.getSeverity()) || IssueSeverityEnum.FATAL.equals(e.getSeverity()));
+
+			if (hasError) {
+				final ErrorResponseDTO error = ErrorResponseDTO.builder()
+						.type(result.getType()).title(result.getTitle())
+						.instance("/validation/error").detail(errorDetail).build();
+
+				throw new ValidationException(error);
+			}
+		} else if (ActivityEnum.VALIDATION.equals(activity)) {
+			final String hashedFHIR = StringUtility.encodeSHA256B64(fhir);
+			cdaFacadeSRV.create(hashedFHIR, workflowInstanceId, null, null);
+		}
+		return errorDetail;
+	}
+
+	protected ValidationFHIRReqDTO getAndValidateValidationFhirReq(final String jsonREQ) {
+
+		final ValidationFHIRReqDTO out = StringUtility.fromJSONJackson(jsonREQ, ValidationFHIRReqDTO.class);
+		final String errorMsg = checkFhirValidationMandatoryElements(out);
+
+		if (errorMsg != null) {
+
+			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
+					.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
+					.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
+					.detail(errorMsg).build();
+
+			throw new ValidationException(error);
+		}
+
+		return out;
+	}
 }

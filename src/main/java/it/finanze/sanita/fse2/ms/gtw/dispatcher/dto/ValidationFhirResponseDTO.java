@@ -9,33 +9,23 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
 
-import lombok.Getter;
+import java.util.List;
 
-public enum EventTypeEnum {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-	VALIDATION("VALIDATION"),
-	FHIR_VALIDATION("FHIR_VALIDATION"),
-	VALIDATION_FOR_PUBLICATION("VALIDATION_FOR_PUBLICATION"),
-	VALIDATION_FOR_REPLACE("VALIDATION_FOR_REPLACE"),
-	PUBLICATION("PUBLICATION"),
-	REPLACE("REPLACE"),
-	FEEDING("FEEDING"),
-	DELETE("DELETE"),
-	RIFERIMENTI_INI("RIFERIMENTI_INI"),
-	EDS_DELETE("EDS_DELETE"),
-	EDS_UPDATE("EDS_UPDATE"),
-	INI_DELETE("INI_DELETE"),
-	INI_UPDATE("INI_UPDATE"),
-	UPDATE("UPDATE"),
-	GENERIC_ERROR("Generic error from dispatcher");
-
-	@Getter
-	private String name;
-
-	private EventTypeEnum(String inName) {
-		name = inName;
-	}
-
+/**
+ *	DTO used to return validation result.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ValidationFhirResponseDTO  {
+ 
+	private List<IssueDto> issues;
+	 
 }
+
