@@ -50,5 +50,18 @@ public class DispatcherApplication {
     public RestTemplate restTemplateIni(RestTemplateBuilder builder) {
     	return builder.errorHandler(new RestTemplateResponseErrorHandler()).build();
     }
+
+    /**
+     * Definizione rest template.
+     *
+     * @return	rest template
+     */
+    @Bean
+    @Qualifier("restTemplateWithErrorHandler")
+    public RestTemplate restTemplateIni() {
+        RestTemplate rt = new RestTemplate();
+        rt.setErrorHandler(new RestTemplateResponseErrorHandler());
+        return rt;
+    }
    
 }
