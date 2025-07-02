@@ -451,7 +451,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// [2] Send delete request to EDS
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
-			if(!configSRV.isRemoveEds()) {
+			if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(iniReference.getMockEds())) {
 				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id());
 				// Exit if necessary
 				Objects.requireNonNull(edsResponse, "PublicationCTL returned an error - edsResponse is null!");

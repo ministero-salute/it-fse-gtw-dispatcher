@@ -740,7 +740,7 @@ public abstract class AbstractCTL {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
 				}
 
-				if(!configSRV.isRemoveEds()) {
+				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
 					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, requestBody,jwtPayloadToken.getPerson_id()));
 					if(edsResponse.isEsito()) {
 						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
