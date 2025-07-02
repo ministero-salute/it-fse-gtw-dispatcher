@@ -31,6 +31,8 @@ public class IniReferenceResponseDTO extends ResponseDTO {
 	private List<String> administrativeRequest;
 	
 	private String authorInstitution;
+	
+	private Boolean mockEds;
 
 	public IniReferenceResponseDTO() {
 		super();
