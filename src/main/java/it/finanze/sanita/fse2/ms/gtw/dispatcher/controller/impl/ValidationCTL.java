@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 import java.io.IOException;
 import java.util.Date;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,9 +134,13 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		JWTPayloadDTO jwtPayloadToken = null;
 		ValidationFHIRReqDTO jsonObj = null;
 		String warning = null;
+		
+		if(ActivityEnum.VALIDATION.equals(requestBody.getActivity())){
+			throw new NotImplementedException("La funzionalità al momento non è permessa");
+		}
 
 		try {
-
+			
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.FHIR_VALIDATION);
 			jsonObj = getAndValidateValidationFhirReq(request.getParameter("requestBody"));
 
@@ -157,8 +162,7 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 
 			if (!jsonObj.getActivity().equals(ActivityEnum.VERIFICA)) {
 				kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS, message, jwtPayloadToken);
-				logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation FHIR completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_FHIR, ResultLogEnum.OK, startDateOperation, "TODO documentType",
-						jwtPayloadToken,"TODO typeIdExtension");
+				logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation FHIR completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_FHIR, ResultLogEnum.OK, startDateOperation, "TODO documentType", jwtPayloadToken,"TODO typeIdExtension");
 			}
 			 
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());

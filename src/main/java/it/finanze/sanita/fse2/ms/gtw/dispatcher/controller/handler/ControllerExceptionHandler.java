@@ -14,6 +14,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
+
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -261,6 +263,18 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 
+		return new ResponseEntity<>(out, headers, status);
+	}
+	
+	@ExceptionHandler(value = {NotImplementedException.class})
+	protected ResponseEntity<ErrorResponseDTO> handleNotImplementedException(final NotImplementedException ex, final WebRequest request) {
+		int status = 503;
+
+		LogTraceInfoDTO traceInfo = getLogTraceInfo();
+		ErrorResponseDTO out = new ErrorResponseDTO(traceInfo, RestExecutionResultEnum.NOT_IMPLEMENTED_EXCEPTION.getType(), RestExecutionResultEnum.NOT_IMPLEMENTED_EXCEPTION.getTitle(), 
+				ex.getMessage(), status, ErrorInstanceEnum.NO_INFO.getInstance());
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 		return new ResponseEntity<>(out, headers, status);
 	}
 
