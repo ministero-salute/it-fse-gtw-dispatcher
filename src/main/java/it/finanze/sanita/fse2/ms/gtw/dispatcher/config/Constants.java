@@ -107,6 +107,8 @@ public final class Constants {
 		public static final String MASTER_ID_SEPARATOR = "^";
 		public static final String WIF_SUFFIX = "^^^^urn:ihe:iti:xdw:2013:workflowInstanceId";
 		public static final String WIF_SEPARATOR = ".";
+
+		public static final String JSON_EXTENSION = ".json";
 		
 		
 		private App() {

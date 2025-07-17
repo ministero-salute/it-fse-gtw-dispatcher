@@ -134,18 +134,14 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		JWTPayloadDTO jwtPayloadToken = null;
 		ValidationFHIRReqDTO jsonObj = null;
 		String warning = null;
-		
-		if(ActivityEnum.VALIDATION.equals(requestBody.getActivity())){
-			throw new NotImplementedException("La funzionalità al momento non è permessa");
-		}
 
 		try {
 			
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.FHIR_VALIDATION);
 			jsonObj = getAndValidateValidationFhirReq(request.getParameter("requestBody"));
 
-			DirectFhirDTO directFhirDTO = getAndValidateFhirFile(file);
-			workflowInstanceId = FhirUtility.getWorkflowInstanceId(directFhirDTO.getFhir());
+			DirectFhirDTO directFhirDTO = getAndValidateFhirFile(file, jsonObj.getMode());
+			workflowInstanceId = directFhirDTO.getWii();
 
 			log.info("[START] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
 

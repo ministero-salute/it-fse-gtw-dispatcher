@@ -14,4 +14,8 @@ public class DirectFhirDTO {
     private String sourceType;
 
     private String fhir;
+
+    private String wii;
+
+    private String filename;
 }

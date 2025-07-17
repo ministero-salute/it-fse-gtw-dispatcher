@@ -19,9 +19,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.EDS_U
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_UPDATE;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.RIFERIMENTI_INI;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.get;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createMasterIdError;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createWorkflowInstanceId;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +29,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -47,13 +47,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.CDACFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DirectFhirDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
@@ -88,7 +84,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.DirectFhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import jakarta.annotation.Nullable;
@@ -119,6 +114,9 @@ public abstract class AbstractCTL {
 	private CDACFG cdaCfg;
 
 	@Autowired
+	private FHIRCFG fhirCfg;
+
+	@Autowired
 	protected MicroservicesURLCFG msCfg;
 	
 	@Autowired
@@ -144,9 +142,6 @@ public abstract class AbstractCTL {
 	
 	@Autowired
 	private IConfigSRV configSRV;
-
-	@Autowired
-	private DirectFhirUtility directFhirUtility;
 
 
 	protected LogTraceInfoDTO getLogTraceInfo() {
@@ -549,6 +544,31 @@ public abstract class AbstractCTL {
 		return out;
 	}
 
+	protected String extractFHIR(final byte[] bytesPDF, final InjectionModeEnum mode) {
+		String out = null;
+		if (InjectionModeEnum.RESOURCE.equals(mode)) {
+			out = FhirUtility.extractJsonFromPdf(bytesPDF);
+		} else if (InjectionModeEnum.ATTACHMENT.equals(mode)) {
+			out = PDFUtility.extractCDAFromAttachments(bytesPDF, fhirCfg.getFhirAttachmentName());
+		} else {
+			out = PDFUtility.unenvelopeA2(bytesPDF);
+			if (StringUtility.isNullOrEmpty(out)) {
+				out = PDFUtility.extractCDAFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
+			}
+		}
+
+		if (StringUtility.isNullOrEmpty(out)) {
+			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.title(RestExecutionResultEnum.MINING_CDA_ERROR.getTitle())
+					.type(RestExecutionResultEnum.MINING_CDA_ERROR.getType())
+					.instance(ErrorInstanceEnum.CDA_EXTRACTION.getInstance())
+					.detail(ErrorInstanceEnum.CDA_EXTRACTION.getDescription()).build();
+
+			throw new ValidationException(error);
+		}
+		return out;
+	}
+
 	protected String cdaWithoutLegalAuthenticator(final String cda) {
 		Document doc = Jsoup.parse(cda, "", Parser.xmlParser());
 		Element authenticator = doc.selectFirst("LegalAuthenticator");
@@ -793,7 +813,7 @@ public abstract class AbstractCTL {
 		return new ResponseWifDTO(wif, logTraceDTO, warning);
 	}
 
-	protected DirectFhirDTO getAndValidateFhirFile(final MultipartFile file) throws IOException {
+	protected DirectFhirDTO getAndValidateFhirFile(final MultipartFile file, InjectionModeEnum mode) throws IOException {
 
 		try {
 			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
@@ -813,17 +833,16 @@ public abstract class AbstractCTL {
 			String filename = file.getOriginalFilename();
 
 			DirectFhirDTO directFhirDTO = new DirectFhirDTO();
-			if (directFhirUtility.isPdf(inputBytes)) {
-				Optional<String> extractedJson = directFhirUtility.extractJsonFromPdf(inputBytes);
-				if (extractedJson.isEmpty()) {
-					log.error("There is no Bundle attachment to the file.");
-					throw new IllegalArgumentException("There is no Bundle attachment to the file.");
-				}
-				directFhirDTO.setFhir(extractedJson.get());
+			if (FhirUtility.isPdf(inputBytes)) {
+				String extractedJson = extractFHIR(inputBytes, mode);
+				directFhirDTO.setFhir(extractedJson);
 				directFhirDTO.setSourceType(DirectFhirSourceEnum.PDF.getSource());
-			} else if (directFhirUtility.isJson(inputBytes, filename)) {
+				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceIdFromPDF(extractedJson));
+				directFhirDTO.setFilename(filename);
+			} else if (FhirUtility.isJson(inputBytes, filename)) {
 				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
 				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
+				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId());
 			}
 
 			return directFhirDTO;

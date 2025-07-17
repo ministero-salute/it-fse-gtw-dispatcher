@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JacksonStdImpl;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,5 +38,8 @@ public class ValidationFHIRReqDTO{
 
     @Schema(description = "Attività del gateway", required = true)
     private ActivityEnum activity;
+
+    @Schema(description = "Modalità di iniezione del FHIR", required = true)
+    private InjectionModeEnum mode;
     
 }
