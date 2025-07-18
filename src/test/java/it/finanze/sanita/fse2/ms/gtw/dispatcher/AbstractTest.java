@@ -234,7 +234,7 @@ public abstract class AbstractTest {
 		String out = null;
 		out = PDFUtility.unenvelopeA2(bytesPDF);
 		if (StringUtility.isNullOrEmpty(out)) {
-			out = PDFUtility.extractCDAFromAttachments(bytesPDF,cdaCfg.getCdaAttachmentName());
+			out = PDFUtility.extractContentFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
 		}
 		return out;
 	}

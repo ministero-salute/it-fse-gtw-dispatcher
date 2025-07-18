@@ -43,6 +43,7 @@ import com.lowagie.text.pdf.PdfString;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AttachmentDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoAttachmentInPdfException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PDFUtility {
 
 	
-	public static String extractCDAFromAttachments(final byte[] pdf, final String cdaAttachmentName) {
+	public static String extractContentFromAttachments(final byte[] pdf, final String cdaAttachmentName)
+			throws NoAttachmentInPdfException {
 	    String out = null;
 	    final Map<String, AttachmentDTO> attachments = extractAttachments(pdf);
 	    if (!attachments.isEmpty()) {
@@ -67,7 +69,7 @@ public class PDFUtility {
 	}
 	
 
-	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
+	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) throws NoAttachmentInPdfException {
 		Map<String,AttachmentDTO> out = new HashMap<>();
 	    try (PDDocument document = PDDocument.load(bytePDF)) {
 	        PDDocumentCatalog catalog = document.getDocumentCatalog();
@@ -83,7 +85,8 @@ public class PDFUtility {
 	            }
 	        }
 	    } catch (Exception e) {
-	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
+			log.warn("Errore in fase di estrazione allegati da pdf.", e);
+			throw new NoAttachmentInPdfException("Errore in fase di estrazione allegati da pdf" + e.getMessage(), e);
 	    }
 	    
 	    return out;

@@ -524,11 +524,11 @@ public abstract class AbstractCTL {
 		if (InjectionModeEnum.RESOURCE.equals(mode)) {
 			out = PDFUtility.unenvelopeA2(bytesPDF);
 		} else if (InjectionModeEnum.ATTACHMENT.equals(mode)) {
-			out = PDFUtility.extractCDAFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());  
+			out = PDFUtility.extractContentFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
 		} else {
 			out = PDFUtility.unenvelopeA2(bytesPDF);
 			if (StringUtility.isNullOrEmpty(out)) {
-				out = PDFUtility.extractCDAFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());  
+				out = PDFUtility.extractContentFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
 			}
 		}
 
@@ -549,11 +549,11 @@ public abstract class AbstractCTL {
 		if (InjectionModeEnum.RESOURCE.equals(mode)) {
 			out = FhirUtility.extractJsonFromPdf(bytesPDF);
 		} else if (InjectionModeEnum.ATTACHMENT.equals(mode)) {
-			out = PDFUtility.extractCDAFromAttachments(bytesPDF, fhirCfg.getFhirAttachmentName());
+			out = PDFUtility.extractContentFromAttachments(bytesPDF, fhirCfg.getFhirAttachmentName());
 		} else {
 			out = PDFUtility.unenvelopeA2(bytesPDF);
 			if (StringUtility.isNullOrEmpty(out)) {
-				out = PDFUtility.extractCDAFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
+				out = PDFUtility.extractContentFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
 			}
 		}
 
