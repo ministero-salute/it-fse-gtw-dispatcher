@@ -286,7 +286,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	 * @param request	request
 	 * @return			
 	 */
-	@ExceptionHandler(value = { ValidationPublicationErrorException.class, NoAttachmentInPdfException.class })
+	@ExceptionHandler(value = { ValidationPublicationErrorException.class })
 	protected ResponseEntity<ErrorResponseDTO> handleValidationException(final ValidationPublicationErrorException ex, final WebRequest request) {
 		log.error("" , ex);  
 		int status = 400;

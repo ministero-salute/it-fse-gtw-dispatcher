@@ -42,6 +42,9 @@ import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfString;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AttachmentDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoAttachmentInPdfException;
 import lombok.AccessLevel;
@@ -75,8 +78,12 @@ public class PDFUtility {
 	        PDDocumentCatalog catalog = document.getDocumentCatalog();
 	        PDDocumentNameDictionary names = catalog.getNames();
 			if (names == null) {
-				throw new NoAttachmentInPdfException(
-						"Errore in fase di estrazione allegati da pdf: Nessun allegato in PDF");
+				final ErrorResponseDTO error = ErrorResponseDTO.builder()
+						.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
+						.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
+						.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
+						.detail("No Content Attached to PDF").build();
+				throw new NoAttachmentInPdfException(error);
 			}
 
 			PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
