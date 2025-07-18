@@ -551,7 +551,7 @@ public abstract class AbstractCTL {
 		} else if (InjectionModeEnum.ATTACHMENT.equals(mode)) {
 			out = PDFUtility.extractContentFromAttachments(bytesPDF, fhirCfg.getFhirAttachmentName());
 		} else {
-			out = PDFUtility.unenvelopeA2(bytesPDF);
+			out = FhirUtility.extractJsonFromPdf(bytesPDF);
 			if (StringUtility.isNullOrEmpty(out)) {
 				out = PDFUtility.extractContentFromAttachments(bytesPDF, fhirCfg.getFhirAttachmentName());
 			}
