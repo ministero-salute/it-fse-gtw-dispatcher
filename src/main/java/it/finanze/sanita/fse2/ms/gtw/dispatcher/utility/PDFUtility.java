@@ -74,8 +74,12 @@ public class PDFUtility {
 	    try (PDDocument document = PDDocument.load(bytePDF)) {
 	        PDDocumentCatalog catalog = document.getDocumentCatalog();
 	        PDDocumentNameDictionary names = catalog.getNames();
-	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
+			if (names == null) {
+				throw new NoAttachmentInPdfException(
+						"Errore in fase di estrazione allegati da pdf: Nessun allegato in PDF");
+			}
 
+			PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
 	        if (embeddedFiles != null) {
 	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
 	            if (embeddedFileNames != null) {
@@ -86,7 +90,7 @@ public class PDFUtility {
 	        }
 	    } catch (Exception e) {
 			log.warn("Errore in fase di estrazione allegati da pdf.", e);
-			throw new NoAttachmentInPdfException("Errore in fase di estrazione allegati da pdf" + e.getMessage(), e);
+			throw new BusinessException(e.getMessage(), e);
 	    }
 	    
 	    return out;

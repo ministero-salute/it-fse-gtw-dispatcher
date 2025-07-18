@@ -250,7 +250,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(out, headers, status);
 	}
 
-	@ExceptionHandler(value = { BusinessException.class, NoAttachmentInPdfException.class })
+	@ExceptionHandler(value = { BusinessException.class })
 	protected ResponseEntity<ErrorResponseDTO> handleBusinessException(final BusinessException ex, final WebRequest request) {
 		log.error("Errore generico", ex);		
 		int status = 500;
@@ -286,7 +286,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	 * @param request	request
 	 * @return			
 	 */
-	@ExceptionHandler(value = {ValidationPublicationErrorException.class})
+	@ExceptionHandler(value = { ValidationPublicationErrorException.class, NoAttachmentInPdfException.class })
 	protected ResponseEntity<ErrorResponseDTO> handleValidationException(final ValidationPublicationErrorException ex, final WebRequest request) {
 		log.error("" , ex);  
 		int status = 400;
