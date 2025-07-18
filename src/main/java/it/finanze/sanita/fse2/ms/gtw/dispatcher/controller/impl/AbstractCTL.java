@@ -553,7 +553,7 @@ public abstract class AbstractCTL {
 		} else {
 			out = PDFUtility.unenvelopeA2(bytesPDF);
 			if (StringUtility.isNullOrEmpty(out)) {
-				out = PDFUtility.extractContentFromAttachments(bytesPDF, cdaCfg.getCdaAttachmentName());
+				out = PDFUtility.extractContentFromAttachments(bytesPDF, fhirCfg.getFhirAttachmentName());
 			}
 		}
 
