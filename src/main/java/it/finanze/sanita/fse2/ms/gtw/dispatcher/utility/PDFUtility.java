@@ -95,7 +95,7 @@ public class PDFUtility {
 	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
 	            }
 	        }
-	    } catch (Exception e) {
+		} catch (IOException e) {
 			log.warn("Errore in fase di estrazione allegati da pdf.", e);
 			throw new BusinessException(e.getMessage(), e);
 	    }
