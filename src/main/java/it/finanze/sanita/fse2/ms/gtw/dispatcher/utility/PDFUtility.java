@@ -71,22 +71,14 @@ public class PDFUtility {
 	    return out;
 	}
 	
-
-	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) throws NoAttachmentInPdfException {
+ 
+	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
 		Map<String,AttachmentDTO> out = new HashMap<>();
 	    try (PDDocument document = PDDocument.load(bytePDF)) {
 	        PDDocumentCatalog catalog = document.getDocumentCatalog();
 	        PDDocumentNameDictionary names = catalog.getNames();
-			if (names == null) {
-				final ErrorResponseDTO error = ErrorResponseDTO.builder()
-						.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
-						.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
-						.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
-						.detail("No Content Attached to PDF").build();
-				throw new NoAttachmentInPdfException(error);
-			}
+	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
 
-			PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
 	        if (embeddedFiles != null) {
 	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
 	            if (embeddedFileNames != null) {
@@ -95,9 +87,8 @@ public class PDFUtility {
 	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
 	            }
 	        }
-		} catch (IOException e) {
-			log.warn("Errore in fase di estrazione allegati da pdf.", e);
-			throw new BusinessException(e.getMessage(), e);
+	    } catch (Exception e) {
+	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
 	    }
 	    
 	    return out;

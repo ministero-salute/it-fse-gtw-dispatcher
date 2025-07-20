@@ -2,9 +2,12 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.*;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.FHIR_MAPPING_ERROR;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.VALIDATOR_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.generateWii;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import lombok.AccessLevel;
@@ -82,8 +85,8 @@ public final class FhirUtility {
 			String fullText = stripper.getText(document);
 
 			int startIndex = fullText.indexOf('{');
-			if (startIndex == -1) {
-				throw new IOException("Nessuna apertura di JSON trovata nel testo del PDF.");
+			if (startIndex == -1) { 
+				return "";
 			}
 
 			int braceCount = 0;
