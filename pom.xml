@@ -187,6 +187,30 @@
 		  <groupId>io.opentelemetry.instrumentation</groupId>
 		  <artifactId>opentelemetry-spring-boot-starter</artifactId>
 		</dependency> 
+		
+		<!-- https://mvnrepository.com/artifact/software.amazon.msk/aws-msk-iam-auth -->
+		<dependency>
+		    <groupId>software.amazon.msk</groupId>
+		    <artifactId>aws-msk-iam-auth</artifactId>
+		    <version>2.3.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sts -->
+		<dependency>
+		    <groupId>software.amazon.awssdk</groupId>
+		    <artifactId>sts</artifactId>
+		    <version>2.32.11</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/auth -->
+		<dependency>
+		    <groupId>software.amazon.awssdk</groupId>
+		    <artifactId>auth</artifactId>
+		    <version>2.32.11</version>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>kms</artifactId>
+		    <version>2.32.11</version>
+		</dependency>
 		 
 	</dependencies>
  

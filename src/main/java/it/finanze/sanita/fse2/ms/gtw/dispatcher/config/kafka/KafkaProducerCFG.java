@@ -17,7 +17,6 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -99,6 +98,9 @@ public class KafkaProducerCFG {
 			props.put("kafka.oauth.pwd", kafkaPropCFG.getPwd());
 		}
 
+		if(!StringUtility.isNullOrEmpty(kafkaPropsCfg.getCallbackHandlerClass())) {
+			props.put("sasl.client.callback.handler.class", kafkaPropsCfg.getCallbackHandlerClass());
+		}
 		return props;
 	}
 
@@ -176,6 +178,9 @@ public class KafkaProducerCFG {
 			props.put("kafka.oauth.pwd", kafkaPropCFG.getPwd());
 		}
 
+		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
+			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
+		}
 
 		return props;
 	}

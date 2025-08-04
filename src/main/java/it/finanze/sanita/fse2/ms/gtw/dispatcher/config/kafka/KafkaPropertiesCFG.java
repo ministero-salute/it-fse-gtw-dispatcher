@@ -80,6 +80,9 @@ public class KafkaPropertiesCFG {
 	
 	@Value("${kafka.oauth.pwd}")
 	private String pwd;
+	
+	@Value("${kafka.properties.sasl.client.callback.handler.class:#{null}}")
+	private String callbackHandlerClass;
 
 	@Autowired
 	private ProfileUtility profileUtility;

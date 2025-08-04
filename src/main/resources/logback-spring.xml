@@ -73,6 +73,7 @@
 				<producerConfig>security.protocol=${kafka.properties.security.protocol}</producerConfig>
 				<producerConfig>sasl.mechanism=${kafka.properties.sasl.mechanism}</producerConfig>
 				<producerConfig>sasl.jaas.config=${kafka.properties.sasl.jaas.config}</producerConfig>
+				<producerConfig>sasl.login.callback.handler.class=${kafka.properties.sasl.client.callback.handler.class}</producerConfig>
 				<springProfile name="default">
 					<producerConfig>ssl.truststore.location=${kafka.properties.ssl.truststore.location}</producerConfig>
 					<producerConfig>ssl.truststore.password=${kafka.properties.ssl.truststore.password}</producerConfig>
