@@ -11,18 +11,18 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 public class AzureCfg {
 
-	@Value("${azure.kms.tenant-id}")
+	@Value("${azure.kms.tenant-id:#{null}}")
 	private String tenantId;
 
-	@Value("${azure.kms.client-id}")
+	@Value("${azure.kms.client-id:#{null}}")
 	private String clientId;
 
-	@Value("${azure.kms.client-secret}")
+	@Value("${azure.kms.client-secret:#{null}}")
 	private String clientSecret;
 
-	@Value("${azure.kms.master-key-name}")
+	@Value("${azure.kms.master-key-name:#{null}}")
 	private String masterKeyName;
 
-	@Value("${azure.kms.key-vault-endpoint}")
+	@Value("${azure.kms.key-vault-endpoint:#{null}}")
 	private String keyVaultEndpoint;
 }
