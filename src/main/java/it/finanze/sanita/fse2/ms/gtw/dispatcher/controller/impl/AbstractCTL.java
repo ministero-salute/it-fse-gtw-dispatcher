@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -568,21 +570,28 @@ public abstract class AbstractCTL {
 		}
 		return out;
 	}
-
-	protected String cdaWithoutLegalAuthenticator(final String cda) {
-		Document doc = Jsoup.parse(cda, "", Parser.xmlParser());
-		Element authenticator = doc.selectFirst("LegalAuthenticator");
-		if(authenticator != null) {
-			authenticator.forEach(e -> {
-				// Reset attributes
-				e.attributes().forEach(a -> a.setValue("PLACEHOLDER"));
-				// Reset values on node without children and with text
-				if(e.children().isEmpty() && !e.text().isEmpty()) e.text("PLACEHOLDER");
-			});
-		} else {
-			log.warn("Unable to calculate cda-hash correctly because LegalAuthenticator doesn't exists");
-		}
-		return doc.toString();
+  
+	protected static String cdaWithoutLegalAuthenticator(final String cda) {
+	    Document doc = Jsoup.parse(cda, "", Parser.xmlParser());
+	    Element authenticator = doc.selectFirst("LegalAuthenticator");
+	    
+	    if (authenticator != null) {
+	        Element signature = authenticator.selectFirst("Signature");
+	        if (signature != null) {
+	            signature.remove();
+	        }
+	        
+	        authenticator.forEach(e -> {
+	            e.attributes().forEach(a -> a.setValue("PLACEHOLDER"));
+	            if (e.children().isEmpty() && !e.text().isEmpty()) {
+	                e.text("PLACEHOLDER");
+	            }
+	        });
+	    } else {
+	        log.warn("Unable to calculate cda-hash correctly because LegalAuthenticator doesn't exists");
+	    }
+	    
+	    return doc.toString();
 	}
 
 	protected String validate(final String cda, final ActivityEnum activity, final String workflowInstanceId, final String issuer) {

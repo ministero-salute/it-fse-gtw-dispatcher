@@ -87,7 +87,6 @@ public class KafkaProducerCFG {
 		
 		if (kafkaPropCFG.getTrustorePassword() != null && kafkaPropCFG.getTrustorePassword().length > 0) {
 			props.put("ssl.truststore.password", String.valueOf(kafkaPropCFG.getTrustorePassword()));
-			System.out.println("TRUSTORE PWD:"+String.valueOf(kafkaPropCFG.getTrustorePassword()));
 		}
 
 		if("OAUTHBEARER".equals(kafkaPropCFG.getMechanism())) {
