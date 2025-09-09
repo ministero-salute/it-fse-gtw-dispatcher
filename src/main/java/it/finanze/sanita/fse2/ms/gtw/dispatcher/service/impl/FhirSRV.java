@@ -43,6 +43,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IFhirSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.DateUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -154,7 +155,7 @@ public class FhirSRV implements IFhirSRV {
 		}
 		return sse;
 	}
-
+	
 	private DocumentEntryDTO createDocumentEntry(final org.jsoup.nodes.Document docCDA,
 			final PublicationCreateReplaceMetadataDTO requestBody, final Integer size, final String sha1,
 			AuthorSlotDTO authorSlotDTO) {
@@ -241,6 +242,11 @@ public class FhirSRV implements IFhirSRV {
 			if(!referenceIdList.isEmpty()) {
 				de.setReferenceIdList(referenceIdList);	
 			}
+
+			Element titleElement = docCDA.select("ClinicalDocument > title").first();
+	        if (titleElement != null) {
+	        	de.setTitle(titleElement.text());
+	        }
 
 
 		} catch(final Exception ex) {
