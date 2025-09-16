@@ -21,6 +21,7 @@ public enum HealthcareFacilityEnum {
 	SistemaTS("SistemaTS"),
 	Cittadino("Cittadino"),
 	MdsPN_DGC("MdsPN-DGC");
+	
 
 	@Getter
 	private String code;
