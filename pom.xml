@@ -94,17 +94,17 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-sync</artifactId>
-			<version>5.2.1</version>
+			<version>5.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-core</artifactId>
-			<version>5.2.1</version>
+			<version>5.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>bson</artifactId>
-			<version>5.2.1</version>
+			<version>5.5.1</version>
 		</dependency>
 
 		<!-- KAFKA -->
@@ -131,7 +131,6 @@
 			<artifactId>bcpkix-jdk18on</artifactId>
 			<version>1.80</version>
 		</dependency>
-
 
 		<!-- PDF -->
 		<dependency>
@@ -197,7 +196,6 @@
 	      <groupId>io.opentelemetry</groupId>
 	      <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
 	    </dependency>
-
 		
 		<!-- https://mvnrepository.com/artifact/software.amazon.msk/aws-msk-iam-auth -->
 		<dependency>

@@ -101,8 +101,10 @@ public class KafkaProducerCFG {
 
 		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
 			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
-			props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
 		}
+		
+		props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
+
 		return props;
 	}
 
@@ -182,9 +184,9 @@ public class KafkaProducerCFG {
 
 		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
 			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
-			props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
+			
 		}
-
+		props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
 		return props;
 	}
 
