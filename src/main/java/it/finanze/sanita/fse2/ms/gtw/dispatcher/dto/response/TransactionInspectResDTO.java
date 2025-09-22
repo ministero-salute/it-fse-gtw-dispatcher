@@ -27,7 +27,7 @@ import lombok.Setter;
 public class TransactionInspectResDTO extends ResponseDTO {
 
     
-	@ArraySchema(minItems = 0, maxItems = 1000, schema = @Schema(implementation = StatusCheckDTO.class))
+	@ArraySchema(minItems = 0, maxItems = 1000)
 	private List<StatusCheckDTO> transactionData;
 	
 	public TransactionInspectResDTO() {
