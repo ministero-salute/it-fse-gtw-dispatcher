@@ -26,6 +26,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)  
 public class MongoPropertiesCFG {
 	
+	@Value("${spring.data.mongodb.uri}")
+	private String uri;
+	
 	@Value("${data.mongodb.encryption.enabled}")
 	private boolean encryptionEnabled;
 	
