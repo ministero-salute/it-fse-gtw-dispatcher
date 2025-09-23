@@ -26,6 +26,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 
+import io.opentelemetry.instrumentation.kafkaclients.v2_6.TracingProducerInterceptor;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.oauth2.CustomAuthenticateCallbackHandler;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -100,6 +101,9 @@ public class KafkaProducerCFG {
 		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
 			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
 		}
+		
+		props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
+
 		return props;
 	}
 
@@ -179,8 +183,9 @@ public class KafkaProducerCFG {
 
 		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
 			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
+			
 		}
-
+		props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
 		return props;
 	}
 

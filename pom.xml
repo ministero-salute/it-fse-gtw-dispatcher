@@ -132,7 +132,6 @@
 			<version>1.80</version>
 		</dependency>
 
-
 		<!-- PDF -->
 		<dependency>
 			<groupId>com.github.librepdf</groupId>
@@ -187,6 +186,16 @@
 		  <groupId>io.opentelemetry.instrumentation</groupId>
 		  <artifactId>opentelemetry-spring-boot-starter</artifactId>
 		</dependency> 
+		<dependency>
+	      <groupId>io.opentelemetry.instrumentation</groupId>
+	      <artifactId>opentelemetry-kafka-clients-2.6</artifactId>
+	      <version>2.15.0-alpha</version>
+	    </dependency>
+	
+	    <dependency>
+	      <groupId>io.opentelemetry</groupId>
+	      <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+	    </dependency>
 		
 		<!-- https://mvnrepository.com/artifact/software.amazon.msk/aws-msk-iam-auth -->
 		<dependency>

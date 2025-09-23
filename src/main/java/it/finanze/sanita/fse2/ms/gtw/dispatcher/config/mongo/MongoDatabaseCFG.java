@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
@@ -36,8 +35,6 @@ import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -70,6 +67,9 @@ public class MongoDatabaseCFG {
 
     @Autowired
     private MongoPropertiesCFG mongoPropsCfg;
+    
+    @Autowired
+    private MongoDatabaseFactory factory;
 
     @Value("${data.mongodb.crypting.datakey-id-name}")
     private String dataKeyIdName;
@@ -83,6 +83,7 @@ public class MongoDatabaseCFG {
     @Value("${cloud.provider:#{null}}")
     private CloudProviderEnum cloudProvider;
 
+    
     @PostConstruct
     public void init() {
         mongoClientSettings = MongoClientSettings.builder().applyConnectionString(new ConnectionString(mongoPropsCfg.getUri())).build();
@@ -90,16 +91,11 @@ public class MongoDatabaseCFG {
             generateOrRetrieveDataKeyId(cloudProvider);
         }
     }
-
-    @Bean
-    public MongoDatabaseFactory mongoDatabaseFactory() {
-        MongoClient mongoClient = MongoClients.create(mongoClientSettings);
-        return new SimpleMongoClientDatabaseFactory(mongoClient, mongoPropsCfg.getSchemaName());
-    }
+ 
 
     @Bean
     @Primary
-    public MongoTemplate mongoTemplate(final MongoDatabaseFactory factory, final ApplicationContext appContext) {
+    public MongoTemplate mongoTemplate(final ApplicationContext appContext) {
         final MongoMappingContext mongoMappingContext = new MongoMappingContext();
         mongoMappingContext.setApplicationContext(appContext);
         MappingMongoConverter converter = new MappingMongoConverter(new DefaultDbRefResolver(factory),
