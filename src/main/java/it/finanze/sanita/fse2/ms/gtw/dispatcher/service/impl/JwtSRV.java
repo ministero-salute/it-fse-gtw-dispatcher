@@ -76,7 +76,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 	public void validatePayloadForReplace(JWTPayloadDTO payload) {
 		performCommonValidation(payload);
 		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
-		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.UPDATE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT, PurposeOfUseEnum.UPDATE));
 		isValidLocality(payload.getLocality());
 	}
 
