@@ -39,7 +39,7 @@ public interface IKafkaSRV {
 	 * @param documentType
 	 * @param destinationTypeEnum
 	 */
-	void notifyChannel(String key, String value, PriorityTypeEnum priorityType, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationTypeEnum);
+	void notifyChannel(String key, String value, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationTypeEnum);
 	
 	void sendValidationStatus(String traceId, String workflowInstanceId, EventStatusEnum eventStatus, String message,JWTPayloadDTO jwtClaimDTO); 
 	void sendValidationStatus(String traceId,String workflowInstanceId, EventStatusEnum eventStatus, String message,

@@ -11,28 +11,30 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISSING_DOC_TYPE_PLACEHOLDER;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.BLOCKING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.EDS_UPDATE;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_UPDATE;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.RIFERIMENTI_INI;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.get;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.*;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createMasterIdError;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createWorkflowInstanceId;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -49,9 +51,14 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.CDACFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FHIRCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DirectFhirDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
@@ -74,6 +81,20 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDT
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.IssueSeverityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
@@ -86,6 +107,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import jakarta.annotation.Nullable;
@@ -99,7 +121,8 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class AbstractCTL {
 	
 	private static final String TEAM_OID = "2.16.840.1.113883.2.9.4.3.7";
-	 
+	private static final String LOINC_SYSTEM = "2.16.840.1.113883.6.1";
+	
 	@Autowired
 	private Tracer tracer;
 
@@ -365,6 +388,10 @@ public abstract class AbstractCTL {
 				jwtSRV.validatePayloadForValidation(token.getPayload());
 				break;
 			case FHIR_VALIDATION:
+				jwtSRV.validatePayloadForValidation(token.getPayload());
+				break;
+			case FHIR_CREATE:
+				//TODO 
 				// Da incontro ocn gli sme è emerso che la verifica è la stessa della validazione CDA
 				jwtSRV.validatePayloadForValidation(token.getPayload());
 				break;
@@ -436,6 +463,17 @@ public abstract class AbstractCTL {
 		validateResourceHl7Type(jwtPayloadToken, docT);
 		validatePersonId(jwtPayloadToken, docT);
 	}
+	
+	
+	protected void validateJWTFhirDiretto(final JWTPayloadDTO jwtPayloadToken, final String bundle) {
+		String hl7Code = FhirUtility.extractValue(bundle, "Composition", "type.coding[0].code");
+		String hl7Type = "('" + hl7Code + "^^" + LOINC_SYSTEM + "')";
+		if(!hl7Type.equals(jwtPayloadToken.getResource_hl7_type())) {
+			String message = "JWT payload: Tipologia documento diversa dalla tipologia di CDA (code - codesystem)";
+			throwInvalidTokenError(ErrorInstanceEnum.DOCUMENT_TYPE_MISMATCH, message);
+		}
+		validatePersonId(jwtPayloadToken, bundle);
+	}
 
 	private void validateResourceHl7Type(JWTPayloadDTO jwtPayloadToken, Document docT) {
 		Elements element = docT.select("code");
@@ -477,6 +515,44 @@ public abstract class AbstractCTL {
 		}
 		
 	}
+	
+	private void validatePersonId(JWTPayloadDTO jwtPayloadToken, String bundleJson) {
+	    List<String> identifiers = FhirUtility.extractValues(bundleJson,"Patient","identifier[*].value");
+
+	    if (identifiers == null || identifiers.isEmpty()) {
+	        String message = "JWT payload: non è stato possibile verificare il codice fiscale del paziente nel Bundle FHIR";
+	        throwInvalidTokenError(ErrorInstanceEnum.PERSON_ID_MISMATCH, message);
+	    }
+
+	    // Estrai il CF dal JWT
+	    String rawPersonId = jwtPayloadToken.getPerson_id();
+	    if (rawPersonId == null || rawPersonId.isEmpty()) {
+	        throwInvalidTokenError(ErrorInstanceEnum.PERSON_ID_MISMATCH, "JWT payload: person_id mancante");
+	    }
+	    String jwtFiscalCode = rawPersonId.split("\\^")[0].split("&")[0].trim();
+
+	    // Normalizziamo e cicliamo sui valori estratti dal Bundle per cercare una corrispondenza
+	    boolean matchFound = false;
+	    for (String idValue : identifiers) {
+	        if (idValue == null) continue;
+	        String candidate = idValue.split("\\^")[0].split("&")[0].trim();
+	        if (jwtFiscalCode.equalsIgnoreCase(candidate)) {
+	            matchFound = true;
+	            break;
+	        }
+	    }
+
+	    if (!matchFound) {
+	        String message = String.format(
+	            "JWT payload: codice fiscale '%s' non corrisponde ad alcun Patient.identifier nel Bundle FHIR",
+	            jwtFiscalCode
+	        );
+	        throwInvalidTokenError(ErrorInstanceEnum.PERSON_ID_MISMATCH, message);
+	    }
+
+	    jwtSRV.checkFiscalCode(jwtFiscalCode, "person_id");
+	}
+
 
 	private void throwInvalidTokenError(ErrorInstanceEnum errorInstance, String errorMessage) {
 		ErrorResponseDTO error = ErrorResponseDTO.builder()
@@ -686,6 +762,23 @@ public abstract class AbstractCTL {
 			return validationInfo;
 		}
 	}
+    
+    protected ValidationDataDTO getValidationInfoFhirBundle(final String bundle, @Nullable String wii) {
+    	String hashedBundle = StringUtility.encodeSHA256B64(bundle);
+
+		ValidationDataDTO validationInfo = cdaFacadeSRV.retrieveValidationInfo(hashedBundle, wii);
+		if (!validationInfo.isCdaValidated()) {
+			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+				.type(RestExecutionResultEnum.CDA_MATCH_ERROR.getType())
+				.title(RestExecutionResultEnum.CDA_MATCH_ERROR.getTitle())
+				.instance(ErrorInstanceEnum.CDA_NOT_VALIDATED.getInstance())
+				.detail("Il CDA non risulta validato").build();
+			
+			throw new ValidationException(error);
+		} else {
+			return validationInfo;
+		}
+	}
 
     protected String checkFormatDate(final String dataInizio, final String dataFine) {
     	String out = null;
@@ -842,17 +935,19 @@ public abstract class AbstractCTL {
 			String filename = file.getOriginalFilename();
 
 			DirectFhirDTO directFhirDTO = new DirectFhirDTO();
-			if (FhirUtility.isPdf(inputBytes)) {
-				String extractedJson = extractFHIR(inputBytes, mode);
-				directFhirDTO.setFhir(extractedJson);
+			if (PDFUtility.isPdf(inputBytes)) {
+				String extractedBundle = extractFHIR(inputBytes, mode);
+				directFhirDTO.setFhir(extractedBundle);
 				directFhirDTO.setSourceType(DirectFhirSourceEnum.PDF.getSource());
-				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceIdFromPDF(extractedJson));
+				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId(extractedBundle));
 				directFhirDTO.setFilename(filename);
-			} else if (FhirUtility.isJson(inputBytes, filename)) {
-				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
-				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
-				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId());
-			}
+			} 
+			
+//			else if (FhirUtility.isJson(inputBytes, filename)) {
+//				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
+//				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
+//				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId());
+//			}
 
 			return directFhirDTO;
 
@@ -871,9 +966,7 @@ public abstract class AbstractCTL {
 		String errorDetail = "";
 		final ValidationFhirResponseDTO rawValRes = fhirValidatorClient.validate(fhir, workflowInstanceId);
 
-		//ValidationFhirResponseDTO rawValRes = new ValidationFhirResponseDTO();
-		//rawValRes.setIssues(new ArrayList<>());
-
+		
 		if (!rawValRes.getIssues().isEmpty()) {
 			final RestExecutionResultEnum result = RestExecutionResultEnum.FHIR_VALIDATOR_ERROR;
 			errorDetail = result.getTitle();
@@ -890,7 +983,9 @@ public abstract class AbstractCTL {
 
 				throw new ValidationException(error);
 			}
-		} else if (ActivityEnum.VALIDATION.equals(activity)) {
+		}
+		
+		if (ActivityEnum.VALIDATION.equals(activity)) {
 			final String hashedFHIR = StringUtility.encodeSHA256B64(fhir);
 			cdaFacadeSRV.create(hashedFHIR, workflowInstanceId, null, null);
 		}

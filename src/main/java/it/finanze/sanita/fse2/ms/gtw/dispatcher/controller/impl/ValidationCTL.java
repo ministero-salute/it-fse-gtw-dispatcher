@@ -14,7 +14,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 import java.io.IOException;
 import java.util.Date;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.SignerUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import jakarta.servlet.http.HttpServletRequest;
@@ -144,6 +142,8 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 			workflowInstanceId = directFhirDTO.getWii();
 
 			log.info("[START] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
+
+			validateJWTFhirDiretto(jwtPayloadToken, directFhirDTO.getFhir());
 
 			String issuer = jwtPayloadToken.getIss();
 			String result = fhirValidate(directFhirDTO.getFhir(), jsonObj.getActivity(), workflowInstanceId, issuer);

@@ -35,7 +35,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PriorityTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
@@ -115,8 +114,7 @@ public class KafkaSRV implements IKafkaSRV {
 	}
 
 	@Override
-	public void notifyChannel(final String key, final String kafkaValue, PriorityTypeEnum priorityFromRequest,
-			TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType) {
+	public void notifyChannel(final String key, final String kafkaValue, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType) {
 		log.debug("Destination: {}", destinationType.name());
 		try {
 

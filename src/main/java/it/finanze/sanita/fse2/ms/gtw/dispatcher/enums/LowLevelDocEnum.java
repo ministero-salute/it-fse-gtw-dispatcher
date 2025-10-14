@@ -10,6 +10,8 @@
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
+import java.util.Arrays;
+
 import lombok.Getter;
 
 @Getter
@@ -45,5 +47,15 @@ public enum LowLevelDocEnum {
 		code = inCode;
 		description = inDescription;
 	}
+	
+	public static LowLevelDocEnum fromCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        return Arrays.stream(LowLevelDocEnum.values())
+                .filter(e -> e.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(null);
+    }
 
 }

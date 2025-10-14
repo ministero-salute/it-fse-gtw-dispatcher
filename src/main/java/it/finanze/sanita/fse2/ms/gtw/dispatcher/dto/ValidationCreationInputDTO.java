@@ -30,8 +30,6 @@ public class ValidationCreationInputDTO {
     
     private Document document;
 
-//    private String kafkaKey;
-
     private String documentSha;
 
     private ResourceDTO fhirResource;
