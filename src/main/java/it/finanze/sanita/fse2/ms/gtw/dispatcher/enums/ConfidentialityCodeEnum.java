@@ -1,6 +1,8 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
 
 
+import java.util.Arrays;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -31,4 +33,13 @@ public enum ConfidentialityCodeEnum {
         return "";
     }
 
+    public static ConfidentialityCodeEnum fromCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        return Arrays.stream(ConfidentialityCodeEnum.values())
+                .filter(e -> e.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(null);
+    }
 }

@@ -16,7 +16,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateRep
 
 public interface IFhirSRV {
 
-	ResourceDTO createFhirResources(String cda, String authorRole, PublicationCreateReplaceMetadataDTO requestBody,
-			 Integer size, String hash, String transformId, String engineId, String organizationId, String authorInstitution,String sha1);
+    ResourceDTO createFhirResources(String cda, String authorRole, PublicationCreateReplaceMetadataDTO requestBody, Integer size, String hash,
+            String transformId, String engineId, String organizationId, String authorInstitution, String sha1);
 
+    ResourceDTO createFhirResourcesFromBundle(String fhirBundleJson, String authorRole, PublicationCreateReplaceMetadataDTO requestBody,
+            Integer size, String hash, String organizationId, String authorInstitution, String sha1);
 }

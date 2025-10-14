@@ -16,8 +16,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateRep
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-import java.util.Date;
-
 /**
  * Interface for service used to handle kafka communications
  */
