@@ -81,11 +81,9 @@ class EngineSRVTest {
 
     @Test
     void testGetStructureObjectID_NoMapException(){
-        Pair<String, String> expectedValue;
         EngineETY engine = new EngineETY();
         engine.setId("656f557479464f1e20f869a7");
 
-        Pair<String, String> actualValue;
         when(engineRepo.getLatestEngine()).thenReturn(engine);
         assertThrows(
                 BusinessException.class,
