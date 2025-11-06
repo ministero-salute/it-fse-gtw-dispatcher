@@ -20,7 +20,8 @@ public enum AdministrativeReqEnum {
 	INPATIENT("INPATIENT", "Regime di ricovero"),
 	NOSSN("NOSSN", "Regime privato"),
 	SSR("SSR", "Regime SSR"),
-	DONOR("DONOR", "Regime donatori");
+	DONOR("DONOR", "Regime donatori"),
+	AUTO("AUTO","Autoprodotto / Taccuino / Cittadino");
 	 
 	private String code;
 	private String description;

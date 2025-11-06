@@ -233,6 +233,7 @@ public enum EventCodeEnum {
 	_971000221109("971000221109","Live attenuated Salmonella enterica subspecies enterica serovar Typhi antigen only vaccine product in oral dose form"),
 	_981000221107("981000221107","Streptococcus pneumoniae antigen only vaccine product"),
 	P99("P99", "Oscuramento del documento"),
+	P00("P00", "De-Oscuramento in alimentazione"),
 	P97("P97", "Oscuramento al genitore"),
 	P98("P98", "Oscuramento all’assistito"),
 	J07BN("J07BN", "Vaccino per Covid-19"),
