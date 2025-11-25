@@ -11,13 +11,14 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -73,5 +74,10 @@ public interface ITransactionInspectCTL {
 			@ApiResponse(responseCode = "504", description = "Endpoint request timed-out", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class)))
 	})
 	TransactionInspectResDTO getEventsByTraceId(@Size(min = 1, max = 100) @PathVariable(required = true, name = "traceId") String traceId,HttpServletRequest request);
-	
+
+    @Operation(summary = "Aggiorna stato finale di esecuzione da EDS")
+    @PostMapping(value = "/status/eds", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+    CallbackTransactionDataResponseDTO postTransactionDataEds(HttpServletRequest request, @Valid @RequestBody CallbackTransactionDataRequestDTO callbackTransactionDataRequestDTO);
+
 }
