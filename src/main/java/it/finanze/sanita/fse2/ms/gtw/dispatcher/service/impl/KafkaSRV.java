@@ -213,6 +213,12 @@ public class KafkaSRV implements IKafkaSRV {
 		sendStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null);
 	}
 
+    @Override
+    public void sendEdsUarStatus(final String workflowInstanceId, final EventStatusEnum eventStatus, final String message) {
+        sendStatusMessage(null, workflowInstanceId, EventTypeEnum.UAR_FINAL_STATUS, eventStatus, message,
+                null, null, null);
+    }
+
 	private String sendObjectAsJson(Object o) {
 		String json;
 		// Try to deserialize message

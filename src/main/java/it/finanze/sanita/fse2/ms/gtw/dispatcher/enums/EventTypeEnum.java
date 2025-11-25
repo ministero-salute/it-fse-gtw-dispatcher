@@ -29,6 +29,7 @@ public enum EventTypeEnum {
 	INI_DELETE("INI_DELETE"),
 	INI_UPDATE("INI_UPDATE"),
 	UPDATE("UPDATE"),
+    UAR_FINAL_STATUS("UAR_FINAL_STATUS"),
 	GENERIC_ERROR("Generic error from dispatcher");
 
 	@Getter

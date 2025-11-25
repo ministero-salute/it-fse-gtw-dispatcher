@@ -34,6 +34,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Size;
 
