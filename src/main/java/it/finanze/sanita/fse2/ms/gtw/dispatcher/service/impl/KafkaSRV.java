@@ -213,6 +213,12 @@ public class KafkaSRV implements IKafkaSRV {
 		sendStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null);
 	}
 
+    @Override
+    public void sendEdsUarStatus(final String workflowInstanceId, final EventStatusEnum eventStatus, final String message) {
+        sendStatusMessageNoJwt(null, workflowInstanceId, EventTypeEnum.UAR_FINAL_STATUS, eventStatus, message,
+                null, null);
+    }
+
 	private String sendObjectAsJson(Object o) {
 		String json;
 		// Try to deserialize message
@@ -235,6 +241,30 @@ public class KafkaSRV implements IKafkaSRV {
 			sendMessage(topic, workflowInstanceId, json, true);
 		}
 	}
+
+
+    private void sendStatusMessageNoJwt(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
+                                   final EventStatusEnum eventStatus, final String message, final String documentId, AttivitaClinicaEnum tipoAttivita) {
+        try {
+            KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder()
+                    .traceId(traceId).eventType(eventType).eventDate(new Date()).eventStatus(eventStatus)
+                    .message(message).identificativoDocumento(documentId).tipoAttivita(tipoAttivita)
+                    .microserviceName(msName).build();
+
+            String json = truncateMessageIfNecessary(statusManagerMessage);
+
+            if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
+                log.info("PRODUCER NON TRANSAZIONALE");
+                sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, false);
+            } else {
+                log.info("PRODUCER TRANSAZIONALE");
+                sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, true);
+            }
+        } catch (Exception ex) {
+            log.error("Error while send status message : ", ex);
+            throw new BusinessException(ex);
+        }
+    }
 
 	private void sendStatusMessage(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
 			final EventStatusEnum eventStatus, final String message, final String documentId,

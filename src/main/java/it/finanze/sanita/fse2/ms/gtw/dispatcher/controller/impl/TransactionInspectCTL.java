@@ -13,11 +13,17 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.ITransactionInspectCTL;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +32,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
+
 @RestController
 @Slf4j
 public class TransactionInspectCTL extends AbstractCTL implements ITransactionInspectCTL {
 
 	@Autowired
 	private ITransactionInspectSRV transactionInspectSRV;
+
+    @Autowired
+    private IKafkaSRV kafkaSRV;
 
 	@Override
 	public TransactionInspectResDTO getEvents(String workflowInstanceId, HttpServletRequest request) {
@@ -59,4 +70,12 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 		log.info("[EXIT] {}() with arguments {}={}", "getEventsByTraceId", "traceId", traceId);
 		return res;
 	}
+
+    @Override
+    public CallbackTransactionDataResponseDTO postTransactionDataEds(HttpServletRequest request, CallbackTransactionDataRequestDTO callbackTransactionDataRequestDTO) {
+        log.info("[START] {}() with arguments {}={}", "postTransactionDataEds", "CallbackTransactionDataRequestDTO", callbackTransactionDataRequestDTO);
+        kafkaSRV.sendEdsUarStatus(callbackTransactionDataRequestDTO.getWorkflowInstanceId(),
+                EventStatusEnum.valueOf(callbackTransactionDataRequestDTO.getStatus()), null);
+        return new CallbackTransactionDataResponseDTO(Boolean.TRUE);
+    }
 }
