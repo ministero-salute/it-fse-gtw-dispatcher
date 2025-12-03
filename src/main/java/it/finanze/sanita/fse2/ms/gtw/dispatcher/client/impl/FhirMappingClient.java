@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -55,4 +56,24 @@ public class FhirMappingClient implements IFhirMappingClient {
 		}
 		return out;
 	}
+
+    @Override
+    public TransformResDTO callConvertDocumentInTransaction(FhirDocumentDTO resourceDTO) {
+        TransformResDTO out = null;
+        log.debug("Fhir Mapping Client - Calling Fhir Mapping to execute conversion");
+        String url = msUrlCFG.getFhirMappingEngineHost() + "/v1/transform/document-to-transaction";
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<FhirDocumentDTO> entity = new HttpEntity<>(resourceDTO, headers);
+        try {
+            out = restTemplate.postForObject(url, entity, TransformResDTO.class);
+        } catch(ResourceAccessException cex) {
+            log.error("Connect error while call document transform :",cex);
+            throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
+        } catch(Exception ex){
+            log.error("Error while convert cda in bundle :",ex);
+            throw new BusinessException("Error while convert cda in bundle :",ex);
+        }
+        return out;
+    }
 }

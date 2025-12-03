@@ -30,10 +30,12 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isNullOrEmpty;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.FhirSRV;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -133,7 +135,6 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	@Autowired
 	private IConfigSRV configSRV;
 
-
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -146,15 +147,21 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 		try {
 			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
-			
-			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+            ResourceDTO resourceDTO = validationInfo.getFhirResource();
+            ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
+			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
+			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
+            validationInfo.setFhirResource(transactionResourceDTO);
+            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationInfo.getDocument()));
-		}
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-		String warning = "";
+        String warning = "";
 
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
@@ -193,7 +200,13 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-			validationInfo = publicationAndReplace(file, request, true,idDoc,traceInfoDTO);
+            validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
+            ResourceDTO resourceDTO = validationInfo.getFhirResource();
+            ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
+            transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
+            transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
+            validationInfo.setFhirResource(transactionResourceDTO);
+            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
 
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -223,9 +236,11 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, e, false, getDocumentType(validationInfo.getDocument()));
-		}
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-		String warning = "";
+        String warning = "";
 
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
@@ -321,121 +336,6 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	}
 
 
-	@Override
-	public ResponseWifDTO delete(String idDoc, HttpServletRequest request) {
-		final Date startOperation = new Date();
-		// Create request tracking
-		LogTraceInfoDTO info = getLogTraceInfo();
-		String workflowInstanceId = createWorkflowInstanceId(idDoc);
-
-		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","delete","traceId", info.getTraceID(),"wif", workflowInstanceId,"idDoc", idDoc);
-
-		JWTPayloadDTO jwtPayloadToken = null;
-		String warning = null;
-
-		String subjApplicationId = null;
-		String subjApplicationVendor = null;
-		String subjApplicationVersion = null;
-
-		if(!isValidMasterId(idDoc)) throw new ValidationException(createMasterIdError());
-
-		try {
-			// Extract token
-			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.DELETE); 
-			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-
-			subjApplicationId = jwtPayloadToken.getSubject_application_id(); 
-			subjApplicationVendor = jwtPayloadToken.getSubject_application_vendor();
-			subjApplicationVersion = jwtPayloadToken.getSubject_application_version();
-
-			// ==============================
-			// [1] Retrieve reference from INI
-			// ==============================
-			IniReferenceResponseDTO iniReference = iniClient.reference(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
-			// Exit if necessary
-			if(!isNullOrEmpty(iniReference.getErrorMessage())) {
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, iniReference.getErrorMessage(), BLOCKING_ERROR, jwtPayloadToken, RIFERIMENTI_INI);
-				throw new IniException(iniReference.getErrorMessage(),workflowInstanceId);	
-			} else {
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Riferimenti trovati: " +iniReference.getUuid(), SUCCESS, jwtPayloadToken, RIFERIMENTI_INI);
-			}
-
-			// ==============================
-			// [2] Send delete request to EDS
-			// ==============================
-			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
-			if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(iniReference.getMockEds())) {
-				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id());
-				// Exit if necessary
-				Objects.requireNonNull(edsResponse, "PublicationCTL returned an error - edsResponse is null!");
-
-				if (!edsResponse.isEsito()) {
-					// Update transaction status
-					kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, edsResponse.getMessageError(), BLOCKING_ERROR, jwtPayloadToken, EDS_DELETE);
-					throw new EdsException("Error encountered while sending delete information to EDS client");
-				} else {
-					// Update transaction status
-					kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Delete effettuata su eds", SUCCESS, jwtPayloadToken, EDS_DELETE);
-				}
-			}
-			
-
-			// ==============================
-			// [3] Send delete request to INI
-			// ==============================
-			DeleteRequestDTO deleteRequestDTO = buildRequestForIni(
-					idDoc,
-					iniReference.getUuid(),
-					jwtPayloadToken,
-					iniReference.getDocumentType(),
-					subjApplicationId,
-					subjApplicationVendor,
-					subjApplicationVersion,
-					workflowInstanceId,
-					iniReference.getAuthorInstitution(),
-					iniReference.getAdministrativeRequest() );
-			IniTraceResponseDTO iniResponse = iniClient.delete(deleteRequestDTO);
-
-			// Check mock errors
-			boolean iniMockMessage = !isNullOrEmpty(iniResponse.getMessage()) && iniResponse.getMessage().contains("Invalid region ip");
-			// Exit if necessary
-			if (iniMockMessage) {
-				throw new MockEnabledException(iniResponse.getMessage(), edsResponse.getMessageError());
-			}
-
-			// Check response errors
-			if(Boolean.FALSE.equals(iniResponse.getEsito())) {
-				// Send to indexer
-				kafkaSRV.sendDeleteRequest(workflowInstanceId, deleteRequestDTO);
-				// Update transaction status
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Transazione presa in carico", EventStatusEnum.ASYNC_RETRY, jwtPayloadToken,INI_DELETE);
-				warning = Misc.WARN_ASYNC_TRANSACTION;
-			} else {
-				// Update transaction status
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Delete effettuata su ini", SUCCESS, jwtPayloadToken, INI_DELETE);
-			}
-
-			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Deletion of CDA completed for document with identifier %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.OK, startOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null);
-		} catch(MockEnabledException me) {
-			throw me;
-		} catch(IniException inEx) {
-			logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Error while delete record from ini %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.KO, startOperation, INI_EXCEPTION.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken);
-			throw inEx;
-
-		} catch (Exception e) {
-			RestExecutionResultEnum errorInstance = RestExecutionResultEnum.GENERIC_ERROR;
-			if (e instanceof ValidationException) {
-				errorInstance = get(((ValidationException) e).getError().getType());
-			}
-
-			logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Error while deleting CDA of document with identifier %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.KO, startOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken);
-			throw e;
-		}
-
-		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}", "delete", "traceId", info.getTraceID(), "wif", workflowInstanceId, "idDoc", idDoc);
-		return new ResponseWifDTO(workflowInstanceId, info, warning);
-	}
-
 	private DeleteRequestDTO buildRequestForIni(final String identificativoDocumento, final List<String> uuid, final JWTPayloadDTO jwtPayloadToken,
 			final String documentType, String applicationId, String applicationVendor, String applicationVersion,
 			final String workflowInstanceId, String authorInstitution, List<String> administrativeRequest) {
@@ -470,15 +370,8 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		return out;
 	}
  
-	 
-	@Override
-	public ResponseWifDTO updateMetadataIti_57(@Size(min = 1, max = 256) String idDoc, PublicationMetadataReqDTO requestBody, HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, true,request);
-	}
-	
-
 	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO) {
-		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION; 
+		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION;
 		ValidationCreationInputDTO validationResult = publicationAndReplaceValidationFhirDiretto(file, request, isReplace,idDoc, traceInfoDTO,eventType);
 
 		String bundleJson = validationResult.getFhirResource()!=null ? validationResult.getFhirResource().getBundleJson() : "";

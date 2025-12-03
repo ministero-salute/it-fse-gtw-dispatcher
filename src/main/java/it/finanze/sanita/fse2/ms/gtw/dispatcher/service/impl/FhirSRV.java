@@ -1,5 +1,7 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -19,12 +22,6 @@ import org.springframework.util.CollectionUtils;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.FhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AuthorSlotDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentEntryDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentReferenceDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
@@ -40,6 +37,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -65,6 +63,23 @@ public class FhirSRV implements IFhirSRV {
             final Integer size, final String hash, String organizationId, final String authorInstitution, String sha1) {
 
         return createBaseResource(fhirBundleJson, authorRole, requestBody, size, hash, "", "", organizationId, authorInstitution, sha1, false);
+    }
+    @Override
+    public ResourceDTO convertDocumentToTransaction(String bundleJson) throws IOException {
+        log.debug("FhirMappingService - Reading FHIR bundle from uploaded file '{}'", bundleJson);
+
+        FhirDocumentDTO fhirDocumentDTO = new FhirDocumentDTO(bundleJson);
+        log.info("FhirMappingService - Calling mapping engine to convert DOCUMENT -> TRANSACTION");
+        TransformResDTO transformRes = client.callConvertDocumentInTransaction(fhirDocumentDTO);
+        ResourceDTO resourceDTO = new ResourceDTO();
+        if (transformRes != null) {
+            resourceDTO.setErrorMessage(transformRes.getErrorMessage());
+            resourceDTO.setBundleJson((StringUtility.toJSON(transformRes.getJson())));
+        }
+
+        log.debug("FhirMappingService - Mapping engine conversion completed");
+
+        return resourceDTO;
     }
 
     private ResourceDTO createBaseResource(final String inputData, String authorRole, final PublicationCreateReplaceMetadataDTO requestBody,
