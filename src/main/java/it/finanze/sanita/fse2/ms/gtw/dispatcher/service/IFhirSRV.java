@@ -13,6 +13,9 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 public interface IFhirSRV {
 
@@ -21,4 +24,7 @@ public interface IFhirSRV {
 
     ResourceDTO createFhirResourcesFromBundle(String fhirBundleJson, String authorRole, PublicationCreateReplaceMetadataDTO requestBody,
             Integer size, String hash, String organizationId, String authorInstitution, String sha1);
+
+    ResourceDTO convertDocumentToTransaction(String bundleJson) throws IOException;
+
 }
