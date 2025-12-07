@@ -50,6 +50,7 @@ import org.springframework.web.multipart.MultipartFile;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
@@ -62,6 +63,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FHIRCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DirectFhirDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentReferenceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
@@ -75,14 +77,17 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateRep
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
@@ -168,6 +173,9 @@ public abstract class AbstractCTL {
 	
 	@Autowired
 	private IConfigSRV configSRV;
+	
+	@Autowired
+	private IFhirMappingClient fhirClient;
 
 
 	protected LogTraceInfoDTO getLogTraceInfo() {
@@ -798,7 +806,12 @@ public abstract class AbstractCTL {
 				}
 
 				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
-					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, requestBody,jwtPayloadToken.getPerson_id()));
+					GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
+					UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
+					req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
+					req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody));
+					TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
+					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()));
 					if(edsResponse.isEsito()) {
 						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
 					} else {
@@ -943,5 +956,14 @@ public abstract class AbstractCTL {
 		}
 
 		return out;
+	}
+	
+	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(PublicationMetadataReqDTO requestBody) {
+		DocumentReferenceDTO output = new DocumentReferenceDTO();
+		output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());
+		output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());
+		output.setFacilityTypeCode(requestBody.getTipologiaStruttura().getCode());
+		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo().getCode());
+		return output;
 	}
 }

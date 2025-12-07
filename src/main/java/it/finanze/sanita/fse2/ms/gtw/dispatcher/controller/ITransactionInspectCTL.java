@@ -20,6 +20,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -75,6 +76,7 @@ public interface ITransactionInspectCTL {
 	})
 	TransactionInspectResDTO getEventsByTraceId(@Size(min = 1, max = 100) @PathVariable(required = true, name = "traceId") String traceId,HttpServletRequest request);
 
+	@Hidden
     @PostMapping(value = "/status/eds", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Aggiorna stato finale di esecuzione da EDS",
