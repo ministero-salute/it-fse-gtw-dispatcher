@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import java.net.URI;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -89,7 +90,7 @@ public class FhirMappingClient implements IFhirMappingClient {
             throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
         } catch(Exception ex){
             log.error("Error while convert cda in bundle :",ex);
-            throw new BusinessException("Error while convert cda in bundle :",ex);
+      throw new BusinessException("Error while convert cda in bundle :", ex);
         }
         return out;
     }
