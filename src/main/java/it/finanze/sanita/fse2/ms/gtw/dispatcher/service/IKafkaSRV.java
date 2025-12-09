@@ -39,9 +39,9 @@ public interface IKafkaSRV {
 	 * @param documentType
 	 * @param destinationTypeEnum
 	 */
-	void notifyChannel(String key, String value, PriorityTypeEnum priorityType, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationTypeEnum);
-
-	void sendValidationStatus(String traceId, String workflowInstanceId, EventStatusEnum eventStatus, String message,JWTPayloadDTO jwtClaimDTO);
+	void notifyChannel(String key, String value, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationTypeEnum);
+	
+	void sendValidationStatus(String traceId, String workflowInstanceId, EventStatusEnum eventStatus, String message,JWTPayloadDTO jwtClaimDTO); 
 	void sendValidationStatus(String traceId,String workflowInstanceId, EventStatusEnum eventStatus, String message,
 			 JWTPayloadDTO jwtClaimDTO, EventTypeEnum eventTypeEnum);
 	void sendPublicationStatus(String traceId, String workflowInstanceId, EventStatusEnum eventStatus, String message, PublicationCreateReplaceMetadataDTO req, JWTPayloadDTO jwtClaimDTO);
@@ -49,7 +49,7 @@ public interface IKafkaSRV {
 	void sendReplaceStatus(String traceId, String workflowInstanceId, EventStatusEnum eventStatus, String message, PublicationCreateReplaceMetadataDTO req, JWTPayloadDTO jwtClaimDTO);
 	void sendDeleteStatus(String traceId, String workflowInstanceId, String idDoc, String message, EventStatusEnum eventStatus, JWTPayloadDTO jwt, EventTypeEnum eventType);
 	void sendDeleteRequest(String workflowInstanceId, Object request);
-
+	
 	void sendUpdateStatus(String traceId, String workflowInstanceId, String idDoc, EventStatusEnum eventStatus, JWTPayloadDTO jwt, String message,EventTypeEnum event);
     void sendEdsUarStatus(String workflowInstanceId, EventStatusEnum eventStatus, String message);
     void sendUpdateRequest(String workflowInstanceId, Object request);
