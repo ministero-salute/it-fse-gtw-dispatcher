@@ -27,5 +27,6 @@ import lombok.NoArgsConstructor;
 public class FhirDocumentDTO {
 
     private String bundleJson;
+    private DocumentReferenceDTO documentReferenceDTO;
 
 }

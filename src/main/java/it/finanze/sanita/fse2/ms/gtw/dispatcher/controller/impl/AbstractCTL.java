@@ -478,10 +478,18 @@ public abstract class AbstractCTL {
 	protected void validateJWTFhirDiretto(final JWTPayloadDTO jwtPayloadToken, final String bundle) {
 		String hl7Code = FhirUtility.extractValue(bundle, "Composition", "type.coding[0].code");
 		String hl7Type = "('" + hl7Code + "^^" + LOINC_SYSTEM + "')";
-		if(!hl7Type.equals(jwtPayloadToken.getResource_hl7_type())) {
-			String message = "JWT payload: Tipologia documento diversa dalla tipologia di CDA (code - codesystem)";
-			throwInvalidTokenError(ErrorInstanceEnum.DOCUMENT_TYPE_MISMATCH, message);
-		}
+
+        String jwtResourceHl7Type = jwtPayloadToken.getResource_hl7_type();
+        String jwtHl7Code = jwtResourceHl7Type.substring(2, jwtResourceHl7Type.indexOf("^^"));
+        boolean sameFullType = hl7Type.equals(jwtResourceHl7Type);
+        boolean sameCodeOnly = hl7Code.equals(jwtHl7Code);
+
+        // Throw only if both the full type AND the code differ
+        if (!sameFullType && !sameCodeOnly) {
+            String message = "JWT payload: Tipologia documento diversa dalla tipologia di CDA (code - codesystem)";
+            throwInvalidTokenError(ErrorInstanceEnum.DOCUMENT_TYPE_MISMATCH, message);
+        }
+
 		validatePersonId(jwtPayloadToken, bundle);
 	}
 

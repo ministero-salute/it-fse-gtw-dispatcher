@@ -149,6 +149,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
             ResourceDTO resourceDTO = validationInfo.getFhirResource();
             ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
+            //propagate metadata
 			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
 			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
             validationInfo.setFhirResource(transactionResourceDTO);
@@ -203,6 +204,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
             validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
             ResourceDTO resourceDTO = validationInfo.getFhirResource();
             ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
+            //propagate metadata
             transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
             transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
             validationInfo.setFhirResource(transactionResourceDTO);

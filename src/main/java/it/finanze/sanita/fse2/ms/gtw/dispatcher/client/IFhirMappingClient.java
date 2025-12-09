@@ -21,5 +21,6 @@ public interface IFhirMappingClient {
 
 	TransformResDTO callConvertCdaInBundle(FhirResourceDTO resourceDTO);
 	TransformResDTO updateDocumentReferenceClient(UpdateDocumentReferenceRequestDTO updateDto);
+    TransformResDTO addDocumentReferenceToBundle(FhirDocumentDTO fhirDocumentDTO);
     TransformResDTO callConvertDocumentInTransaction(FhirDocumentDTO documentDTO);
 }

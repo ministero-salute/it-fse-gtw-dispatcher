@@ -13,7 +13,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 

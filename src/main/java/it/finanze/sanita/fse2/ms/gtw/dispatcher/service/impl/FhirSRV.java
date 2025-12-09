@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -66,19 +68,23 @@ public class FhirSRV implements IFhirSRV {
     }
     @Override
     public ResourceDTO convertDocumentToTransaction(String bundleJson) throws IOException {
-        log.debug("FhirMappingService - Reading FHIR bundle from uploaded file '{}'", bundleJson);
-
-        FhirDocumentDTO fhirDocumentDTO = new FhirDocumentDTO(bundleJson);
-        log.info("FhirMappingService - Calling mapping engine to convert DOCUMENT -> TRANSACTION");
-        TransformResDTO transformRes = client.callConvertDocumentInTransaction(fhirDocumentDTO);
+        log.debug("FhirMappingService - Reading FHIR bundle");
         ResourceDTO resourceDTO = new ResourceDTO();
-        if (transformRes != null) {
-            resourceDTO.setErrorMessage(transformRes.getErrorMessage());
-            resourceDTO.setBundleJson((StringUtility.toJSON(transformRes.getJson())));
+        FhirDocumentDTO fhirDocumentDTO = new FhirDocumentDTO(bundleJson, null);
+        JsonObject json = JsonParser.parseString(bundleJson).getAsJsonObject();
+        String type = json.get("type").getAsString();
+        boolean isDocument = "document".equalsIgnoreCase(type);
+        if (isDocument) {
+            log.info("FhirMappingService - Converting DOCUMENT → TRANSACTION");
+            TransformResDTO transformRes = client.callConvertDocumentInTransaction(fhirDocumentDTO);
+            if (transformRes != null) {
+                resourceDTO.setErrorMessage(transformRes.getErrorMessage());
+                resourceDTO.setBundleJson(StringUtility.toJSON(transformRes.getJson()));
+            }
+            log.debug("FhirMappingService - Conversion completed");
+            return resourceDTO;
         }
-
-        log.debug("FhirMappingService - Mapping engine conversion completed");
-
+        resourceDTO.setBundleJson(bundleJson);
         return resourceDTO;
     }
 
@@ -113,7 +119,8 @@ public class FhirSRV implements IFhirSRV {
                     output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
                 }
             } else if (!isCdaInput) {
-                output.setBundleJson(inputData);
+                TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(StringUtility.toJSON(inputData), docRef));
+                output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
             }
 
         } catch (ValidationException e) {
