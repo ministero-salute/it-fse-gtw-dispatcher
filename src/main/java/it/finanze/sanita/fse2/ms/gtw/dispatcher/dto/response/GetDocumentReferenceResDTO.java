@@ -9,16 +9,28 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@AllArgsConstructor
-public class EdsMetadataUpdateReqDTO {
-    private String idDoc;
-    private String workflowInstanceId;
-    private String documentReference;
-    private String fiscalCode;
+/**
+ * 
+ *
+ *	DTO used to return check exist result.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+public class GetDocumentReferenceResDTO extends ResponseDTO {
+
+	private String documentReference;
+	
+	public GetDocumentReferenceResDTO(final LogTraceInfoDTO traceInfo, final String inDocumentReference) {
+		super(traceInfo);
+		documentReference = inDocumentReference;
+	}
+	
+    
 }

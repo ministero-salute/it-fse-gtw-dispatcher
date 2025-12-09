@@ -13,10 +13,13 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface IFhirMappingClient {
 
-    TransformResDTO callConvertCdaInBundle(FhirResourceDTO resourceDTO);
+	TransformResDTO callConvertCdaInBundle(FhirResourceDTO resourceDTO);
+	TransformResDTO updateDocumentReferenceClient(UpdateDocumentReferenceRequestDTO updateDto);
     TransformResDTO callConvertDocumentInTransaction(FhirDocumentDTO documentDTO);
 }
