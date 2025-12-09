@@ -20,6 +20,7 @@ public enum ErrorInstanceEnum {
 
 	NO_INFO("", "No specific information for this error, refeer to type for any info"),
 	CDA_EXTRACTION("/cda-extraction", "Error while extracting CDA from PDF document"),
+	FHIR_EXTRACTION("/fhir-extraction", "Error while extracting FHIR from PDF document"),
 	CDA_NOT_VALIDATED("/cda-validation", "Error while retrieving information about CDA validation"),
 	DIFFERENT_HASH("/jwt-hash-match", "Hash of document different from hash in JWT"),
 	MISSING_MANDATORY_ELEMENT("/request-missing-field", "Missing required field in request body"),

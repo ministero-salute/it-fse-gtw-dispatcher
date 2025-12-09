@@ -595,8 +595,8 @@ public abstract class AbstractCTL {
 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.title(RestExecutionResultEnum.MINING_CDA_ERROR.getTitle())
 					.type(RestExecutionResultEnum.MINING_CDA_ERROR.getType())
-					.instance(ErrorInstanceEnum.CDA_EXTRACTION.getInstance())
-					.detail(ErrorInstanceEnum.CDA_EXTRACTION.getDescription()).build();
+					.instance(ErrorInstanceEnum.FHIR_EXTRACTION.getInstance())
+					.detail(ErrorInstanceEnum.FHIR_EXTRACTION.getDescription()).build();
 
 			throw new ValidationException(error);
 		}

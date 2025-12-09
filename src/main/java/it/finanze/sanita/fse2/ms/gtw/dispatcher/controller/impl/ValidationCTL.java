@@ -14,10 +14,10 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 import java.io.IOException;
 import java.util.Date;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +41,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.SignerUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,6 +61,9 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 
 	@Autowired
 	private IErrorHandlerSRV errorHandlerSRV;
+
+	@Value("${issuer.sonde:}")
+	private String issuerSonde;
 
 	@Override
 	public ResponseEntity<ValidationResDTO> validate(final ValidationCDAReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
@@ -95,12 +97,13 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 				message = "Attenzione - è stato chiamato l'endpoint di validazione con VERIFICA";
 			}
 
-			if (!jsonObj.getActivity().equals(ActivityEnum.VERIFICA)) {
-				kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,message, jwtPayloadToken);
+			if (!issuer.equals(issuerSonde)) {
+				kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS, message, jwtPayloadToken);
 				String typeIdExtension = docT.select("typeId").get(0).attr("extension");
-				logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperation, CdaUtility.getDocumentType(docT), 
-						jwtPayloadToken,typeIdExtension);				
+				logger.info(Constants.App.LOG_TYPE_CONTROL, workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperation, CdaUtility.getDocumentType(docT),
+						jwtPayloadToken, typeIdExtension);
 			}
+
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		} catch (final ValidationException e) {
 			errorHandlerSRV.validationExceptionHandler(startDateOperation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, CdaUtility.getDocumentType(docT));
@@ -116,7 +119,7 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		}
 		if (jsonObj != null && ActivityEnum.VALIDATION.equals(jsonObj.getActivity())) {
 			return new ResponseEntity<>(new ValidationResDTO(traceInfoDTO, workflowInstanceId, warning),
-				HttpStatus.CREATED);
+					HttpStatus.CREATED);
 		}
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
@@ -136,7 +139,7 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 		String warning = null;
 
 		try {
-			
+
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.FHIR_VALIDATION);
 			jsonObj = getAndValidateValidationFhirReq(request.getParameter("requestBody"));
 
@@ -148,7 +151,7 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 			String issuer = jwtPayloadToken.getIss();
 			String result = fhirValidate(directFhirDTO.getFhir(), jsonObj.getActivity(), workflowInstanceId, issuer);
 			if (!StringUtility.isNullOrEmpty(result)) {
-			    warning += result;
+				warning += result;
 			}
 
 			String message = null;
@@ -160,19 +163,19 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 				kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS, message, jwtPayloadToken);
 				logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation FHIR completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_FHIR, ResultLogEnum.OK, startDateOperation, "TODO documentType", jwtPayloadToken,"TODO typeIdExtension");
 			}
-			 
+
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		} catch (final ValidationException e) {
 			errorHandlerSRV.validationExceptionHandler(startDateOperation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, null);
 		} catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+			throw new RuntimeException(e);
+		}
 
-        warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
+		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
 		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
 			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
 		}
-		
+
 		log.info("[EXIT] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
 
 		return new ResponseEntity<>(new ValidationResDTO(traceInfoDTO, workflowInstanceId, warning), HttpStatus.OK);
