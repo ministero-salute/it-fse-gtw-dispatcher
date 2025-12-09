@@ -80,7 +80,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PriorityTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ProcessorOperationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
@@ -161,7 +160,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	@Autowired
 	private BenchmarkCFG benchmarkCFG;
 
-
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -197,8 +195,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			ValidationCreationInputDTO validationInfo) {
 		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
-		PriorityTypeEnum priorityType = PriorityTypeEnum.NULL;
-		
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
 		final IndexerValueDTO kafkaValue = new IndexerValueDTO();
@@ -206,7 +202,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		kafkaValue.setIdDoc(idDoc);
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
-		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), priorityType, validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
+		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
 
 		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
@@ -244,7 +240,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setIdDoc(idDoc);
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
-			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), PriorityTypeEnum.LOW, validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
+			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
@@ -670,7 +666,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setIdDoc(idDoc);
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
-			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), PriorityTypeEnum.LOW, validationResult.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
+			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationResult.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), validationResult.getJwtPayloadToken());
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationResult.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationResult.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateReplacenOperation,

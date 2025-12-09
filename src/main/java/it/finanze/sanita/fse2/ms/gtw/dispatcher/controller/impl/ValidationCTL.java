@@ -148,6 +148,8 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 
 			log.info("[START] {}() with arguments {}={}, {}={}","validate","traceId", traceInfoDTO.getTraceID(),"wif", workflowInstanceId);
 
+			validateJWTFhirDiretto(jwtPayloadToken, directFhirDTO.getFhir());
+
 			String issuer = jwtPayloadToken.getIss();
 			String result = fhirValidate(directFhirDTO.getFhir(), jsonObj.getActivity(), workflowInstanceId, issuer);
 			if (!StringUtility.isNullOrEmpty(result)) {

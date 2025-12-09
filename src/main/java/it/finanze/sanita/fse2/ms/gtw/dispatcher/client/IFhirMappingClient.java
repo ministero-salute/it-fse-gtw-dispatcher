@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
@@ -20,4 +21,6 @@ public interface IFhirMappingClient {
 
 	TransformResDTO callConvertCdaInBundle(FhirResourceDTO resourceDTO);
 	TransformResDTO updateDocumentReferenceClient(UpdateDocumentReferenceRequestDTO updateDto);
+    TransformResDTO addDocumentReferenceToBundle(FhirDocumentDTO fhirDocumentDTO);
+    TransformResDTO callConvertDocumentInTransaction(FhirDocumentDTO documentDTO);
 }
