@@ -119,7 +119,7 @@ public class FhirSRV implements IFhirSRV {
                     output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
                 }
             } else if (!isCdaInput) {
-                TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(StringUtility.toJSON(inputData), docRef));
+                TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(inputData, docRef));
                 output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
             }
 
