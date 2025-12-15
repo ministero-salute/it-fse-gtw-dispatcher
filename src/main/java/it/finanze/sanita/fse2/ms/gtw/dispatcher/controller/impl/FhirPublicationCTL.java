@@ -201,7 +201,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-            validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
+            validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO);
             ResourceDTO resourceDTO = validationInfo.getFhirResource();
             ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
             //propagate metadata
