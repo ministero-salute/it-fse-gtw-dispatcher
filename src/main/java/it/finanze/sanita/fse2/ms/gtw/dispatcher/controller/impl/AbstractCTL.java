@@ -400,11 +400,15 @@ public abstract class AbstractCTL {
 			case FHIR_VALIDATION:
 				jwtSRV.validatePayloadForValidation(token.getPayload());
 				break;
-			case FHIR_CREATE:
-				//TODO 
-				// Da incontro ocn gli sme è emerso che la verifica è la stessa della validazione CDA
-				jwtSRV.validatePayloadForValidation(token.getPayload());
-				break;
+            case FHIR_CREATE:
+                //TODO
+                // Da incontro ocn gli sme è emerso che la verifica è la stessa della validazione CDA
+                jwtSRV.validatePayloadForValidation(token.getPayload());
+                break;
+            case FHIR_REPLACE:
+                // Da incontro ocn gli sme è emerso che la verifica è la stessa della validazione CDA
+                jwtSRV.validatePayloadForValidation(token.getPayload());
+                break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + eventType);
 		}
