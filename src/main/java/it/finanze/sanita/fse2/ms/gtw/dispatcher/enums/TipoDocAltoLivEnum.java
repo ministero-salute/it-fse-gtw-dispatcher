@@ -17,21 +17,24 @@ import lombok.Getter;
 public enum TipoDocAltoLivEnum {
 
 	WOR("WOR", "Documento di workflow"),
-	REF("REF","Referto"),
-	LDO("LDO","Lettera di dimissione ospedaliera"),
-	RIC("RIC","Richiesta"),
-	SUM("SUM","Sommario"),
-	TAC("TAC","Taccuino"),
-	PRS("PRS","Prescrizione"),
-	PRE("PRE","Prestazioni"),
-	ESE("ESE","Esenzione"),
-	PDC("PDC","Piano di cura"),
-	VAC("VAC","Vaccino"),
-	CER("CER","Certificato per DGC"),
-	VRB("VRB","Verbale"),
+	REF("REF", "Referto"),
+	LDO("LDO", "Lettera di dimissione sia ospedaliera, sia non ospedaliera"),
+	RIC("RIC", "Richiesta"),
+	SUM("SUM", "Sommario"),
+	TAC("TAC", "Taccuino"),
+	PRS("PRS", "Prescrizione"),
+	PRE("PRE", "Prestazioni"),
+	ESE("ESE", "Esenzione"),
+	PDC("PDC", "Piano di cura"),
+	VAC("VAC", "Vaccino"),
+	CER("CER", "Certificato per DGC"),
+	VRB("VRB", "Verbale"),
 	CON("CON", "Documento di consenso"),
 	CNT("CNT", "Documento di controllo"),
-	CRT("CRT","Certificato Amministrativo generico");
+	CRT("CRT", "Certificato Amministrativo Generico"),
+	LET("LET", "Lettera"),
+	PRO("PRO", "Promemoria"),
+	COL("COL", "Collezione documentale");
 
 	private String code;
 	private String description;

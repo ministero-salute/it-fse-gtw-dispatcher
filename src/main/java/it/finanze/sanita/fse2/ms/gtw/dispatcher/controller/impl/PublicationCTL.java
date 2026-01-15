@@ -262,11 +262,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 
-	@Override
-	public ResponseEntity<ResponseWifDTO> updateMetadata(final String idDoc, final PublicationMetadataReqDTO requestBody, final HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, false,request);
-	}
-
 	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO) {
 		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION; 
 		ValidationCreationInputDTO validationResult = publicationAndReplaceValidation(file, request, isReplace,idDoc, traceInfoDTO,eventType);
