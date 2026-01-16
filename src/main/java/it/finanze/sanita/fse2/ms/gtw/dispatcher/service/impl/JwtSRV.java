@@ -53,6 +53,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		checkNull(payload.getSubject_application_version(), "subject_application_version");
 		validateActionCoherence(payload, Set.of(ActionEnum.CREATE, ActionEnum.UPDATE));
 		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT));
+		checkNull(payload.getResource_hl7_type(), "resource_hl7_type");
 	}
 
 	@Override
@@ -70,6 +71,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		validateActionCoherence(payload, Set.of(ActionEnum.CREATE));
 		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT));
 		isValidLocality(payload.getLocality());
+		checkNull(payload.getResource_hl7_type(), "resource_hl7_type");
 	}
 
 	@Override
@@ -78,6 +80,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
 		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT, PurposeOfUseEnum.UPDATE));
 		isValidLocality(payload.getLocality());
+		checkNull(payload.getResource_hl7_type(), "resource_hl7_type");
 	}
 
 	@Override
@@ -86,6 +89,7 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
 		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.UPDATE,PurposeOfUseEnum.ACCESS_UPDATE));
 		isValidLocality(payload.getLocality());
+		checkNull(payload.getResource_hl7_type(), "resource_hl7_type");
 	}
 
 	@Override
@@ -115,7 +119,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		checkNull(payload.getSubject_application_id(), "subject_application_id");
 		checkNull(payload.getSubject_application_vendor(), "subject_application_vendor");
 		checkNull(payload.getSubject_application_version(), "subject_application_version");
-		checkNull(payload.getResource_hl7_type(), "resource_hl7_type");
 	}
 
 	private void validateFiscalCodes(JWTPayloadDTO payload) {
