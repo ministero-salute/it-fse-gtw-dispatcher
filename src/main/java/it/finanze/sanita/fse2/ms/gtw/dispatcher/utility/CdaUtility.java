@@ -83,6 +83,11 @@ public final class CdaUtility {
 		
 		return isNullOrEmpty(docType) ? Constants.App.MISSING_DOC_TYPE_PLACEHOLDER : docType;
 	}
+	
+	public static DocumentTypeEnum getDocumentTypeEnum(final Document cdaDocument) {
+		final String code = cdaDocument.select("code").get(0).attr("code");
+		return DocumentTypeEnum.getByCode(code);
+	}
 
 
 	/**

@@ -104,6 +104,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validators.CorrelationDocumentTypeValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
@@ -322,10 +323,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			validateJWT(validation.getJwtPayloadToken(), cda);
 
 			final org.jsoup.nodes.Document docT = Jsoup.parse(cda);
-//			final String key = extractFieldCda(docT);
 
+			CorrelationDocumentTypeValidator.isValid(CdaUtility.getDocumentTypeEnum(docT), jsonObj.getTipoDocumentoLivAlto());
+			
 			validation.setDocument(docT);
-//			validation.setKafkaKey(key);
 		} catch (final ValidationException | NoRecordFoundException ve) {
 			cdaSRV.consumeHash(validationInfo.getHash());
 			throw ve;
