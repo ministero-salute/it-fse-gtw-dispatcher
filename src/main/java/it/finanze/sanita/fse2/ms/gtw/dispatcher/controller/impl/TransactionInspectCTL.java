@@ -67,6 +67,7 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	}
 	
 	private void printToken(final HttpServletRequest request) {
+		log.info("Sono nel print token");
 	    if (request == null) {
 	        log.warn("HttpServletRequest is null");
 	        return;
