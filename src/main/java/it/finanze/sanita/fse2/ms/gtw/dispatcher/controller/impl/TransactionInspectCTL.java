@@ -11,30 +11,27 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
+import java.util.Enumeration;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.ITransactionInspectCTL;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RestController;
-
 import jakarta.servlet.http.HttpServletRequest;
-
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @Slf4j
@@ -50,7 +47,7 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	public TransactionInspectResDTO getEvents(String workflowInstanceId, HttpServletRequest request) {
 		log.info("[START] {}() with arguments {}={}", "getEvents", "wif", workflowInstanceId);
 		
-		printToken(request);
+		printHeaders(request);
 		if(workflowInstanceId.equalsIgnoreCase(Constants.App.MISSING_WORKFLOW_PLACEHOLDER)) {
 			ErrorResponseDTO error = new ErrorResponseDTO(getLogTraceInfo());
 			error.setType(RestExecutionResultEnum.INVALID_WII.getType());
@@ -66,22 +63,24 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 		return res;
 	}
 	
-	private void printToken(final HttpServletRequest request) {
-		log.info("Sono nel print token");
+	private void printHeaders(final HttpServletRequest request) {
+	    log.info("Sono nel printHeaders");
+
 	    if (request == null) {
 	        log.warn("HttpServletRequest is null");
 	        return;
 	    }
-	    if (msCfg == null) {
-	        log.warn("msCfg is null");
-	        return;
+
+	    Enumeration<String> headerNames = request.getHeaderNames();
+	    if (headerNames != null) {
+	        while (headerNames.hasMoreElements()) {
+	            String headerName = headerNames.nextElement();
+	            String headerValue = request.getHeader(headerName);
+	            log.info("Header [{}] = {}", headerName, headerValue);
+	        }
+	    } else {
+	        log.info("Nessun header presente nella request");
 	    }
-
-	    String extractedToken = Boolean.TRUE.equals(msCfg.getFromGovway())
-	            ? request.getHeader(Headers.JWT_GOVWAY_HEADER)
-	            : request.getHeader(Headers.JWT_HEADER);
-
-	    log.info("Extracted token: {}", extractedToken);
 	}
 
  
