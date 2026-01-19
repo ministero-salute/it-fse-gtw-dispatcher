@@ -12,6 +12,7 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Headers;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.ITransactionInspectCTL;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
@@ -21,6 +22,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
@@ -48,6 +50,7 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	public TransactionInspectResDTO getEvents(String workflowInstanceId, HttpServletRequest request) {
 		log.info("[START] {}() with arguments {}={}", "getEvents", "wif", workflowInstanceId);
 		
+		printToken(request);
 		if(workflowInstanceId.equalsIgnoreCase(Constants.App.MISSING_WORKFLOW_PLACEHOLDER)) {
 			ErrorResponseDTO error = new ErrorResponseDTO(getLogTraceInfo());
 			error.setType(RestExecutionResultEnum.INVALID_WII.getType());
@@ -62,6 +65,24 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 		log.info("[EXIT] {}() with arguments {}={}, {}={}", "getEvents", "reqTraceId", res.getTraceID(), "wif", workflowInstanceId);
 		return res;
 	}
+	
+	private void printToken(final HttpServletRequest request) {
+	    if (request == null) {
+	        log.warn("HttpServletRequest is null");
+	        return;
+	    }
+	    if (msCfg == null) {
+	        log.warn("msCfg is null");
+	        return;
+	    }
+
+	    String extractedToken = Boolean.TRUE.equals(msCfg.getFromGovway())
+	            ? request.getHeader(Headers.JWT_GOVWAY_HEADER)
+	            : request.getHeader(Headers.JWT_HEADER);
+
+	    log.info("Extracted token: {}", extractedToken);
+	}
+
  
 	@Override
 	public TransactionInspectResDTO getEventsByTraceId(String traceId, HttpServletRequest request) {
