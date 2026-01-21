@@ -13,8 +13,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
-
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +31,7 @@ import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
@@ -42,6 +41,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ServerResponseException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.UnauthorizedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationErrorException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationPublicationErrorException;
@@ -225,6 +225,35 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
 		return new ResponseEntity<>(out, headers, status);
 	}
+	
+	@ExceptionHandler(value = {UnauthorizedException.class})
+	protected ResponseEntity<ErrorResponseDTO> handleUnauthorizedException(
+	        UnauthorizedException ex,
+	        final WebRequest request) {
+
+	    final int status = HttpStatus.UNAUTHORIZED.value();
+
+	    LogTraceInfoDTO traceInfoDto = getLogTraceInfo();
+
+	    String detail = ex.getMessage();
+	    ErrorResponseDTO out = new ErrorResponseDTO(
+	            traceInfoDto,
+	            RestExecutionResultEnum.UNAUTHORIZED.getType(),
+	            RestExecutionResultEnum.UNAUTHORIZED.getTitle(),
+	            detail,
+	            status,
+	            ErrorInstanceEnum.INVALID_ISSUER_SUB_MISMATCH.getInstance() // nuovo enum per mismatch
+	    );
+
+	    out.setSpanID(traceInfoDto.getSpanID());
+	    out.setTraceID(traceInfoDto.getTraceID());
+
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+
+	    return new ResponseEntity<>(out, headers, status);
+	}
+
 
 
 
