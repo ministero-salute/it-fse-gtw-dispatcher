@@ -84,10 +84,12 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 			throw new ValidationException(error);
 		}
 
-		String issuer = res.getTransactionData().get(0).getIssuer();
-		String issuerValue = extractValueBetweenHashes(issuer);
-		if (!Objects.equals(subValue, issuerValue)) {
-			throw new UnauthorizedException("Mismatch sub/issuer");
+		boolean matchFound = res.getTransactionData().stream()
+		        .map(t -> extractValueBetweenHashes(t.getIssuer()))
+		        .anyMatch(issuerValue -> Objects.equals(subValue, issuerValue));
+
+		if (!matchFound) {
+		    throw new UnauthorizedException("Mismatch sub/issuer");
 		}
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}", "getEvents", "reqTraceId", res.getTraceID(), "wif", workflowInstanceId);
@@ -122,14 +124,25 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	    return extractValueBetweenHashes(sub);
 	}
 
-	private String extractValueBetweenHashes(String sub) {
-	    if (sub == null) {
+	private String extractValueBetweenHashes(String value) {
+	    if (value == null) {
 	        return null;
 	    }
 
-	    String[] parts = sub.split("#");
-	    return parts.length >= 3 ? parts[1] : null;
+	    String[] parts = value.split("#");
+	    if (parts.length < 3) {
+	        return null;
+	    }
+
+	    String middle = parts[1];
+
+	    if (middle.length() > 3) {
+	        return middle.substring(0, 3);
+	    }
+
+	    return middle;
 	}
+
 
 	private String extractSubFromJwtWithoutValidation(String jwt) {
 	    if (jwt == null) {
