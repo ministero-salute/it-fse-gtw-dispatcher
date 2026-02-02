@@ -33,6 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndReplaceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
@@ -205,5 +206,6 @@ public interface IPublicationCTL {
 			@ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
 			@ApiResponse(responseCode = "504", description = "Endpoint request timed-out", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class)))})
 	ResponseEntity<ResponseWifDTO> updateMetadataIti_57(@Size(min = 1, max = 256)@PathVariable(value = "idDoc" , required = true) String idDoc, 
-			@org.springframework.web.bind.annotation.RequestBody(required = true) PublicationMetadataReqDTO requestBody, HttpServletRequest request);
+			@org.springframework.web.bind.annotation.RequestBody(required = true) UpdateMetadataReqDTO requestBody,
+			HttpServletRequest request);
 }

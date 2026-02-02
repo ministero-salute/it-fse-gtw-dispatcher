@@ -78,6 +78,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationR
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
@@ -109,11 +110,14 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
@@ -159,6 +163,12 @@ public abstract class AbstractCTL {
 	
 	@Autowired
 	private IKafkaSRV kafkaSRV;
+
+	@Autowired
+	private IAffinityDomainValidationSRV affinityDomainValidationSRV;
+
+	@Autowired
+	private AffinityDomainUtility affinityDomainUtility;
 
 	@Autowired
 	private LoggerHelper logger;
@@ -246,7 +256,7 @@ public abstract class AbstractCTL {
         return out;
     }
 
-	protected void validateUpdateMetadataReq(final PublicationMetadataReqDTO out) {
+	protected void validateUpdateMetadataReq(final UpdateMetadataReqDTO out) {
 		final String errorMsg = checkUpdateMandatoryElements(out);
 
 		if (errorMsg != null) {
@@ -254,7 +264,6 @@ public abstract class AbstractCTL {
 					.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
 					.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
 					.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
-
 					.detail(errorMsg).build();
 			throw new ValidationException(error);
 		}
@@ -347,7 +356,7 @@ public abstract class AbstractCTL {
     	return output;
     }
     
-	protected String checkUpdateMandatoryElements(final PublicationMetadataReqDTO jsonObj) {
+	protected String checkUpdateMandatoryElements(final UpdateMetadataReqDTO jsonObj) {
 		String out = null;
 		
 		if (jsonObj.getTipoDocumentoLivAlto()==null) {
@@ -854,7 +863,8 @@ public abstract class AbstractCTL {
     	return out;
     }
     
-    protected ResponseEntity<ResponseWifDTO> updateAbstract(final String idDoc, final PublicationMetadataReqDTO requestBody, boolean callUpdateV2,
+	protected ResponseEntity<ResponseWifDTO> updateAbstract(final String idDoc, final UpdateMetadataReqDTO requestBody,
+			boolean callUpdateV2,
 			final HttpServletRequest request) {
 		// Estrazione token
 		JWTPayloadDTO jwtPayloadToken = null;
@@ -886,6 +896,35 @@ public abstract class AbstractCTL {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime mock", RIFERIMENTI_INI);
 				} else {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
+
+					if (!StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
+						java.time.LocalDate referenceDate = affinityDomainUtility
+								.extractCreationTime(metadatiToUpdate.getMarshallResponse());
+                        log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
+                        affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate);
+
+					    // ITI-57 Affinity Domain Validation
+						log.info("Performing Affinity Domain validation of update metadata for document: {}", idDoc);
+						ValidationResultDTO adValidationResult = affinityDomainValidationSRV
+								.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
+
+						if (!adValidationResult.isValid()) {
+							log.error("Affinity Domain validation failed for document {}: {}",
+									idDoc, adValidationResult.getErrorMessage());
+
+							ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
+							final ErrorResponseDTO error = ErrorResponseDTO.builder()
+									.type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
+									.title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
+									.instance(errorInstance.getInstance())
+									.detail(adValidationResult.getErrorMessage())
+									.build();
+							throw new ValidationException(error);
+						}
+
+						log.info("Affinity Domain validation passed for document {} using AD version {}",
+								idDoc, adValidationResult.getAdVersion());
+					}
 				}
 
 				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
@@ -1043,12 +1082,12 @@ public abstract class AbstractCTL {
 		return out;
 	}
 	
-	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(PublicationMetadataReqDTO requestBody) {
+	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(UpdateMetadataReqDTO requestBody) {
 		DocumentReferenceDTO output = new DocumentReferenceDTO();
 		output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());
 		output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());
-		output.setFacilityTypeCode(requestBody.getTipologiaStruttura().getCode());
-		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo().getCode());
+		output.setFacilityTypeCode(requestBody.getTipologiaStruttura());
+		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo());
 		return output;
 	}
 }

@@ -45,8 +45,13 @@ public enum ErrorInstanceEnum {
 	EDS_DOCUMENT_MISSING("/msg/eds-document-missing", "Document cannot be found on the Server FHIR"),
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation error"),
 	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
-	INVALID_ISSUER_SUB_MISMATCH("/msg/invalid-issuer-sub", "Issuer and JWT sub mismatch");
-	
+	INVALID_ISSUER_SUB_MISMATCH("/msg/invalid-issuer-sub", "Issuer and JWT sub mismatch"),
+	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
+	AD_NO_STRATEGY_FOR_DATE("/ad-validation/no-strategy", "No Affinity Domain strategy found for the document creation date"),
+	AD_MISSING_MANDATORY_FIELD("/ad-validation/missing-mandatory", "Missing mandatory field(s) required by Affinity Domain specification"),
+	AD_WRONG_LOCATION("/ad-validation/wrong-location", "Field(s) found in wrong parent element (DocumentEntry vs SubmissionSet)"),
+	AD_MISSING_REFERENCE_DATE("/ad-validation/missing-reference-date", "Cannot extract creationTime from metadata for AD validation");
+
 	private String instance;
 	private String description;
 

@@ -9,36 +9,48 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto;
 
-import java.util.List;
-
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AdministrativeReqEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * DTO containing the result of Affinity Domain validation.
+ */
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class DocumentReferenceDTO {
-	
-	private Integer size;
-	private String hash;
-	private String facilityTypeCode;
-	private List<String> eventCode;
-	private String practiceSettingCode;
-	private String patientID;
-	private String tipoDocumentoLivAlto;
-	private String repositoryUniqueID;
-	private String serviceStartTime;
-	private String serviceStopTime;
-	private String encodedCDA;
-	private String identificativoDoc;
-	private List<String> administrativeRequestEnum;
-	
+public class ValidationResultDTO {
+    
+    /**
+     * Whether the validation passed
+     */
+    private boolean valid;
+    
+    /**
+     * The AD version used for validation
+     */
+    private String adVersion;
+    
+    /**
+     * List of missing mandatory fields (if any)
+     */
+    @Builder.Default
+    private List<String> missingFields = new ArrayList<>();
+    
+    /**
+     * Error code for validation failure
+     */
+    private String errorCode;
+    
+    /**
+     * Detailed error message
+     */
+    private String errorMessage;
 }

@@ -98,6 +98,7 @@ public class FhirSRV implements IFhirSRV {
             final DocumentReferenceDTO docRef = buildDocumentReferenceDTO(encodedInput, requestBody, size, hash);
             final FhirResourceDTO fhirReq = buildFhirResourceDTO(docRef, inputData, transformId, engineId);
 
+            // idea, copia estrazione metadata, che suppongo contenga tutto, poi ua i build entries
             AuthorSlotDTO authorSlot = buildAuthorSlot(authorInstitution, authorRole, inputData, isCdaInput);
             Map<DocumentMetadataKeyEnum, Object> metadata = extractMetadata(inputData, isCdaInput);
 

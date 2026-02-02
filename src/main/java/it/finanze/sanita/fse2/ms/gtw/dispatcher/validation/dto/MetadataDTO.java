@@ -9,36 +9,30 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto;
 
-import java.util.List;
-
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AdministrativeReqEnum;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+import java.util.Set;
+
+/**
+ * DTO containing the sets of present fields extracted from metadata XML.
+ * Separates DocumentEntry fields (from ExtrinsicObject) and SubmissionSet fields (from RegistryPackage).
+ */
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class DocumentReferenceDTO {
-	
-	private Integer size;
-	private String hash;
-	private String facilityTypeCode;
-	private List<String> eventCode;
-	private String practiceSettingCode;
-	private String patientID;
-	private String tipoDocumentoLivAlto;
-	private String repositoryUniqueID;
-	private String serviceStartTime;
-	private String serviceStopTime;
-	private String encodedCDA;
-	private String identificativoDoc;
-	private List<String> administrativeRequestEnum;
-	
+public class MetadataDTO {
+    
+    /**
+     * Fields present in DocumentEntry (ExtrinsicObject tag)
+     */
+    private Set<String> documentEntryFields;
+    
+    /**
+     * Fields present in SubmissionSet (RegistryPackage tag)
+     */
+    private Set<String> submissionSetFields;
 }

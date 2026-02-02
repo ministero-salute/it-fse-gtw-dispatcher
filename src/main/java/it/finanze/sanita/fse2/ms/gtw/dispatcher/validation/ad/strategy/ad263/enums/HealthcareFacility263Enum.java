@@ -9,25 +9,40 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class MergedMetadatiRequestDTO {
+public enum HealthcareFacility263Enum {
+
+	Ospedale("Ospedale"),
+	Prevenzione("Prevenzione"),
+	Territorio("Territorio"),
+	SistemaTS("SistemaTS"),
+	Cittadino("Cittadino"),
+	MdsPN_DGC("MdsPN-DGC");
 	
-    private String idDoc;
-    
-    private JWTPayloadDTO token;
-    
-    private UpdateMetadataReqDTO body;
-    
-    private String workflow_instance_id;
-    
+
+	@Getter
+	private String code;
+
+	private HealthcareFacility263Enum(String inCode) {
+		code = inCode;
+	}
+	
+	/**
+	 * Validates if a string value is a valid code for this enum
+	 */
+	public static boolean isValidCode(String code) {
+		if (code == null) return false;
+		for (HealthcareFacility263Enum value : values()) {
+			if (value.getCode().equals(code)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }
-	
+
+// Made with Bob
