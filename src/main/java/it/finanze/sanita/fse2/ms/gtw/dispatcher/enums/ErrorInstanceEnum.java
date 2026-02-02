@@ -46,7 +46,6 @@ public enum ErrorInstanceEnum {
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation error"),
 	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
 	INVALID_ISSUER_SUB_MISMATCH("/msg/invalid-issuer-sub", "Issuer and JWT sub mismatch"),
-	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
 	AD_NO_STRATEGY_FOR_DATE("/ad-validation/no-strategy", "No Affinity Domain strategy found for the document creation date"),
 	AD_MISSING_MANDATORY_FIELD("/ad-validation/missing-mandatory", "Missing mandatory field(s) required by Affinity Domain specification"),
 	AD_WRONG_LOCATION("/ad-validation/wrong-location", "Field(s) found in wrong parent element (DocumentEntry vs SubmissionSet)"),

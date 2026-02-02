@@ -93,7 +93,7 @@ public interface IPublicationCTL {
 			@ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
 			@ApiResponse(responseCode = "504", description = "Endpoint request timed-out", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class)))})
 	ResponseEntity<ResponseWifDTO> updateMetadata(@Size(min = 1, max = 256)@PathVariable(value = "idDoc" , required = true) String idDoc, 
-			@org.springframework.web.bind.annotation.RequestBody(required = true) PublicationMetadataReqDTO requestBody, HttpServletRequest request);
+			@org.springframework.web.bind.annotation.RequestBody(required = true) UpdateMetadataReqDTO requestBody, HttpServletRequest request);
 
 	@PutMapping(value = "/documents/{idDoc}", produces = { MediaType.APPLICATION_JSON_VALUE }, consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
 	@ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PublicationResDTO.class)))

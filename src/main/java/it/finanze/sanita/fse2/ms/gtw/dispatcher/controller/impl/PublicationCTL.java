@@ -264,7 +264,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 
 	@Override
-	public ResponseEntity<ResponseWifDTO> updateMetadata(final String idDoc, final PublicationMetadataReqDTO requestBody, final HttpServletRequest request) {
+	public ResponseEntity<ResponseWifDTO> updateMetadata(final String idDoc, final UpdateMetadataReqDTO requestBody, final HttpServletRequest request) {
 		return updateAbstract(idDoc, requestBody, false,request);
 	}
 
