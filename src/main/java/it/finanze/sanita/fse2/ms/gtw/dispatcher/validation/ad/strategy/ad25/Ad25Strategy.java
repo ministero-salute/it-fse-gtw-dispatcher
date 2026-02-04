@@ -95,32 +95,26 @@ public class Ad25Strategy extends AbstractAffinityDomainStrategy {
         return validateUpdateMetadataReqDTOTemplate(request);
     }
 
-        /**
-         * Validates all value sets in the request against AD 2.1-specific enums.
-         * This method is called by the template method in the abstract class.
-         * 
-         * @param request          The update metadata request
-         * @param validationErrors List to collect validation errors
-         */
-        @Override
-        protected void validateValueSetsInternal(UpdateMetadataReqDTO request, List<String> validationErrors) {
+    @Override
+    protected void validateValueSetsInternal(UpdateMetadataReqDTO request, List<String> validationErrors) {
 
-                validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd24Enum::isValidCode,
-                                "administrativeRequest", "AdministrativeRequest", validationErrors);
+        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd24Enum::isValidCode,
+                "administrativeRequest", "AdministrativeRequest", validationErrors);
 
-                validateField(request.getTipologiaStruttura(), HealthcareFacilityAd21Enum::isValidCode,
-                                "tipologiaStruttura", "HealthcareFacility", validationErrors);
+        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd21Enum::isValidCode,
+                "tipologiaStruttura", "HealthcareFacility", validationErrors);
 
-                validateField(request.getAssettoOrganizzativo(),
-                                PracticeSettingCodeAd21Enum::isValidCode,
-                                "assettoOrganizzativo", "PracticeSettingCode", validationErrors);
+        validateField(request.getAssettoOrganizzativo(),
+                PracticeSettingCodeAd21Enum::isValidCode,
+                "assettoOrganizzativo", "PracticeSettingCode", validationErrors);
 
-                validateField(request.getTipoAttivitaClinica(),
-                                AttivitaClinicaAd21Enum::isValidCode,
-                                "tipoAttivitaClinica", "AttivitaClinica", validationErrors);
+        validateField(request.getTipoAttivitaClinica(),
+                AttivitaClinicaAd21Enum::isValidCode,
+                "tipoAttivitaClinica", "AttivitaClinica", validationErrors);
 
-                validateField(request.getTipoDocumentoLivAlto(),
-                                TipoDocAltoLivAd21Enum::isValidCode,
-                                "tipoDocumentoLivAlto", "TipoDocAltoLiv", validationErrors);
-        }
+        validateField(request.getTipoDocumentoLivAlto(),
+                TipoDocAltoLivAd21Enum::isValidCode,
+                "tipoDocumentoLivAlto", "TipoDocAltoLiv", validationErrors);
+    }
+
 }

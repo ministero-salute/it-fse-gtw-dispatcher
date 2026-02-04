@@ -13,12 +13,18 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.AttivitaClinicaAd21Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.HealthcareFacilityAd21Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.PracticeSettingCodeAd21Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.TipoDocAltoLivAd21Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad24.enums.AdministrativeReqAd24Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -92,6 +98,27 @@ public class Ad262Strategy extends AbstractAffinityDomainStrategy {
     public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request) {
         return validateUpdateMetadataReqDTOTemplate(request);
     }
-}
 
-// Made with Bob
+    @Override
+    protected void validateValueSetsInternal(UpdateMetadataReqDTO request, List<String> validationErrors) {
+
+        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd24Enum::isValidCode,
+                "administrativeRequest", "AdministrativeRequest", validationErrors);
+
+        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd21Enum::isValidCode,
+                "tipologiaStruttura", "HealthcareFacility", validationErrors);
+
+        validateField(request.getAssettoOrganizzativo(),
+                PracticeSettingCodeAd21Enum::isValidCode,
+                "assettoOrganizzativo", "PracticeSettingCode", validationErrors);
+
+        validateField(request.getTipoAttivitaClinica(),
+                AttivitaClinicaAd21Enum::isValidCode,
+                "tipoAttivitaClinica", "AttivitaClinica", validationErrors);
+
+        validateField(request.getTipoDocumentoLivAlto(),
+                TipoDocAltoLivAd21Enum::isValidCode,
+                "tipoDocumentoLivAlto", "TipoDocAltoLiv", validationErrors);
+    }
+
+}

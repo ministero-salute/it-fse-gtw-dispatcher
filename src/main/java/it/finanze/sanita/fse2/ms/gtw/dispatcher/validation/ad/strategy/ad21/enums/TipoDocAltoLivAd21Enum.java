@@ -48,5 +48,3 @@ public enum TipoDocAltoLivAd21Enum {
 	}
 
 }
-
-// Made with Bob

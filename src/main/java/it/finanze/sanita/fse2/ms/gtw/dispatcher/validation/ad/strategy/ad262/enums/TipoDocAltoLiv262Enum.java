@@ -55,5 +55,3 @@ public enum TipoDocAltoLiv262Enum {
 	}
 
 }
-
-// Made with Bob

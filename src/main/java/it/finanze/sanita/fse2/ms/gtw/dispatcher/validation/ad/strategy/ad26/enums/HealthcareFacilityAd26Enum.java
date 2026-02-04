@@ -44,5 +44,3 @@ public enum HealthcareFacilityAd26Enum {
 	}
 
 }
-
-// Made with Bob

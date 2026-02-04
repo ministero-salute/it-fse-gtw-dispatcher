@@ -44,5 +44,3 @@ public enum AdministrativeReqAd25Enum {
 	}
 
 }
-
-// Made with Bob

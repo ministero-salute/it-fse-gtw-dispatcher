@@ -47,5 +47,3 @@ public enum AttivitaClinicaAd26Enum {
 	}
 
 }
-
-// Made with Bob

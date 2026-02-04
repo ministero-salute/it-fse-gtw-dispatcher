@@ -24,22 +24,25 @@ import java.util.function.Predicate;
 
 /**
  * Abstract base class for Affinity Domain strategy implementations.
- * Provides common utility methods for validation logic shared across all AD versions.
+ * Provides common utility methods for validation logic shared across all AD
+ * versions.
  * 
- * <p>This class extracts common patterns found in concrete strategy implementations:
+ * <p>
+ * This class extracts common patterns found in concrete strategy
+ * implementations:
  * <ul>
- *   <li>Field validation and collection logic</li>
- *   <li>Result building with consistent error handling</li>
- *   <li>Unsupported feature detection</li>
- *   <li>Template methods for common validation flows</li>
+ * <li>Field validation and collection logic</li>
+ * <li>Result building with consistent error handling</li>
+ * <li>Template methods for common validation flows</li>
  * </ul>
  * 
- * <p>Concrete strategy classes should:
+ * <p>
+ * Concrete strategy classes should:
  * <ul>
- *   <li>Extend this class</li>
- *   <li>Define version-specific mandatory field sets</li>
- *   <li>Implement {@link #versionId()} and {@link #effectiveFrom()}</li>
- *   <li>Use protected utility methods for validation logic</li>
+ * <li>Extend this class</li>
+ * <li>Define version-specific mandatory field sets</li>
+ * <li>Implement {@link #versionId()} and {@link #effectiveFrom()}</li>
+ * <li>Use protected utility methods for validation logic</li>
  * </ul>
  * 
  * @see AffinityDomainStrategy
@@ -93,7 +96,7 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
                                 String fieldName, String codeType, List<String> validationErrors) {
         if (fieldValue != null && !validator.test(fieldValue)) {
             validationErrors.add(String.format(
-                    "Invalid %s: '%s' is not a valid %s code for AD %s",
+                    "Campo invalido %s: '%s' non è un %s valido per AD %s",
                     fieldName, fieldValue, codeType, versionId()));
         }
     }
@@ -116,7 +119,7 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
             for (String fieldValue : fieldValues) {
                 if (fieldValue != null && !validator.test(fieldValue)) {
                     validationErrors.add(String.format(
-                            "Invalid %s: '%s' is not a valid %s code for AD %s",
+                            "Campo invalido %s: '%s' non è un %s valido per AD %s",
                             fieldName, fieldValue, codeType, versionId()));
                 }
             }
@@ -136,7 +139,7 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
     protected void validateUnsupportedField(String fieldValue, String fieldName, List<String> validationErrors) {
         if (fieldValue != null) {
             validationErrors.add(String.format(
-                    "%s metadata not supported by AD %s", fieldName, versionId()));
+                    "%s metadato non supportato da AD %s", fieldName, versionId()));
         }
     }
 
@@ -153,24 +156,8 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
     protected void validateUnsupportedField(List<String> fieldValues, String fieldName, List<String> validationErrors) {
         if (fieldValues != null && !fieldValues.isEmpty()) {
             validationErrors.add(String.format(
-                    "%s metadata not supported by AD %s", fieldName, versionId()));
+                    "%s metadato non supportato da AD %s", fieldName, versionId()));
         }
-    }
-
-    /**
-     * Validates that the request doesn't contain features unsupported in this AD version.
-     *
-     * <p>Default implementation does nothing (no unsupported features). Subclasses should
-     * override this method to add version-specific unsupported feature checks.
-     *
-     * <p>Example: AD 2.1 doesn't support administrativeRequest field.
-     *
-     * @param request The update metadata request (must not be null)
-     * @param validationErrors List to collect validation errors (will be modified)
-     */
-    protected void validateUnsupportedFeatures(UpdateMetadataReqDTO request, List<String> validationErrors) {
-        // Default implementation: no unsupported features
-        // Subclasses should override to provide version-specific validation
     }
 
     /**
@@ -246,7 +233,7 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
             Set<String> mandatorySubmissionSetFields) {
         
         if (metadata == null) {
-            log.error("Metadata cannot be null for AD version {}", versionId());
+            log.error("Metadato non puo essere null per AD version {}", versionId());
             return buildErrorResult(
                     ERROR_CODE_MISSING_MANDATORY,
                     "Metadata object is null",
@@ -265,10 +252,10 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
 
         // Build and return result
         if (missingFields.isEmpty()) {
-            log.info("Validation passed for AD {}", versionId());
+            log.info("Validazione OK per AD {}", versionId());
             return buildSuccessResult();
         } else {
-            log.warn("Validation failed for AD {}: missing {} field(s)", versionId(), missingFields.size());
+            log.warn("Validazione fallita per AD {}: missing {} field(s)", versionId(), missingFields.size());
             return buildErrorResult(
                     ERROR_CODE_MISSING_MANDATORY,
                     String.format("Missing mandatory fields for AD %s: %s", 
@@ -296,7 +283,7 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
      */
     protected ValidationResultDTO validateUpdateMetadataReqDTOTemplate(UpdateMetadataReqDTO request) {
         if (request == null) {
-            log.error("UpdateMetadataReqDTO cannot be null for AD version {}", versionId());
+            log.error("UpdateMetadataReqDTO non puo' essere null per AD version {}", versionId());
             return buildErrorResult(
                     ERROR_CODE_MISSING_MANDATORY,
                     "Request object is null",
@@ -313,11 +300,11 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
 
         // Build and return result
         if (validationErrors.isEmpty()) {
-            log.debug("UpdateMetadataReqDTO validation passed for AD {}", versionId());
+            log.debug("UpdateMetadataReqDTO validazione OK per AD {}", versionId());
             return buildSuccessResult();
         } else {
-            log.warn("UpdateMetadataReqDTO validation failed for AD {}: {} error(s)", 
-                    versionId(), validationErrors.size());
+            log.warn("UpdateMetadataReqDTO validazione fallita per AD {}: {} error(s)",
+                            versionId(), validationErrors.size());
             return buildErrorResult(
                     ERROR_CODE_INVALID_VALUE_SET,
                     String.format("Invalid value set for AD %s: %s", 

@@ -128,5 +128,3 @@ public enum PracticeSettingCodeAd241Enum {
 		return false;
 	}
 }
-
-// Made with Bob
