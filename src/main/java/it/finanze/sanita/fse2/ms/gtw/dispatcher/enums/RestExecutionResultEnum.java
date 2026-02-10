@@ -42,12 +42,22 @@ public enum RestExecutionResultEnum {
 	SERVICE_ERROR("/msg/service-error", "Errore di comunicazione service-to-service.", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
 	GENERIC_ERROR("/msg/generic-error", "Errore generico.", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
 	MISSING_TOKEN("/msg/missing-token", "Token non fornito.", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR),
-	INI_EXCEPTION("/msg/ini-error", "Ini error.", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR),
 	EDS_EXCEPTION("/msg/eds-error", "Eds error.", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR),
 	OLDER_DAY("/msg/max-day-limit-exceed", "Error: document exceeded the maximum period to be published.", ErrorLogEnum.KO_PUB,EventStatusEnum.BLOCKING_ERROR),
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation Error.", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR),
 	SIGN_EXCEPTION("/msg/sign-error", "Sign error", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR),
-	NOT_IMPLEMENTED_EXCEPTION("/msg/not-implemented", "Not implemented", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR);
+	NOT_IMPLEMENTED_EXCEPTION("/msg/not-implemented", "Not implemented", ErrorLogEnum.KO_GENERIC,EventStatusEnum.BLOCKING_ERROR),
+
+	// INI external system errors
+	INI_REFERENCE_NOT_FOUND("/msg/ini-reference-not-found", "Riferimenti non trovati in INI.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
+	INI_METADATA_NOT_FOUND("/msg/ini-metadata-not-found", "Metadati non trovati in INI.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
+	INI_COMMUNICATION_ERROR("/msg/ini-communication-error", "Errore di comunicazione con INI.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
+	INI_SOAP_FAULT("/msg/ini-soap-fault", "SOAP fault ricevuto da INI.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
+	INI_TIMEOUT("/msg/ini-timeout", "Timeout comunicazione con INI.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
+	INI_SERVICE_UNAVAILABLE("/msg/ini-service-unavailable", "Servizio INI temporaneamente non disponibile.", ErrorLogEnum.KO_PUB, EventStatusEnum.NON_BLOCKING_ERROR),
+	INI_REGISTRY_ERROR("/msg/ini-registry-error", "Errore del registry INI.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
+	INI_EXCEPTION("/msg/ini-error", "Ini error.", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR);
+
 
 
 	private String type;
@@ -78,21 +88,21 @@ public enum RestExecutionResultEnum {
 		RestExecutionResultEnum result;
 
 		switch (rawResult) {
-			case VOCABULARY_ERROR:
-				result = RestExecutionResultEnum.VOCABULARY_ERROR;
-				break;
-			case SEMANTIC_ERROR:
-				result = RestExecutionResultEnum.SEMANTIC_ERROR;
-				break;
-			case SYNTAX_ERROR:
-				result = RestExecutionResultEnum.SYNTAX_ERROR;
-				break;
-			case OK:
-				result = RestExecutionResultEnum.OK;
-				break;
-			default:
-				result = RestExecutionResultEnum.GENERIC_ERROR;
-				break;
+		case VOCABULARY_ERROR:
+			result = RestExecutionResultEnum.VOCABULARY_ERROR;
+			break;
+		case SEMANTIC_ERROR:
+			result = RestExecutionResultEnum.SEMANTIC_ERROR;
+			break;
+		case SYNTAX_ERROR:
+			result = RestExecutionResultEnum.SYNTAX_ERROR;
+			break;
+		case OK:
+			result = RestExecutionResultEnum.OK;
+			break;
+		default:
+			result = RestExecutionResultEnum.GENERIC_ERROR;
+			break;
 		}
 
 		return result;

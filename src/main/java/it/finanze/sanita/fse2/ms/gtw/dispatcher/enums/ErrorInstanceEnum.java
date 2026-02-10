@@ -44,7 +44,19 @@ public enum ErrorInstanceEnum {
 	OLDER_DAY("/msg/max-day-limit-exceed", "Cannot publish documents older"),
 	EDS_DOCUMENT_MISSING("/msg/eds-document-missing", "Document cannot be found on the Server FHIR"),
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation error"),
-	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf");
+	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
+	
+	INI_REFERENCE_NOT_FOUND("/external/ini/reference-not-found", "References not found in INI registry"),
+	INI_METADATA_NOT_FOUND("/external/ini/metadata-not-found", "Metadata not found in INI registry"),
+	INI_COMMUNICATION_ERROR("/external/ini/communication-error", "Communication error with INI service"),
+	INI_SOAP_FAULT("/external/ini/soap-fault", "SOAP fault received from INI service"),
+	INI_TIMEOUT("/external/ini/timeout", "Timeout while communicating with INI service"),
+	INI_SERVICE_UNAVAILABLE("/external/ini/service-unavailable", "INI service temporarily unavailable"),
+	INI_REGISTRY_ERROR("/external/ini/registry-error", "INI registry returned an error"),
+	
+	// Generic external system error
+	EXTERNAL_SERVICE_ERROR("/external/service-error", "Generic external service error");
+
 	
 	private String instance;
 	private String description;

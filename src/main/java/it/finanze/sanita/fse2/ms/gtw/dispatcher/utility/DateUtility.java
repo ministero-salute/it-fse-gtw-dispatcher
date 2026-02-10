@@ -28,6 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DateUtility {
 	
+	private static final String UTC = "UTC";
+
+    private static final List<String> SUPPORTED_DATE_PATTERNS = List.of("yyyy-MM-dd'T'HH:mm:ssXXX", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyyMMddHHmmssX", "yyyyMMddHHmmssZ", "yyyyMMddHHmmss", "yyyyMMdd");
+
+    public static final String INI_DATE_PATTERN = "yyyyMMddHHmmss";
+	
 	public static long getDifferenceDays(Date d1, Date d2) {
 		long diff = d2.getTime() - d1.getTime();
 		return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
@@ -58,37 +64,6 @@ public class DateUtility {
 		}
 	}
 	
- 
-//	public static String convertDateCda(String data) {
-//        SimpleDateFormat sdfInput;
-//        if (data.contains("+") || data.contains("-")) {
-//            sdfInput = new SimpleDateFormat("yyyyMMddHHmmssX");  
-//        } else {
-//            sdfInput = new SimpleDateFormat(INI_DATE_PATTERN);
-//        }
-//        sdfInput.setTimeZone(TimeZone.getTimeZone("UTC"));
-//        
-//        Date parsedDate = null;
-//		try {
-//			parsedDate = sdfInput.parse(data);
-//		} catch (ParseException e) {
-//			log.error("Error while perform convertDateCda",e);
-//			throw new BusinessException(e);
-//		}
-//		
-//        SimpleDateFormat sdfOutput = new SimpleDateFormat(INI_DATE_PATTERN);
-//        sdfOutput.setTimeZone(TimeZone.getTimeZone("UTC"));
-//        return sdfOutput.format(parsedDate);
-//    }
-	
-	
-	private static final String UTC = "UTC";
-
-    // Pattern di date CDA/FHIR più comuni (immutabili)
-    private static final List<String> SUPPORTED_DATE_PATTERNS = List.of("yyyy-MM-dd'T'HH:mm:ssXXX", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyyMMddHHmmssX", "yyyyMMddHHmmssZ", "yyyyMMddHHmmss", "yyyyMMdd");
-
-    public static final String INI_DATE_PATTERN = "yyyyMMddHHmmss";
-
     public static String convertDateCda(String data) {
         if (data == null || data.trim().isEmpty()) {
             log.warn("convertDateCda: data nulla o vuota");
@@ -117,6 +92,4 @@ public class DateUtility {
         sdfOutput.setTimeZone(TimeZone.getTimeZone(UTC));
         return sdfOutput.format(parsedDate);
     }
-
- 
 }

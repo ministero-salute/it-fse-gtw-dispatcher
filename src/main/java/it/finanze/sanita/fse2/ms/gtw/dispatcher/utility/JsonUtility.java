@@ -13,18 +13,14 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
  
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonUtility {
 
-
-	/**
-	 * Private constructor to avoid instantiation.
-	 * 
-	 * @throws IllegalStateException
-	 */
-	private JsonUtility() {}
 
 	private static ObjectMapper mapper = new ObjectMapper(); 
 

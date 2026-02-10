@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.Getter;
 
 public enum EventTypeEnum {
@@ -39,6 +40,12 @@ public enum EventTypeEnum {
 
 	private EventTypeEnum(String inName) {
 		name = inName;
+	}
+	
+	public static void main(String[] args) {
+		String stringaProva = "Prova";
+		String sha256Prova = StringUtility.encodeSHA256(stringaProva.getBytes());
+		System.out.println(sha256Prova);
 	}
 
 }

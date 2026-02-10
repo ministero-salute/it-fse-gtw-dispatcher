@@ -42,9 +42,6 @@ import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfString;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AttachmentDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoAttachmentInPdfException;
 import lombok.AccessLevel;

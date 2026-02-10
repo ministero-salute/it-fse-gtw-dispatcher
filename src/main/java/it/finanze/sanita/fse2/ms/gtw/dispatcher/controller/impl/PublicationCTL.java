@@ -465,17 +465,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// ==============================
 			// [3] Send delete request to INI
 			// ==============================
-			DeleteRequestDTO deleteRequestDTO = buildRequestForIni(
-					idDoc,
-					iniReference.getUuid(),
-					jwtPayloadToken,
-					iniReference.getDocumentType(),
-					subjApplicationId,
-					subjApplicationVendor,
-					subjApplicationVersion,
-					workflowInstanceId,
-					iniReference.getAuthorInstitution(),
-					iniReference.getAdministrativeRequest() );
+			DeleteRequestDTO deleteRequestDTO = buildRequestForIni(idDoc, iniReference.getUuid(), jwtPayloadToken,
+					iniReference.getDocumentType(), subjApplicationId, subjApplicationVendor, subjApplicationVersion, workflowInstanceId,
+					iniReference.getAuthorInstitution(), iniReference.getAdministrativeRequest());
 			IniTraceResponseDTO iniResponse = iniClient.delete(deleteRequestDTO);
 
 			// Check mock errors

@@ -13,16 +13,13 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.codec.binary.Hex;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
@@ -35,21 +32,16 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class StringUtility {
 
 	private static final String ERROR_MSG = "Errore in fase di calcolo sha";
-	private static final ObjectMapper mapper = new ObjectMapper();
-
-	/**
-	 * Private constructor to avoid instantiation.
-	 */
-	private StringUtility() {
-		// Constructor intentionally empty.
-	}
-
+ 
 	/**
 	 * Returns {@code true} if the String passed as parameter is null or empty.
 	 * 

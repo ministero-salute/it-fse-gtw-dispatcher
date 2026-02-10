@@ -13,8 +13,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
-
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +31,13 @@ import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ExternalServiceException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
@@ -223,7 +223,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 
-		return new ResponseEntity<>(out, headers, status);
+		return new ResponseEntity<>(out, headers,  HttpStatus.NOT_FOUND);
 	}
 
 
@@ -305,6 +305,34 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 
 		return new ResponseEntity<>(out, headers, status);
+	}
+	
+	/**
+	 * Handles external service exceptions (e.g., INI, other external systems).
+	 *
+	 * @param ex      external service exception
+	 * @param request web request
+	 * @return error response
+	 */
+	@ExceptionHandler(value = {ExternalServiceException.class})
+	protected ResponseEntity<ErrorResponseDTO> handleExternalServiceException(
+	        final ExternalServiceException ex, 
+	        final WebRequest request) {
+
+	    LogTraceInfoDTO traceInfo = getLogTraceInfo();
+	    
+	    if (ex.getErrorResponse() != null) {
+	        ErrorResponseDTO response = ex.getErrorResponse();
+	        return new ResponseEntity<>(response, HttpStatus.BAD_GATEWAY);
+	    }
+
+	    ErrorResponseDTO response = new ErrorResponseDTO(
+	            traceInfo, RestExecutionResultEnum.INI_COMMUNICATION_ERROR.getType(), 
+	            RestExecutionResultEnum.INI_COMMUNICATION_ERROR.getTitle(), ex.getMessage(), 
+	            HttpStatus.BAD_GATEWAY.value(), ErrorInstanceEnum.INI_COMMUNICATION_ERROR.getInstance()
+	    );
+	    
+	    return new ResponseEntity<>(response, HttpStatus.BAD_GATEWAY);
 	}
 
 

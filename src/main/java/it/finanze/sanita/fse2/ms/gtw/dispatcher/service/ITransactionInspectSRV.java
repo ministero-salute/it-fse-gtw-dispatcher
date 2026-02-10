@@ -19,6 +19,4 @@ public interface ITransactionInspectSRV {
 
 	TransactionInspectResDTO callSearchEventByTraceId(String traceId);
 	
-	TransactionInspectResDTO callSearchEventByIdDocumento(String idDocumento);
-
 }
