@@ -9,34 +9,22 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
-import java.util.List;
-
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.StatusCheckDTO;
-import lombok.Getter;
-import lombok.Setter;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 
 /**
- *	DTO used to return inspect result.
+ * Client interface for status-manager microservice.
  */
-@Getter
-@Setter
-public class TransactionInspectResDTO extends ResponseDTO {
+public interface IStatusManagerClient {
 
-    
-	@ArraySchema(minItems = 0, maxItems = 1000)
-	private List<StatusCheckDTO> transactionData;
-	
-	public TransactionInspectResDTO() {
-		super();
-		transactionData = null;
-	}
+	/**
+	 * Save transaction status synchronously.
+	 * 
+	 * @param request Transaction data request
+	 * @return Response with success flag
+	 */
+	CallbackTransactionDataResponseDTO saveTransactionStatus(CallbackTransactionDataRequestDTO request);
 
-	public TransactionInspectResDTO(final LogTraceInfoDTO traceInfo, final List<StatusCheckDTO> inTransactionData) {
-		super(traceInfo);
-		transactionData = inTransactionData;
-	}
-	
 }

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusManagerClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.ITransactionInspectCTL;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
@@ -30,11 +31,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.UnauthorizedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +45,8 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	@Autowired
 	private ITransactionInspectSRV transactionInspectSRV;
 
-    @Autowired
-    private IKafkaSRV kafkaSRV;
+	@Autowired
+		private IStatusManagerClient statusManagerClient;
  
 	@Override
 	public TransactionInspectResDTO getEvents(String workflowInstanceId, HttpServletRequest request) {
@@ -180,8 +179,11 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
     @Override
     public CallbackTransactionDataResponseDTO postTransactionDataEds(HttpServletRequest request, CallbackTransactionDataRequestDTO callbackTransactionDataRequestDTO) {
         log.info("[START] {}() with arguments {}={}", "postTransactionDataEds", "CallbackTransactionDataRequestDTO", callbackTransactionDataRequestDTO);
-        kafkaSRV.sendEdsUarStatus(callbackTransactionDataRequestDTO.getWorkflowInstanceId(),
-                EventStatusEnum.valueOf(callbackTransactionDataRequestDTO.getStatus()), null);
-        return new CallbackTransactionDataResponseDTO(Boolean.TRUE);
+
+		CallbackTransactionDataResponseDTO response = statusManagerClient
+				.saveTransactionStatus(callbackTransactionDataRequestDTO);
+
+		log.info("[EXIT] {}() with success={}", "postTransactionDataEds", response.getSuccess());
+		return response;
     }
 }
