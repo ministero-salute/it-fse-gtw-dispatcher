@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 
 public interface ITransactionInspectSRV {
@@ -20,5 +21,7 @@ public interface ITransactionInspectSRV {
 	TransactionInspectResDTO callSearchEventByTraceId(String traceId);
 	
 	TransactionInspectResDTO callSearchEventByIdDocumento(String idDocumento);
+
+	GetIngestionStatusResponseDTO getEdsStatusByWorkflowInstanceId(String workflowInstanceId);
 
 }

@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
 
 public interface IEdsClient {
 
@@ -22,5 +23,7 @@ public interface IEdsClient {
 	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
 	
 	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
+
+	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
 
 }

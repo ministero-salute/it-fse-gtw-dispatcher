@@ -29,7 +29,7 @@ public class RoutingTableUpdateReqDTO {
      * Notification endpoint URL (must be HTTPS)
      * Optional - only updated if provided
      */
-    @Pattern(regexp = "^https://.*", message = "Notification endpoint must be a valid HTTPS URL")
+    @Pattern(regexp = "^https?://.*", message = "Notification endpoint must be a valid HTTPS URL")
     @Size(max = 500, message = "Notification endpoint must not exceed 500 characters")
     private String notificationEndpoint;
     

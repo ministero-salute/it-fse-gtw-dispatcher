@@ -17,11 +17,13 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusCheckClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.StatusCheckDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
@@ -37,6 +39,9 @@ public class TransactionInspectSRV implements ITransactionInspectSRV {
 	
 	@Autowired
 	private IConfigSRV configSRV;
+
+	@Autowired
+	private IEdsClient edsClient;
 	
 
 	@Override
@@ -63,5 +68,10 @@ public class TransactionInspectSRV implements ITransactionInspectSRV {
 	@Override
 	public TransactionInspectResDTO callSearchEventByIdDocumento(final String idDocumento) {
 		return statusCheckClient.callSearchEventByTraceId(idDocumento);
+	}
+
+	@Override
+	public GetIngestionStatusResponseDTO getEdsStatusByWorkflowInstanceId(final String workflowInstanceId) {
+		return edsClient.getEdsStatus(workflowInstanceId);
 	}
 }
