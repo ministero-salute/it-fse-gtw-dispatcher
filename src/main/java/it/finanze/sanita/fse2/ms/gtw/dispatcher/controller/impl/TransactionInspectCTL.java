@@ -130,7 +130,7 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	    }
 
 	    String[] parts = value.split("#");
-	    if (parts.length < 3) {
+	    if (parts.length < 2) {
 	        return null;
 	    }
 

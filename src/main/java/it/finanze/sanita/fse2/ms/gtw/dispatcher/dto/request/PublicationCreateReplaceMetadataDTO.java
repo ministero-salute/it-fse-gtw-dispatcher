@@ -18,7 +18,7 @@ import jakarta.validation.constraints.Size;
 public class PublicationCreateReplaceMetadataDTO extends PublicationMetadataReqDTO {
 
     @Schema(description = "Identificativo documento", requiredMode = RequiredMode.REQUIRED)
-    @Size(min = 0, max = 100)
+    @Size(min = 0, max = 256)
     private String identificativoDoc;
 
     @Schema(description = "Identificativo repository", requiredMode = RequiredMode.REQUIRED)
