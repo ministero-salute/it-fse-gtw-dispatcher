@@ -11,18 +11,26 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
+import java.net.URI;
+
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,10 +57,61 @@ public class FhirMappingClient implements IFhirMappingClient {
 		} catch(ResourceAccessException cex) {
 			log.error("Connect error while call document transform :",cex);
 			throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
-		} catch(Exception ex){
-			log.error("Error while convert cda in bundle :",ex);
-			throw new BusinessException("Error while convert cda in bundle :",ex);
 		}
 		return out;
 	}
+
+    @Override
+    public TransformResDTO updateDocumentReferenceClient(UpdateDocumentReferenceRequestDTO updateDto) {
+        final URI uri = UriComponentsBuilder.fromUriString(msUrlCFG.getFhirMappingEngineHost() + "/v1/documents/transform/update").build().toUri();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<UpdateDocumentReferenceRequestDTO> entity = new HttpEntity<>(updateDto, headers);
+
+        ResponseEntity<TransformResDTO> response = restTemplate.exchange(uri, HttpMethod.POST, entity, TransformResDTO.class);
+        return response.getBody();
+
+    }
+    @Override
+    public TransformResDTO addDocumentReferenceToBundle(FhirDocumentDTO fhirDocumentDTO) {
+        TransformResDTO out = null;
+        log.debug("Fhir Mapping Client - Calling Fhir Mapping to execute Document Reference addon");
+        String url = msUrlCFG.getFhirMappingEngineHost() + "/v1/documents/transform/add-document-reference";
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<FhirDocumentDTO> entity = new HttpEntity<>(fhirDocumentDTO, headers);
+        try {
+            out = restTemplate.postForObject(url, entity, TransformResDTO.class);
+        } catch(ResourceAccessException cex) {
+            log.error("Connect error while call document transform :",cex);
+            throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
+        } catch(Exception ex){
+            log.error("Error while convert cda in bundle :",ex);
+            throw new BusinessException("Error while convert cda in bundle :", ex);
+        }
+        return out;
+
+    }
+
+    @Override
+    public TransformResDTO callConvertDocumentInTransaction(FhirDocumentDTO resourceDTO) {
+        TransformResDTO out = null;
+        log.debug("Fhir Mapping Client - Calling Fhir Mapping to execute conversion");
+        String url = msUrlCFG.getFhirMappingEngineHost() + "/v1/documents/transform/document-to-transaction";
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<FhirDocumentDTO> entity = new HttpEntity<>(resourceDTO, headers);
+        try {
+            out = restTemplate.postForObject(url, entity, TransformResDTO.class);
+        } catch(ResourceAccessException cex) {
+            log.error("Connect error while call document transform :",cex);
+            throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
+        } catch(Exception ex){
+            log.error("Error while convert cda in bundle :",ex);
+      throw new BusinessException("Error while convert cda in bundle :", ex);
+        }
+        return out;
+    }
 }

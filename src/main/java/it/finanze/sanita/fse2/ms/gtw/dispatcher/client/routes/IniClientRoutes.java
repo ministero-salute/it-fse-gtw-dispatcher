@@ -25,7 +25,7 @@ public final class IniClientRoutes {
     private MicroservicesURLCFG microservices;
 
     public UriComponentsBuilder base() {
-        return UriComponentsBuilder.fromHttpUrl(microservices.getIniClientHost());
+    	return UriComponentsBuilder.fromUriString(microservices.getIniClientHost());
     }
 
     public String identifier() {

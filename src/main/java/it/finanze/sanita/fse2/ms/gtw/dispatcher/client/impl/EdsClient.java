@@ -11,13 +11,20 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IEdsClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.base.AbstractClient;
@@ -25,7 +32,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,16 +43,16 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 
 	@Autowired
 	private RestTemplate restTemplate;
-	
+
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
-	
+
 	@Override
-	public EdsResponseDTO delete(final String oid) {
+	public EdsResponseDTO delete(final String oid, final String fiscalCode) {
 		EdsResponseDTO output = null;
-		
+
 		log.debug("EDS Client - Calling EDS to execute delete operation");
-		String endpoint = msUrlCFG.getEdsClientHost() + Constants.Client.Eds.DELETE_PATH.replace(Constants.Client.Eds.ID_DOC_PLACEHOLDER, oid);
+		String endpoint = msUrlCFG.getEdsClientHost() + "/v1/documents/"+ oid + "/"+fiscalCode;
 		try {
 			ResponseEntity<EdsResponseDTO> restExchange = restTemplate.exchange(endpoint, HttpMethod.DELETE, null, EdsResponseDTO.class);
 			output = restExchange.getBody();
@@ -54,7 +63,7 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 			log.error("Errore durante l'invocazione di EDS dell' API delete(). ", e);
 			throw new BusinessException("Errore durante l'invocazione di EDS dell' API delete(). ", e);
 		}
-		
+
 		return output;
 	}
 
@@ -78,5 +87,26 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 		}
 		return output;
 	}
-	
+
+
+	@Override
+	public GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier) {
+			final URI uri = UriComponentsBuilder.fromUriString(msUrlCFG.getEdsClientHost())
+					.path("/v1/document/{fiscalCode}/{masterIdentifier}").buildAndExpand(fiscalCode, masterIdentifier)
+					.toUri();
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+			ResponseEntity<GetDocumentReferenceResDTO> response = restTemplate.exchange(
+					uri,
+					HttpMethod.GET,
+					entity,
+					GetDocumentReferenceResDTO.class
+					);
+
+			return response.getBody();
+	}
 }

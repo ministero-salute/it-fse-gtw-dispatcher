@@ -18,11 +18,13 @@ public enum PurposeOfUseEnum {
 	TREATMENT("TREATMENT","Trattamento di cura ordinario"),
 	EMERGENCY("EMERGENCY","Trattamento in emergenza"),
 	PUBEMERGENCY("PUBEMERGENCY","Trattamento per la salvaguardia di un terzo o della collettività"),
-	SYSADMIN("SYSADMIN","Trasferimento del FSE"),
+	SYSADMIN("SYSADMIN","Trasferimento del FSE e Avvio del processo di catena dell’oscuramento."),
 	PERSONAL("PERSONAL","Consultazione del FSE"),
 	UPDATE("UPDATE","Invalidamento e aggiornamento di un documento"),
+	ACCESS_UPDATE("ACCESS UPDATE","Aggiornamento di un documento e della politica di oscuramento P99"),
 	CONSENT("CONSENT","Comunicazione valori consensi"),
 	ADMINISTRATIVE("ADMINISTRATIVE","Operazioni amministrative");
+	
 
 	@Getter
 	private String display;

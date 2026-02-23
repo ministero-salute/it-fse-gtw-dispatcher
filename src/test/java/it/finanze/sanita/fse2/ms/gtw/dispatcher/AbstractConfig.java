@@ -1,32 +1,36 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IConfigClient;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ConfigItemDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.ConfigSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ProfileUtility;
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfigItemTypeEnum.GENERIC;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfigItemTypeEnum.GENERIC;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IConfigClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ConfigItemDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.ConfigSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ProfileUtility;
 
 public abstract class AbstractConfig {
 
-    @SpyBean
+    @MockitoSpyBean
     protected ConfigSRV config;
-    @MockBean
+    @MockitoBean
     private IConfigClient client;
-    @SpyBean
+    @MockitoSpyBean
     private ProfileUtility profiles;
 
     public abstract List<Pair<String, String>> defaults();

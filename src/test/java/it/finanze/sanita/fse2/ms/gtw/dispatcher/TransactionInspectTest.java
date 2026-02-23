@@ -11,11 +11,12 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusCheckClient;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,18 +25,18 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusCheckClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
 
 
 @AutoConfigureMockMvc
@@ -47,16 +48,16 @@ public class TransactionInspectTest {
 	@Autowired
 	private ServletWebServerApplicationContext webServerAppCtxt;
 	
-	@SpyBean
+	@MockitoSpyBean
 	private IStatusCheckClient statusCheckClient; 
 	
 	@Autowired
 	public MockMvc mvc; 
 
-	@MockBean
+	@MockitoBean
     private ITransactionInspectSRV transactionInspectSRV;
 
-	@MockBean
+	@MockitoBean
 	private IConfigSRV config;
 
 

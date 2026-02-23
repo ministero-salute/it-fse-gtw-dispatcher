@@ -11,7 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,7 +32,7 @@ public class StatusCheckDTO {
 	@Size(min = 0, max = 50000)
 	private String message;
 
-	@Size(min = 0, max = 100)
+	@Size(min = 0, max = 256)
 	private String identificativoDocumento;
 
 	@Size(min = 0, max = 100)

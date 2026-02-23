@@ -11,54 +11,200 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.config.mongo;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClients;
- 
+import com.mongodb.client.model.vault.DataKeyOptions;
+import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.client.vault.ClientEncryptions;
 
-/**
- *	Configuration for MongoDB.
- */
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.AwsCfg;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.AzureCfg;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.CloudProviderEnum;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+
 @Configuration
+@Slf4j
+@Getter
 public class MongoDatabaseCFG {
 
-    final List<Converter<?, ?>> conversions = new ArrayList<>();
+    private static final String ALG = "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic";
+    private static final String KEY_VAULT_NAMESPACE = "encryption.__keyVault";
 
-    @Bean
-    public MongoDatabaseFactory mongoDatabaseFactory(final MongoPropertiesCFG mongoPropertiesCFG){
-    	  ConnectionString connectionString = new ConnectionString(mongoPropertiesCFG.getUri());
-          MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
-              .applyConnectionString(connectionString)
-              .build();
-          return new SimpleMongoClientDatabaseFactory(MongoClients.create(mongoClientSettings), mongoPropertiesCFG.getSchemaName());
+    private static final String KMS_PROVIDER_AZURE = "azure";
+    private static final String KMS_PROVIDER_AWS = "aws";
+
+    private volatile ClientEncryption clientEncryption;
+    private BsonBinary datakeyId;
+    private MongoClientSettings mongoClientSettings;
+
+    @Autowired
+    private MongoPropertiesCFG mongoPropsCfg;
+    
+    @Autowired
+    private MongoDatabaseFactory factory;
+
+    @Value("${data.mongodb.crypting.datakey-id-name}")
+    private String dataKeyIdName;
+
+    @Autowired
+    private AzureCfg azureCfg;
+
+    @Autowired
+    private AwsCfg awsCfg;
+
+    @Value("${cloud.provider:#{null}}")
+    private CloudProviderEnum cloudProvider;
+
+    
+    @PostConstruct
+    public void init() {
+        mongoClientSettings = MongoClientSettings.builder().applyConnectionString(new ConnectionString(mongoPropsCfg.getUri())).build();
+        if (mongoPropsCfg.isEncryptionEnabled()) { 
+            generateOrRetrieveDataKeyId(cloudProvider);
+        }
     }
+ 
 
     @Bean
     @Primary
-    public MongoTemplate mongoTemplate(final MongoDatabaseFactory factory, final ApplicationContext appContext) {
+    public MongoTemplate mongoTemplate(final ApplicationContext appContext) {
         final MongoMappingContext mongoMappingContext = new MongoMappingContext();
         mongoMappingContext.setApplicationContext(appContext);
-        MappingMongoConverter converter = new MappingMongoConverter(new DefaultDbRefResolver(factory), mongoMappingContext);
+        MappingMongoConverter converter = new MappingMongoConverter(new DefaultDbRefResolver(factory),
+                mongoMappingContext);
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return new MongoTemplate(factory, converter);
     }
-  
- 
+
+    private void generateOrRetrieveDataKeyId(CloudProviderEnum cloudProviderEnum) {
+        clientEncryption = buildClientEncryption(cloudProviderEnum); 
+
+        BsonDocument keyDocument = clientEncryption.getKeyByAltName(dataKeyIdName);
+        if (keyDocument == null) {
+            log.info("No existing key found with alias '{}'. Creating a new key...", dataKeyIdName);
+            switch (cloudProviderEnum) {
+                case AWS:
+                    datakeyId = clientEncryption.createDataKey(KMS_PROVIDER_AWS, new DataKeyOptions()
+                            .keyAltNames(Collections.singletonList(dataKeyIdName))
+                            .masterKey(configureMasterKeyProperties(CloudProviderEnum.AWS)));
+                    break;
+                case AZURE:
+                    datakeyId = clientEncryption.createDataKey(KMS_PROVIDER_AZURE, new DataKeyOptions()
+                            .keyAltNames(Collections.singletonList(dataKeyIdName))
+                            .masterKey(configureMasterKeyProperties(CloudProviderEnum.AZURE)));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected value: " + cloudProviderEnum);
+            }
+        } else {
+            log.info("Existing key found with alias '{}'.", dataKeyIdName);
+            datakeyId = keyDocument.getBinary("_id");
+        }
+    }
+
+    public BsonBinary encrypt(BsonValue bsonValue) {
+        if (!mongoPropsCfg.isEncryptionEnabled()) {
+            return bsonValue.asBinary();
+        }
+
+        if (cloudProvider == CloudProviderEnum.AWS) {
+            rebuildClientEncryptionAWS();
+        }
+
+        EncryptOptions options = new EncryptOptions(ALG).keyId(datakeyId);
+        return clientEncryption.encrypt(bsonValue, options);
+    }
+
+    private synchronized void rebuildClientEncryptionAWS() {
+        try {
+            if (clientEncryption != null) {
+                clientEncryption.close();
+            }
+            clientEncryption = buildClientEncryption(CloudProviderEnum.AWS); 
+        } catch (Exception e) {
+            log.error("Errore nel rebuild di ClientEncryption per AWS", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ClientEncryption buildClientEncryption(CloudProviderEnum provider) {
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
+        Map<String, Object> providerDetails = new HashMap<>();
+
+        switch (provider) {
+            case AWS:
+                AwsCredentials credentials = DefaultCredentialsProvider.builder().build().resolveCredentials();
+                providerDetails.put("accessKeyId", credentials.accessKeyId());
+                providerDetails.put("secretAccessKey", credentials.secretAccessKey());
+                if (credentials instanceof AwsSessionCredentials) {
+                    providerDetails.put("sessionToken", ((AwsSessionCredentials) credentials).sessionToken());
+                }
+                kmsProviders.put(KMS_PROVIDER_AWS, providerDetails);
+                break;
+
+            case AZURE:
+                providerDetails.put("tenantId", azureCfg.getTenantId());
+                providerDetails.put("clientId", azureCfg.getClientId());
+                providerDetails.put("clientSecret", azureCfg.getClientSecret());
+                kmsProviders.put(KMS_PROVIDER_AZURE, providerDetails);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unexpected value: " + provider);
+        }
+
+        ClientEncryptionSettings settings = ClientEncryptionSettings.builder()
+                .keyVaultMongoClientSettings(mongoClientSettings)
+                .keyVaultNamespace(KEY_VAULT_NAMESPACE)
+                .kmsProviders(kmsProviders)
+                .build();
+
+        return ClientEncryptions.create(settings);
+    }
+
+    public BsonDocument configureMasterKeyProperties(CloudProviderEnum cloudProviderEnum) {
+        BsonDocument masterKeyProperties = new BsonDocument();
+        switch (cloudProviderEnum) {
+            case AZURE:
+                masterKeyProperties.put("provider", new BsonString(KMS_PROVIDER_AZURE));
+                masterKeyProperties.put("keyName", new BsonString(azureCfg.getMasterKeyName()));
+                masterKeyProperties.put("keyVaultEndpoint", new BsonString(azureCfg.getKeyVaultEndpoint()));
+                break;
+            case AWS:
+                masterKeyProperties.put("region", new BsonString(awsCfg.getRegion()));
+                masterKeyProperties.put("key", new BsonString(awsCfg.getMasterKeyArn()));
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported cloud provider: " + cloudProviderEnum);
+        }
+        return masterKeyProperties;
+    }
 }

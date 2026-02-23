@@ -12,16 +12,17 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.7.18</version>
+		<version>3.5.7</version>
 		<relativePath />
-		<!-- lookup parent from repository -->
 	</parent>
 
 	<properties>
 		<!-- Application -->
-		<java.version>1.8</java.version>
-		<spring-cloud.version>2021.0.1</spring-cloud.version>
-		<start-class>it.finanze.sanita.fse2.ms.gtw.dispatcher.DispatcherApplication</start-class>
+		<java.version>21</java.version>
+		<spring-boot.version>3.4.3</spring-boot.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<start-class>
+			it.finanze.sanita.fse2.ms.gtw.dispatcher.DispatcherApplication</start-class>
 		<!-- Build -->
 		<config.infra>${project.basedir}/infrastructure</config.infra>
 		<container.output>target/container</container.output>
@@ -31,7 +32,6 @@
 			src/main/java/it/finanze/sanita/fse2/ms/gtw/dispatcher/config/OpenApiCFG.java,
 			src/main/java/it/finanze/sanita/fse2/ms/gtw/dispatcher/logging/**/*.*
 		</sonar.exclusions>
-		<logback.version>1.2.13</logback.version>
 	</properties>
 
 	<dependencies>
@@ -47,16 +47,13 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
 		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
 		<!-- RESILIENCE -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-aop</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
@@ -67,36 +64,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-registry-prometheus</artifactId>
-			<scope>runtime</scope>
-		</dependency>
 
-		<!-- OPENAPI-UI -->
-		<!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui -->
+		<!-- OpenAPI -->
+		<!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
 		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-ui</artifactId>
-			<version>1.6.11</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.yaml</groupId>
-					<artifactId>snakeyaml</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<!-- LOGBACK JSON -->
-		<dependency>
-			<groupId>ch.qos.logback.contrib</groupId>
-			<artifactId>logback-json-classic</artifactId>
-			<version>0.1.5</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback.contrib</groupId>
-			<artifactId>logback-jackson</artifactId>
-			<version>0.1.5</version>
+		    <groupId>org.springdoc</groupId>
+		    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+		    <version>2.8.6</version>
 		</dependency>
 
 		<!-- DEVTOOL -->
@@ -118,45 +92,30 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongodb-driver-sync</artifactId>
-			<version>5.2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongodb-driver-core</artifactId>
-			<version>5.2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>bson</artifactId>
-			<version>5.2.1</version>
-		</dependency>
-		
+		 
+
 		<!-- KAFKA -->
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
-			<version>2.9.11</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.kafka</groupId>
-			<artifactId>spring-kafka-test</artifactId>
-			<version>2.9.11</version>
-			<scope>test</scope>
 		</dependency>
 
 		<!-- GSON -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
+			<version>2.11.0</version>
 		</dependency>
 
-		<!-- TRACING -->
 		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-sleuth</artifactId>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.80</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.80</version>
 		</dependency>
 
 		<!-- PDF -->
@@ -177,34 +136,79 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.15.3</version>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>commons-io</groupId>
-		    <artifactId>commons-io</artifactId>
-		    <version>2.14.0</version>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.14.0</version>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/com.microsoft.azure/msal4j -->
 		<dependency>
-		    <groupId>com.microsoft.azure</groupId>
-		    <artifactId>msal4j</artifactId>
-		    <version>1.17.3</version>
+			<groupId>com.microsoft.azure</groupId>
+			<artifactId>msal4j</artifactId>
+			<version>1.17.3</version>
 		</dependency>
 		<dependency>
-		      <groupId>com.microsoft.azure</groupId>
-		      <artifactId>azure-client-authentication</artifactId>
-		      <version>1.6.15</version>
-		      <scope>compile</scope>
+			<groupId>com.microsoft.azure</groupId>
+			<artifactId>azure-client-authentication</artifactId>
+			<version>1.6.15</version>
+			<scope>compile</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.codehaus.janino/janino -->
 		<dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
-            <version>3.1.7</version>
-        </dependency>
+			<groupId>org.codehaus.janino</groupId>
+			<artifactId>janino</artifactId>
+			<version>3.1.7</version>
+		</dependency>
 
+		<dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongodb-crypt</artifactId>
+			<version>5.2.0</version>
+		</dependency>
+
+		<dependency>
+		  <groupId>io.opentelemetry.instrumentation</groupId>
+		  <artifactId>opentelemetry-spring-boot-starter</artifactId>
+		</dependency> 
+		<dependency>
+	      <groupId>io.opentelemetry.instrumentation</groupId>
+	      <artifactId>opentelemetry-kafka-clients-2.6</artifactId>
+	      <version>2.15.0-alpha</version>
+	    </dependency>
+	
+	    <dependency>
+	      <groupId>io.opentelemetry</groupId>
+	      <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+	    </dependency>
+		
+		<!-- https://mvnrepository.com/artifact/software.amazon.msk/aws-msk-iam-auth -->
+		<dependency>
+		    <groupId>software.amazon.msk</groupId>
+		    <artifactId>aws-msk-iam-auth</artifactId>
+		    <version>2.3.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/sts -->
+		<dependency>
+		    <groupId>software.amazon.awssdk</groupId>
+		    <artifactId>sts</artifactId>
+		    <version>2.32.11</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/software.amazon.awssdk/auth -->
+		<dependency>
+		    <groupId>software.amazon.awssdk</groupId>
+		    <artifactId>auth</artifactId>
+		    <version>2.32.11</version>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>kms</artifactId>
+		    <version>2.32.11</version>
+		</dependency>
 		 
 	</dependencies>
+ 
 
 	<dependencyManagement>
 		<dependencies>
@@ -216,10 +220,11 @@
 				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>org.xerial.snappy</groupId>
-				<artifactId>snappy-java</artifactId>
-				<version>1.1.10.4</version>
-				<scope>runtime</scope>
+				<groupId>io.opentelemetry.instrumentation</groupId>
+				<artifactId>opentelemetry-instrumentation-bom</artifactId>
+				<version>2.15.0</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -238,10 +243,11 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.8</version>
+				<version>0.8.12</version>
 				<configuration>
 					<excludes>
-						<exclude>src/main/java/it/finanze/sanita/fse2/ms/gtw/**/config/OpenApiCFG.java</exclude>
+						<exclude>
+							src/main/java/it/finanze/sanita/fse2/ms/gtw/**/config/OpenApiCFG.java</exclude>
 					</excludes>
 				</configuration>
 				<executions>
@@ -301,23 +307,43 @@
 								<taskdef
 									resource="net/sf/antcontrib/antcontrib.properties" />
 								<if>
-									<available file="infrastructure" />
+									<available
+										file="infrastructure" />
 									<then>
-										<!-- copy common resources of server runtime to project build directory -->
-										<copy todir="${container.output.runtime}"
-											overwrite="true" failonerror="false">
-											<fileset dir="${config.infra}/runtime" includes="**" />
-										</copy>
-										<!-- copy common resources of server runtime to project build directory -->
-										<copy todir="${container.output}" overwrite="true"
+										<!-- copy common
+										resources of server
+										runtime to project
+										build directory -->
+										<copy
+											todir="${container.output.runtime}"
+											overwrite="true"
 											failonerror="false">
-											<fileset dir="${project.basedir}"
+											<fileset
+												dir="${config.infra}/runtime"
+												includes="**" />
+										</copy>
+										<!-- copy common
+										resources of server
+										runtime to project
+										build directory -->
+										<copy
+											todir="${container.output}"
+											overwrite="true"
+											failonerror="false">
+											<fileset
+												dir="${project.basedir}"
 												includes="Dockerfile" />
 										</copy>
-										<!-- copy common resources of server runtime to project build directory -->
-										<copy todir="${container.output}" overwrite="true"
+										<!-- copy common
+										resources of server
+										runtime to project
+										build directory -->
+										<copy
+											todir="${container.output}"
+											overwrite="true"
 											failonerror="false">
-											<fileset dir="${project.basedir}/target"
+											<fileset
+												dir="${project.basedir}/target"
 												includes="${project.artifactId}.jar" />
 										</copy>
 									</then>

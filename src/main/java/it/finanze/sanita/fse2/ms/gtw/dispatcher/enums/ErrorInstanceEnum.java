@@ -20,6 +20,7 @@ public enum ErrorInstanceEnum {
 
 	NO_INFO("", "No specific information for this error, refeer to type for any info"),
 	CDA_EXTRACTION("/cda-extraction", "Error while extracting CDA from PDF document"),
+	FHIR_EXTRACTION("/fhir-extraction", "Error while extracting FHIR from PDF document"),
 	CDA_NOT_VALIDATED("/cda-validation", "Error while retrieving information about CDA validation"),
 	DIFFERENT_HASH("/jwt-hash-match", "Hash of document different from hash in JWT"),
 	MISSING_MANDATORY_ELEMENT("/request-missing-field", "Missing required field in request body"),
@@ -32,16 +33,19 @@ public enum ErrorInstanceEnum {
 	MISSING_JWT_FIELD("/jwt-mandatory-field-missing", "Mandatory field in JWT is missing"),
 	JWT_MALFORMED_FIELD("/jwt-mandatory-field-malformed", "Malformed JWT field"),
 	FHIR_RESOURCE_ERROR("/fhir-resource", "Error creating fhir resource"),
+	FHIR_NOT_VALIDATED("/fhir-validation","Error while retrieving information about FHIR validation"),
 	INVALID_ID_ERROR("/invalid-id", "L'identificativo documento non è valido"),
 	INVALID_ID_WII("/invalid-id", "Il wii non è valido"),
 	RECORD_NOT_FOUND("/record-not-found", "Record not found"),
 	INVALID_REQ_ID_ERROR("/invalid-req-id", "L'identificativo documento fornito in richiesta non è valido"),
 	NON_PDF_FILE("/multipart-file", "File type must be a PDF document"),
+	NON_JSON_FILE("/fhir+json", "File type must be a PDF document"),
 	EMPTY_FILE("/empty-multipart-file", "File type must not be empty"),
 	OLDER_DAY("/msg/max-day-limit-exceed", "Cannot publish documents older"),
 	EDS_DOCUMENT_MISSING("/msg/eds-document-missing", "Document cannot be found on the Server FHIR"),
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation error"),
-	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf");
+	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
+	INVALID_ISSUER_SUB_MISMATCH("/msg/invalid-issuer-sub", "Issuer and JWT sub mismatch");
 	
 	private String instance;
 	private String description;

@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -31,7 +31,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 @ActiveProfiles(Constants.Profile.TEST)
 public class ValidatorClientTest {
     
-    @SpyBean
+    @MockitoSpyBean
     private RestTemplate restTemplate;
 
     @Autowired

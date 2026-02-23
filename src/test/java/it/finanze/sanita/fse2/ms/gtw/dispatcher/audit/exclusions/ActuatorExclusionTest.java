@@ -61,7 +61,10 @@ class ActuatorExclusionTest {
             // If it wasn't overwritten, it will return null therefore we are using the default mapping value
             String mapper = mapping.getOrDefault(endpoint, endpoint);
             // Get actuator path
-            String path = UriComponentsBuilder.newInstance().pathSegment(base, mapper).toUriString();
+            String path = UriComponentsBuilder.newInstance()
+            	    .pathSegment(base, mapper)
+            	    .build()
+            	    .toUriString();
             // Add to list
             current.add(path);
         }

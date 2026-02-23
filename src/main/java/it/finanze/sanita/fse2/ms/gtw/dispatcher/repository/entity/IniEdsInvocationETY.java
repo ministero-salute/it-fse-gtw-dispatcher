@@ -47,5 +47,11 @@ public class IniEdsInvocationETY {
 	@Field(name = "metadata")
 	private List<org.bson.Document> metadata;
 	
+	@Field(name = "fiscalCode")
+	private String fiscalCode;
+	
+	@Field(name = "rde")
+	private String rde;
+	
 	 
 }

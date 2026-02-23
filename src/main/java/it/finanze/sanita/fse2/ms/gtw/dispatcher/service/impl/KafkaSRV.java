@@ -11,20 +11,8 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaProducerPropertiesCFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaTopicCFG;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.KafkaStatusManagerDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PriorityUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Date;
+
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +22,24 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaProducerPropertiesCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaTopicCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.KafkaStatusManagerDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Kafka management service.
@@ -62,9 +67,6 @@ public class KafkaSRV implements IKafkaSRV {
 	@Autowired
 	@Qualifier("notxkafkatemplate")
 	protected KafkaTemplate<String, String> notxKafkaTemplate;
-
-	@Autowired
-	private PriorityUtility priorityUtility;
 
 	@Autowired
 	private KafkaProducerPropertiesCFG kafkaProducerCFG;
@@ -112,18 +114,16 @@ public class KafkaSRV implements IKafkaSRV {
 	}
 
 	@Override
-	public void notifyChannel(final String key, final String kafkaValue, PriorityTypeEnum priorityFromRequest,
-			TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType) {
+	public void notifyChannel(final String key, final String kafkaValue, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType) {
 		log.debug("Destination: {}", destinationType.name());
 		try {
-			String destTopic = priorityUtility.computeTopic(priorityFromRequest, destinationType, documentType);
 
 			if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
 				log.info("PRODUCER NON TRANSAZIONALE");
-				sendMessage(destTopic, key, kafkaValue, false);
+				sendMessage(kafkaTopicCFG.getDispatcherIndexerTopic(), key, kafkaValue, false);
 			} else {
 				log.info("PRODUCER TRANSAZIONALE");
-				sendMessage(destTopic, key, kafkaValue, true);
+				sendMessage(kafkaTopicCFG.getDispatcherIndexerTopic(), key, kafkaValue, true);
 			}
 		} catch (Exception e) {
 			log.error("Error sending kafka message", e);
@@ -211,6 +211,12 @@ public class KafkaSRV implements IKafkaSRV {
 		sendStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null);
 	}
 
+    @Override
+    public void sendEdsUarStatus(final String workflowInstanceId, final EventStatusEnum eventStatus, final String message) {
+        sendStatusMessageNoJwt(null, workflowInstanceId, EventTypeEnum.UAR_FINAL_STATUS, eventStatus, message,
+                null, null);
+    }
+
 	private String sendObjectAsJson(Object o) {
 		String json;
 		// Try to deserialize message
@@ -233,6 +239,30 @@ public class KafkaSRV implements IKafkaSRV {
 			sendMessage(topic, workflowInstanceId, json, true);
 		}
 	}
+
+
+    private void sendStatusMessageNoJwt(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
+                                   final EventStatusEnum eventStatus, final String message, final String documentId, AttivitaClinicaEnum tipoAttivita) {
+        try {
+            KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder()
+                    .traceId(traceId).eventType(eventType).eventDate(new Date()).eventStatus(eventStatus)
+                    .message(message).identificativoDocumento(documentId).tipoAttivita(tipoAttivita)
+                    .microserviceName(msName).build();
+
+            String json = truncateMessageIfNecessary(statusManagerMessage);
+
+            if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
+                log.info("PRODUCER NON TRANSAZIONALE");
+                sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, false);
+            } else {
+                log.info("PRODUCER TRANSAZIONALE");
+                sendMessage(kafkaTopicCFG.getStatusManagerTopic(), workflowInstanceId, json, true);
+            }
+        } catch (Exception ex) {
+            log.error("Error while send status message : ", ex);
+            throw new BusinessException(ex);
+        }
+    }
 
 	private void sendStatusMessage(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
 			final EventStatusEnum eventStatus, final String message, final String documentId,

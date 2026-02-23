@@ -17,7 +17,6 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +26,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 
+import io.opentelemetry.instrumentation.kafkaclients.v2_6.TracingProducerInterceptor;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.oauth2.CustomAuthenticateCallbackHandler;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +88,6 @@ public class KafkaProducerCFG {
 		
 		if (kafkaPropCFG.getTrustorePassword() != null && kafkaPropCFG.getTrustorePassword().length > 0) {
 			props.put("ssl.truststore.password", String.valueOf(kafkaPropCFG.getTrustorePassword()));
-			System.out.println("TRUSTORE PWD:"+String.valueOf(kafkaPropCFG.getTrustorePassword()));
 		}
 
 		if("OAUTHBEARER".equals(kafkaPropCFG.getMechanism())) {
@@ -98,6 +97,12 @@ public class KafkaProducerCFG {
 			props.put("kafka.oauth.pfxPathName", kafkaPropCFG.getPfxPathName());
 			props.put("kafka.oauth.pwd", kafkaPropCFG.getPwd());
 		}
+
+		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
+			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
+		}
+		
+		props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
 
 		return props;
 	}
@@ -176,7 +181,11 @@ public class KafkaProducerCFG {
 			props.put("kafka.oauth.pwd", kafkaPropCFG.getPwd());
 		}
 
-
+		if(!StringUtility.isNullOrEmpty(kafkaPropCFG.getCallbackHandlerClass())) {
+			props.put("sasl.client.callback.handler.class", kafkaPropCFG.getCallbackHandlerClass());
+			
+		}
+		props.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, TracingProducerInterceptor.class.getName());
 		return props;
 	}
 

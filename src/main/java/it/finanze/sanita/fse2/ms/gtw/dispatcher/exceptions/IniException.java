@@ -22,10 +22,14 @@ public class IniException extends RuntimeException {
 	
 	@Getter
     private String errorMessage;
+	
+	@Getter
+	private final String workflowInstanceId;
 
-    public IniException(final String inErrorMessage) {
+    public IniException(final String inErrorMessage,final String inWorkflowInstanceId) {
         super(inErrorMessage);
         errorMessage = inErrorMessage;
+        workflowInstanceId = inWorkflowInstanceId;
     }
 
 }

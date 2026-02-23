@@ -15,9 +15,12 @@ import lombok.NoArgsConstructor;
 
 import static lombok.AccessLevel.PRIVATE;
 
+import lombok.AccessLevel;
+
 /**
  * Constants application.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Constants {
  
 	public static final class Collections {
@@ -100,6 +103,12 @@ public final class Constants {
 		public static final String LOG_TYPE_CONTROL = "control-structured-log";
 		public static final int MAX_SIZE_WARNING = 200000;
 		public static final String BENCHMARK_ISSUER = "TEST-BENCHMARK";
+
+		public static final String MASTER_ID_SEPARATOR = "^";
+		public static final String WIF_SUFFIX = "^^^^urn:ihe:iti:xdw:2013:workflowInstanceId";
+		public static final String WIF_SEPARATOR = ".";
+
+		public static final String JSON_EXTENSION = ".json";
 		
 		
 		private App() {
@@ -146,7 +155,7 @@ public final class Constants {
 
 		@NoArgsConstructor(access = PRIVATE)
 		public static final class Eds {
-			public static final String DELETE_PATH = "/v1/documents/{idDoc}";
+			public static final String DELETE_PATH = "/v1/documents/{idDoc}/{fiscalCode}";
 			public static final String UPDATE_PATH = "/v1/documents/{idDoc}/metadata";
 			public static final String ID_DOC_PLACEHOLDER = "{idDoc}";
 		}
@@ -156,12 +165,11 @@ public final class Constants {
 			public static final String MOCKED_GATEWAY_NAME = "mocked-gateway";
 		}
 	}
-  
-	/**
-	 *	Constants.
-	 */
-	private Constants() {
-
+	
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
+	public static final class Properties {
+		public static final String MS_NAME = "gtw-dispatcher";
+		 
 	}
-
+   
 }

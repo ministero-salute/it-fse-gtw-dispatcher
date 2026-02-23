@@ -104,7 +104,7 @@ public class AccreditamentoSimulationSRV implements IAccreditamentoSimulationSRV
 
 	private String simulateSkipValidation(byte[] pdf) {
 		log.info("Skip validation simulation");
-		String cda = PDFUtility.extractCDAFromAttachments(pdf,cdaCFG.getCdaAttachmentName());
+		String cda = PDFUtility.extractContentFromAttachments(pdf, cdaCFG.getCdaAttachmentName());
 		Document docT = Jsoup.parse(cda);
 		String templateIdRoot = docT.select("templateid").get(0).attr("root");
 		String workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);

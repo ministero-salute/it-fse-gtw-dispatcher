@@ -42,7 +42,11 @@ import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfString;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AttachmentDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoAttachmentInPdfException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +56,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PDFUtility {
 
 	
-	public static String extractCDAFromAttachments(final byte[] pdf, final String cdaAttachmentName) {
+	public static String extractContentFromAttachments(final byte[] pdf, final String cdaAttachmentName)
+			throws NoAttachmentInPdfException {
 	    String out = null;
 	    final Map<String, AttachmentDTO> attachments = extractAttachments(pdf);
 	    if (!attachments.isEmpty()) {
@@ -66,7 +71,7 @@ public class PDFUtility {
 	    return out;
 	}
 	
-
+ 
 	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
 		Map<String,AttachmentDTO> out = new HashMap<>();
 	    try (PDDocument document = PDDocument.load(bytePDF)) {

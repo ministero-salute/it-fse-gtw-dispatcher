@@ -11,19 +11,14 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 
-import brave.Tracer;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import lombok.extern.slf4j.Slf4j;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
+
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -31,6 +26,27 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.Tracer;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ServerResponseException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.UnauthorizedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationErrorException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationPublicationErrorException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *	Exceptions Handler.
@@ -91,6 +107,10 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
 		if (RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR_TOKEN.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
 			status = 401;
+		}
+		
+		if (RestExecutionResultEnum.INVALID_TOKEN_FIELD.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+			status = 403;
 		}
 
 		final HttpHeaders headers = new HttpHeaders();
@@ -205,6 +225,35 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
 		return new ResponseEntity<>(out, headers, status);
 	}
+	
+	@ExceptionHandler(value = {UnauthorizedException.class})
+	protected ResponseEntity<ErrorResponseDTO> handleUnauthorizedException(
+	        UnauthorizedException ex,
+	        final WebRequest request) {
+
+	    final int status = HttpStatus.UNAUTHORIZED.value();
+
+	    LogTraceInfoDTO traceInfoDto = getLogTraceInfo();
+
+	    String detail = ex.getMessage();
+	    ErrorResponseDTO out = new ErrorResponseDTO(
+	            traceInfoDto,
+	            RestExecutionResultEnum.UNAUTHORIZED.getType(),
+	            RestExecutionResultEnum.UNAUTHORIZED.getTitle(),
+	            detail,
+	            status,
+	            ErrorInstanceEnum.INVALID_ISSUER_SUB_MISMATCH.getInstance() // nuovo enum per mismatch
+	    );
+
+	    out.setSpanID(traceInfoDto.getSpanID());
+	    out.setTraceID(traceInfoDto.getTraceID());
+
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+
+	    return new ResponseEntity<>(out, headers, status);
+	}
+
 
 
 
@@ -229,7 +278,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(out, headers, status);
 	}
 
-	@ExceptionHandler(value = {BusinessException.class})
+	@ExceptionHandler(value = { BusinessException.class })
 	protected ResponseEntity<ErrorResponseDTO> handleBusinessException(final BusinessException ex, final WebRequest request) {
 		log.error("Errore generico", ex);		
 		int status = 500;
@@ -245,6 +294,18 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
 		return new ResponseEntity<>(out, headers, status);
 	}
+	
+	@ExceptionHandler(value = {NotImplementedException.class})
+	protected ResponseEntity<ErrorResponseDTO> handleNotImplementedException(final NotImplementedException ex, final WebRequest request) {
+		int status = 503;
+
+		LogTraceInfoDTO traceInfo = getLogTraceInfo();
+		ErrorResponseDTO out = new ErrorResponseDTO(traceInfo, RestExecutionResultEnum.NOT_IMPLEMENTED_EXCEPTION.getType(), RestExecutionResultEnum.NOT_IMPLEMENTED_EXCEPTION.getTitle(), 
+				ex.getMessage(), status, ErrorInstanceEnum.NO_INFO.getInstance());
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+		return new ResponseEntity<>(out, headers, status);
+	}
 
 	/**
 	 * Management validation exception.
@@ -253,7 +314,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	 * @param request	request
 	 * @return			
 	 */
-	@ExceptionHandler(value = {ValidationPublicationErrorException.class})
+	@ExceptionHandler(value = { ValidationPublicationErrorException.class })
 	protected ResponseEntity<ErrorResponseDTO> handleValidationException(final ValidationPublicationErrorException ex, final WebRequest request) {
 		log.error("" , ex);  
 		int status = 400;
@@ -275,11 +336,6 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(out, headers, status);
 	}
 
-	private LogTraceInfoDTO getLogTraceInfo() {
-		return new LogTraceInfoDTO(
-				tracer.currentSpan().context().spanIdString(),
-				tracer.currentSpan().context().traceIdString());
-	}
 
 	/**
 	 * Management record not found exception received by clients.
@@ -322,7 +378,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	@Override
-	protected ResponseEntity<Object> handleMissingServletRequestPart(MissingServletRequestPartException ex, HttpHeaders h, HttpStatus s, WebRequest r) {
+	protected ResponseEntity<Object> handleMissingServletRequestPart(MissingServletRequestPartException ex, HttpHeaders h, HttpStatusCode s, WebRequest r) {
 		log.error("" , ex);
 		Integer status = 400;
 
@@ -332,5 +388,17 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 
 		return new ResponseEntity<>(out, headers, status);
+	}
+	
+	protected LogTraceInfoDTO getLogTraceInfo() {
+		LogTraceInfoDTO out = new LogTraceInfoDTO(null, null);
+		SpanBuilder spanbuilder = tracer.spanBuilder(MS_NAME);
+		
+		if (spanbuilder != null) {
+			out = new LogTraceInfoDTO(
+					spanbuilder.startSpan().getSpanContext().getSpanId(), 
+					spanbuilder.startSpan().getSpanContext().getTraceId());
+		}
+		return out;
 	}
 }

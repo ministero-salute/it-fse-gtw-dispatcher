@@ -1,28 +1,28 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.engine.EngineETY;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.engine.sub.EngineMap;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.mongo.impl.EngineRepo;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.EngineSRV;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.types.ObjectId;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.apache.commons.lang3.tuple.Pair;
+import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.engine.EngineETY;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.engine.sub.EngineMap;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.mongo.impl.EngineRepo;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.EngineSRV;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Constants.Profile.TEST)
@@ -31,7 +31,7 @@ class EngineSRVTest {
     @Autowired
     EngineSRV engineSRV;
 
-    @MockBean
+    @MockitoBean
     EngineRepo engineRepo;
 
     @Test
@@ -81,11 +81,9 @@ class EngineSRVTest {
 
     @Test
     void testGetStructureObjectID_NoMapException(){
-        Pair<String, String> expectedValue;
         EngineETY engine = new EngineETY();
         engine.setId("656f557479464f1e20f869a7");
 
-        Pair<String, String> actualValue;
         when(engineRepo.getLatestEngine()).thenReturn(engine);
         assertThrows(
                 BusinessException.class,

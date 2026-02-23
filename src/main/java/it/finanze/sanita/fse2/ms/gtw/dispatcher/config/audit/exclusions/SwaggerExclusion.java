@@ -12,12 +12,12 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.exclusions;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.audit.AuditExclusion;
-import org.springdoc.core.SpringDocConfigProperties;
-import org.springdoc.core.SwaggerUiConfigProperties;
+import org.springdoc.core.properties.SpringDocConfigProperties;
+import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class SwaggerExclusion implements AuditExclusion {

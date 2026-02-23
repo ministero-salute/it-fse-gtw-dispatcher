@@ -38,8 +38,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -52,6 +50,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -95,19 +95,19 @@ class ReplaceTest extends AbstractTest {
 	@Autowired
 	ServletWebServerApplicationContext webServerAppCtxt;
 
-	@MockBean
+	@MockitoBean
 	private IValidatorClient validatorClient;
 
-	@SpyBean
+	@MockitoSpyBean
 	RestTemplate restTemplate;
 
 	@Autowired
 	MongoTemplate mongoTemplate;
 	
-	@SpyBean
+	@MockitoSpyBean
 	private IIniClient iniClient;
 
-	@MockBean
+	@MockitoBean
 	private ConfigSRV config;
 
 	@BeforeAll
@@ -131,8 +131,8 @@ class ReplaceTest extends AbstractTest {
 	 	mockDocumentRef();
 	 	mockFhirMapping();
 	 	mockIniClient(HttpStatus.OK, true); 
-	 	mockGetReference(new IniReferenceResponseDTO(Arrays.asList(idDocument), null, "DocumentType", null, null));
-		Mockito.doReturn(new IniReferenceResponseDTO(Arrays.asList(idDocument), "DocumentType", "", null, null)).when(iniClient).
+	 	mockGetReference(new IniReferenceResponseDTO(Arrays.asList(idDocument), null, "DocumentType", null, null,false));
+		Mockito.doReturn(new IniReferenceResponseDTO(Arrays.asList(idDocument), "DocumentType", "", null, null,false)).when(iniClient).
 		reference(any(it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO.class), any(String.class));
 
 	 	final byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files" + File.separator + "accreditamento" + File.separator + filename);
@@ -192,9 +192,9 @@ class ReplaceTest extends AbstractTest {
 	 	
 	 	mockDocumentRef();
 	 	mockFhirMapping();
-	 	mockGetReference(new IniReferenceResponseDTO(Arrays.asList(idDocument), null,"DocumentType", null, null));
+	 	mockGetReference(new IniReferenceResponseDTO(Arrays.asList(idDocument), null,"DocumentType", null, null,false));
 	 	//when(iniClient.reference(any(it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO.class))).thenReturn(true); 
-		Mockito.doReturn(new IniReferenceResponseDTO(Arrays.asList("uuid"), "DocumentType", "", null, null)).when(iniClient).reference(any(it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO.class)
+		Mockito.doReturn(new IniReferenceResponseDTO(Arrays.asList("uuid"), "DocumentType", "", null, null,false)).when(iniClient).reference(any(it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO.class)
 				, any(String.class));
 
 	 	final byte[] notPdfFile = FileUtility.getFileFromInternalResources("Files/Test.docx");

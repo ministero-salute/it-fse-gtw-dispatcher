@@ -189,7 +189,7 @@ class EnumsTest {
     @DisplayName("DescriptionEnum test")
     void testDescriptionEnum() {
         String oid = "2.16.840.1.113883.2.9.6.1.5";
-        assertEquals(oid, DescriptionEnum.PRESCRIZIONE_FARMACEUTICA_AIC.getOid());
+        assertEquals(oid, DescriptionEnum.EROG_PRESC_FARMACEUTICA_AIC.getOid());
     }
     
     @Test

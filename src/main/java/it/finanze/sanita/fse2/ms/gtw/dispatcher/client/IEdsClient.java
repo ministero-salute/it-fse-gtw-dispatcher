@@ -13,11 +13,14 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
 
 public interface IEdsClient {
 
-	EdsResponseDTO delete(final String oid);
+	EdsResponseDTO delete(String oid, String fiscalCode);
 	
 	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
+	
+	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
 
 }

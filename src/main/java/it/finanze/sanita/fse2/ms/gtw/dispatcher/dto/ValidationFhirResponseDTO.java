@@ -9,31 +9,23 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.config;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
 
+import java.util.List;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.NoArgsConstructor;
 
+/**
+ *	DTO used to return validation result.
+ */
 @Data
-@Component
-public class PriorityDocumentCFG {
-
-	/**
-	 * List of low priority documents.
-	 */
-	@Value("${document-type.priority.low}")
-	private String lowPriorityDocuments;
-	
-	/**
-	 * List of medium priority documents.
-	 */
-	@Value("${document-type.priority.medium}")
-	private String mediumPriorityDocuments;
-
-	/**
-	 * List of high priority documents.
-	 */
-	@Value("${document-type.priority.high}")
-	private String highPriorityDocuments;
+@NoArgsConstructor
+@AllArgsConstructor
+public class ValidationFhirResponseDTO  {
+ 
+	private List<IssueDto> issues;
+	 
 }
+
