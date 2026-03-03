@@ -24,7 +24,6 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.create
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
@@ -922,7 +921,8 @@ public abstract class AbstractCTL {
 
 			}
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null);
+			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
+					idDoc);
 		} catch (MockEnabledException me) {
 			throw me;
 		} catch (final ValidationException e) {
@@ -933,7 +933,8 @@ public abstract class AbstractCTL {
 				errorInstance = get(((ValidationException) e).getError().getType());
 			}
 
-			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER,jwtPayloadToken);
+			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER,jwtPayloadToken,
+					idDoc);
 			throw e;
 		}
 
@@ -974,13 +975,6 @@ public abstract class AbstractCTL {
 				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId(extractedBundle));
 				directFhirDTO.setFilename(filename);
 			} 
-			
-//			else if (FhirUtility.isJson(inputBytes, filename)) {
-//				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
-//				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
-//				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId());
-//			}
-
 			return directFhirDTO;
 
 		} catch (final ValidationException validationE) {
