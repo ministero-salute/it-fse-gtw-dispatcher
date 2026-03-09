@@ -584,37 +584,49 @@ public abstract class AbstractCTL {
 				.build();
 		throw new ValidationException(error);
 	}
+	
 	protected byte[] getAndValidateFile(final MultipartFile file) {
-		byte[] out = null;
-		
-		try {
-			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
-			if (file != null && file.getBytes().length > 0) {
-				out = file.getBytes();
+	    byte[] out = null;
 
-				result = RestExecutionResultEnum.DOCUMENT_TYPE_ERROR;
-				if (PDFUtility.isPdf(out)) {
-					result = null;
-				}
-			}
+	    try {
+	        RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
 
-			if (result != null) {
-				String errorInstance = ErrorInstanceEnum.NON_PDF_FILE.getInstance();
-				if (RestExecutionResultEnum.EMPTY_FILE_ERROR.equals(result)) {
-					errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
-				}
-				final ErrorResponseDTO error = ErrorResponseDTO.builder()
-					.type(result.getType()).title(result.getTitle())
-					.instance(errorInstance).detail(result.getTitle()).build();
-				throw new ValidationException(error);
-			}
-		} catch (final ValidationException validationE) {
-			throw validationE;
-		} catch (final Exception e) {
-			log.error("Generic error io in cda :", e);
-			throw new BusinessException(e);
-		}
-		return out;
+	        if (file != null) {
+	            out = file.getBytes();
+
+	            if (out.length > 0) {
+	                result = RestExecutionResultEnum.DOCUMENT_TYPE_ERROR;
+
+	                if (PDFUtility.isPdf(out)) {
+	                    result = null;
+	                }
+	            }
+	        }
+
+	        if (result != null) {
+	            String errorInstance = ErrorInstanceEnum.NON_PDF_FILE.getInstance();
+	            if (RestExecutionResultEnum.EMPTY_FILE_ERROR.equals(result)) {
+	                errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
+	            }
+
+	            final ErrorResponseDTO error = ErrorResponseDTO.builder()
+	                    .type(result.getType())
+	                    .title(result.getTitle())
+	                    .instance(errorInstance)
+	                    .detail(result.getTitle())
+	                    .build();
+
+	            throw new ValidationException(error);
+	        }
+
+	    } catch (ValidationException validationE) {
+	        throw validationE;
+	    } catch (Exception e) {
+	        log.error("Generic error io in cda :", e);
+	        throw new BusinessException(e);
+	    }
+
+	    return out;
 	}
 	
 	
