@@ -11,13 +11,11 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
-import java.io.ByteArrayInputStream;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
@@ -51,57 +49,63 @@ public class SignerUtility {
 	*******************************************************/
 	@SuppressWarnings("unchecked")
 	public static SignatureValidationDTO validate(byte[] file) {
-		SignatureValidationDTO output = null;
-		Boolean status = true;
-		List<SignatureInfoDTO> signatures = new ArrayList<>();
+	    boolean status = true;
+	    List<SignatureInfoDTO> signatures = new ArrayList<>();
 
-		try (PDDocument documentCDA = PDDocument.load(new ByteArrayInputStream(file))) {
-			PDDocumentCatalog docCatalog = documentCDA.getDocumentCatalog();
-			PDAcroForm acroForm = docCatalog.getAcroForm();
-			
-			if (acroForm != null && acroForm.getFields() != null) {
-				for (PDField field : acroForm.getFields()) {
-					if (field instanceof PDSignatureField) {
-						PDSignatureField pf = (PDSignatureField) field;
-						
-						PDSignature signature = pf.getSignature();
-						byte[] signatureAsBytes = signature.getContents(file);
-						byte[] signedContentAsBytes = signature.getSignedContent(file);
-						
-						CMSSignedData cms = new CMSSignedData(new CMSProcessableByteArray(signedContentAsBytes), signatureAsBytes);
-						SignerInformation signerInfo = (SignerInformation) cms.getSignerInfos().getSigners().iterator().next();
-						
-						X509CertificateHolder certHolder = (X509CertificateHolder) cms.getCertificates().getMatches(signerInfo.getSID()).iterator().next();
-						SignerInformationVerifier verifier = new JcaSimpleSignerInfoVerifierBuilder().setProvider(BC_PROVIDER).build(certHolder);
-						X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
-						SignatureInfoDTO info = SignatureInfoDTO.builder().
-								principal(cert.getIssuerX500Principal()).
-								notBefore(cert.getNotBefore()).
-								notAfter(cert.getNotAfter()).
-								contactInfo(pf.getSignature().getContactInfo()).
-								fieldType(field.getFieldType()).
-								fullyQualifiedName(field.getFullyQualifiedName()).
-								location(pf.getSignature().getLocation()).
-								name(pf.getSignature().getName()).
-								reason(pf.getSignature().getReason()).
-								signDate(pf.getSignature().getSignDate().getTime()).
-								encrypAlgOID(signerInfo.getEncryptionAlgOID()).
-								digestAlgOID(signerInfo.getDigestAlgOID()).
-								valid(signerInfo.verify(verifier)).
-								build();
-						signatures.add(info);
-						status = info.getValid();
-					}
-				}
-			} else {
-				status = false;
-			}
-		} catch(Exception ex) {
-			log.error("Error while validate signature : " , ex);
-			status = false;
-		}
-		output = SignatureValidationDTO.builder().status(status).signatures(signatures).build(); 
-        return output;
+	    try (PDDocument document = PDDocument.load(file)) {
+	        PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
+
+	        if (acroForm != null && acroForm.getFields() != null) {
+	            for (PDField field : acroForm.getFields()) {
+	                if (field instanceof PDSignatureField) {
+	                    PDSignatureField signatureField = (PDSignatureField) field;
+	                    PDSignature signature = signatureField.getSignature(); 
+
+	                    byte[] signatureBytes = signature.getContents(file);
+	                    byte[] signedContentBytes = signature.getSignedContent(file);
+
+	                    CMSSignedData cms = new CMSSignedData(new CMSProcessableByteArray(signedContentBytes), signatureBytes);
+
+	                    SignerInformation signerInfo = (SignerInformation) cms.getSignerInfos().getSigners().iterator().next();
+
+	                    X509CertificateHolder certHolder = (X509CertificateHolder) cms.getCertificates().getMatches(signerInfo.getSID()).iterator().next();
+
+	                    SignerInformationVerifier verifier = new JcaSimpleSignerInfoVerifierBuilder().setProvider(BC_PROVIDER).build(certHolder);
+
+	                    X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
+
+	                    SignatureInfoDTO info = SignatureInfoDTO.builder()
+	                            .principal(cert.getIssuerX500Principal())
+	                            .notBefore(cert.getNotBefore())
+	                            .notAfter(cert.getNotAfter())
+	                            .contactInfo(signature.getContactInfo())       
+	                            .fieldType(field.getFieldType())
+	                            .fullyQualifiedName(field.getFullyQualifiedName())
+	                            .location(signature.getLocation())             
+	                            .name(signature.getName())                     
+	                            .reason(signature.getReason())                 
+	                            .signDate(signature.getSignDate().getTime())   
+	                            .encrypAlgOID(signerInfo.getEncryptionAlgOID())
+	                            .digestAlgOID(signerInfo.getDigestAlgOID())
+	                            .valid(signerInfo.verify(verifier))
+	                            .build();
+
+	                    signatures.add(info);
+	                    status = info.getValid(); 
+	                }
+	            }
+	        } else {
+	            status = false;
+	        }
+	    } catch (Exception ex) {
+	        log.error("Error while validate signature : ", ex);
+	        status = false; // comportamento originale preservato
+	    }
+
+	    return SignatureValidationDTO.builder()
+	            .status(status)
+	            .signatures(signatures)
+	            .build();
 	}
      
 //	public static boolean isSigned(byte[] pdf) {
