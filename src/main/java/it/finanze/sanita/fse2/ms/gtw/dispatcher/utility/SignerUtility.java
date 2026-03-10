@@ -31,6 +31,11 @@ import org.bouncycastle.cms.SignerInformationVerifier;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import com.lowagie.text.pdf.PdfArray;
+import com.lowagie.text.pdf.PdfDictionary;
+import com.lowagie.text.pdf.PdfName;
+import com.lowagie.text.pdf.PdfReader;
+
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SignatureInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SignatureValidationDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
@@ -99,16 +104,43 @@ public class SignerUtility {
         return output;
 	}
      
+//	public static boolean isSigned(byte[] pdf) {
+//		boolean hasAnySignature = false;
+//		try (PDDocument document = PDDocument.load(pdf)) {
+//			hasAnySignature = !document.getSignatureDictionaries().isEmpty();
+//		} catch (Exception e) {
+//			log.error("Error while searching signature for file with name", e);
+//			throw new BusinessException("Error while searching signature for file with name", e);
+//		}
+//
+//		return hasAnySignature;
+//	}
+	
 	public static boolean isSigned(byte[] pdf) {
-		boolean hasAnySignature = false;
-		try (PDDocument document = PDDocument.load(pdf)) {
-			hasAnySignature = !document.getSignatureDictionaries().isEmpty();
-		} catch (Exception e) {
-			log.error("Error while searching signature for file with name", e);
-			throw new BusinessException("Error while searching signature for file with name", e);
-		}
+	    PdfReader pdfReader = null;
+	    try {
+	        pdfReader = new PdfReader(pdf);
+	        PdfDictionary acroForm = pdfReader.getCatalog().getAsDict(PdfName.ACROFORM);
+	        if (acroForm == null) return false;
 
-		return hasAnySignature;
+	        PdfArray fields = acroForm.getAsArray(PdfName.FIELDS);
+	        if (fields == null || fields.isEmpty()) return false;
+
+	        for (int i = 0; i < fields.size(); i++) {
+	            PdfDictionary field = fields.getAsDict(i);
+	            if (field == null) continue;
+	            PdfName fieldType = field.getAsName(PdfName.FT);
+	            if (PdfName.SIG.equals(fieldType)) {
+	                return true; // early exit al primo campo firma trovato
+	            }
+	        }
+	    } catch (Exception e) {
+	        log.error("Error while searching signature for file with name", e);
+	        throw new BusinessException("Error while searching signature for file with name", e);
+	    } finally {
+	        if (pdfReader != null) pdfReader.close();
+	    }
+	    return false;
 	}
 
 }

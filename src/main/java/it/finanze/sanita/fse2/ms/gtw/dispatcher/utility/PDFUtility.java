@@ -70,25 +70,70 @@ public class PDFUtility {
 	}
 	
 
+//	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
+//		Map<String, AttachmentDTO> out = new HashMap<>();
+//	    try (PDDocument document = PDDocument.load(bytePDF)) {
+//	        PDDocumentCatalog catalog = document.getDocumentCatalog();
+//	        PDDocumentNameDictionary names = catalog.getNames();
+//	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
+//
+//	        if (embeddedFiles != null) {
+//	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
+//	            if (embeddedFileNames != null) {
+//	            	out.putAll(extractFiles(embeddedFileNames));
+//	            } else {
+//	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
+//	            }
+//	        }
+//	    } catch (Exception e) {
+//	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
+//	    }
+//	    
+//	    return out;
+//	}
+	
 	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
-		Map<String, AttachmentDTO> out = new HashMap<>();
-	    try (PDDocument document = PDDocument.load(bytePDF)) {
-	        PDDocumentCatalog catalog = document.getDocumentCatalog();
-	        PDDocumentNameDictionary names = catalog.getNames();
-	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
+	    Map<String, AttachmentDTO> out = new HashMap<>();
+	    PdfReader pdfReader = null;
+	    try {
+	        pdfReader = new PdfReader(bytePDF);
+	        PdfDictionary catalog = pdfReader.getCatalog();
+	        PdfDictionary names = catalog.getAsDict(PdfName.NAMES);
+	        if (names == null) return out;
 
-	        if (embeddedFiles != null) {
-	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
-	            if (embeddedFileNames != null) {
-	            	out.putAll(extractFiles(embeddedFileNames));
-	            } else {
-	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
-	            }
+	        PdfDictionary embeddedFiles = names.getAsDict(new PdfName("EmbeddedFiles"));
+	        if (embeddedFiles == null) return out;
+
+	        PdfArray namesArray = embeddedFiles.getAsArray(PdfName.NAMES);
+	        if (namesArray == null) return out;
+
+	        // Itera a coppie: [nome, filespec, nome, filespec, ...]
+	        for (int i = 0; i < namesArray.size() - 1; i += 2) {
+	            String name = namesArray.getPdfObject(i).toString();
+	            PdfDictionary fileSpec = namesArray.getAsDict(i + 1);
+	            if (fileSpec == null) continue;
+
+	            PdfDictionary ef = fileSpec.getAsDict(PdfName.EF);
+	            if (ef == null) continue;
+
+	            PRStream stream = (PRStream) ef.getAsStream(PdfName.F);
+	            if (stream == null) continue;
+
+	            byte[] content = PdfReader.getStreamBytes(stream);
+	            String fileName = fileSpec.getAsString(PdfName.F) != null
+	                    ? fileSpec.getAsString(PdfName.F).toString() : name;
+
+	            out.put(name.toLowerCase(), AttachmentDTO.builder()
+	                    .fileName(fileName)
+	                    .name(name)
+	                    .content(content)
+	                    .build());
 	        }
 	    } catch (Exception e) {
 	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
+	    } finally {
+	        if (pdfReader != null) pdfReader.close();
 	    }
-	    
 	    return out;
 	}
 
