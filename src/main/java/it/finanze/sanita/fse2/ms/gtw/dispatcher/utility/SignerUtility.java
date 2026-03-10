@@ -39,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SignerUtility {
 
+	private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
+
 	/******************************************************
 	*	VALIDATE PADES SIGNATURE
 	*******************************************************/
@@ -47,15 +49,15 @@ public class SignerUtility {
 		SignatureValidationDTO output = null;
 		Boolean status = true;
 		List<SignatureInfoDTO> signatures = new ArrayList<>();
-		try {
-			PDDocument documentCDA = PDDocument.load(new ByteArrayInputStream(file));
+
+		try (PDDocument documentCDA = PDDocument.load(new ByteArrayInputStream(file))) {
 			PDDocumentCatalog docCatalog = documentCDA.getDocumentCatalog();
 			PDAcroForm acroForm = docCatalog.getAcroForm();
 			
-			if(acroForm!=null && acroForm.getFields()!=null) {
-				for (PDField field:acroForm.getFields()) {
+			if (acroForm != null && acroForm.getFields() != null) {
+				for (PDField field : acroForm.getFields()) {
 					if (field instanceof PDSignatureField) {
-						PDSignatureField pf = (PDSignatureField)field;
+						PDSignatureField pf = (PDSignatureField) field;
 						
 						PDSignature signature = pf.getSignature();
 						byte[] signatureAsBytes = signature.getContents(file);
@@ -65,7 +67,7 @@ public class SignerUtility {
 						SignerInformation signerInfo = (SignerInformation) cms.getSignerInfos().getSigners().iterator().next();
 						
 						X509CertificateHolder certHolder = (X509CertificateHolder) cms.getCertificates().getMatches(signerInfo.getSID()).iterator().next();
-						SignerInformationVerifier verifier = new JcaSimpleSignerInfoVerifierBuilder().setProvider(new BouncyCastleProvider()).build(certHolder);
+						SignerInformationVerifier verifier = new JcaSimpleSignerInfoVerifierBuilder().setProvider(BC_PROVIDER).build(certHolder);
 						X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
 						SignatureInfoDTO info = SignatureInfoDTO.builder().
 								principal(cert.getIssuerX500Principal()).
@@ -99,7 +101,7 @@ public class SignerUtility {
      
 	public static boolean isSigned(byte[] pdf) {
 		boolean hasAnySignature = false;
-		try(PDDocument document = PDDocument.load(pdf);) {
+		try (PDDocument document = PDDocument.load(pdf)) {
 			hasAnySignature = !document.getSignatureDictionaries().isEmpty();
 		} catch (Exception e) {
 			log.error("Error while searching signature for file with name", e);
