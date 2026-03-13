@@ -28,7 +28,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.ITransactionInspectCT
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
@@ -184,28 +183,6 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 		log.info("[START] {}() with arguments {}={}", "getEventsByTraceId", "traceId", traceId);
 		TransactionInspectResDTO res = transactionInspectSRV.callSearchEventByTraceId(traceId);
 		log.info("[EXIT] {}() with arguments {}={}", "getEventsByTraceId", "traceId", traceId);
-		return res;
-	}
-
-	@Override
-	public GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId, HttpServletRequest request) {
-		log.info("[START] {}() with arguments {}={}", "getEdsStatus", "workflowInstanceId", workflowInstanceId);
-
-		LogTraceInfoDTO traceInfoDto = getLogTraceInfo();
-
-		if (Constants.App.MISSING_WORKFLOW_PLACEHOLDER.equalsIgnoreCase(workflowInstanceId)) {
-			ErrorResponseDTO error = new ErrorResponseDTO(traceInfoDto);
-			error.setType(RestExecutionResultEnum.INVALID_WII.getType());
-			error.setDetail(ErrorInstanceEnum.INVALID_ID_WII.getDescription());
-			error.setStatus(HttpStatus.BAD_REQUEST.value());
-			error.setTitle(RestExecutionResultEnum.INVALID_WII.getTitle());
-			error.setInstance(ErrorInstanceEnum.INVALID_ID_WII.getInstance());
-			throw new ValidationException(error);
-		}
-
-		GetIngestionStatusResponseDTO res = transactionInspectSRV.getEdsStatusByWorkflowInstanceId(workflowInstanceId);
-
-		log.info("[EXIT] {}() with arguments {}={}", "getEdsStatus", "workflowInstanceId", workflowInstanceId);
 		return res;
 	}
 
