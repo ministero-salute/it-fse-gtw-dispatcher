@@ -57,4 +57,6 @@ public class LogDTO {
 	private String workflow_instance_id;
 	
 	private String typeIdExtension;
+	
+	private String idDocumento;
 }

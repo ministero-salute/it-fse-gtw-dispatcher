@@ -191,8 +191,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationInfo.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
 	}
 
-	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
-			ValidationCreationInputDTO validationInfo) {
+	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO, ValidationCreationInputDTO validationInfo) {
 		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
@@ -205,7 +204,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
 
-		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
+		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
+				idDoc);
 	}
 
 	@Override
@@ -244,7 +244,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
-					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
+					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,idDoc);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
@@ -497,11 +497,13 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Delete effettuata su ini", SUCCESS, jwtPayloadToken, INI_DELETE);
 			}
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Deletion of CDA completed for document with identifier %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.OK, startOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null);
+			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Deletion of CDA completed for document with identifier %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.OK, startOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
+					idDoc);
 		} catch(MockEnabledException me) {
 			throw me;
 		} catch(IniException inEx) {
-			logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Error while delete record from ini %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.KO, startOperation, INI_EXCEPTION.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken);
+			logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Error while delete record from ini %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.KO, startOperation, INI_EXCEPTION.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,
+					idDoc);
 			throw inEx;
 
 		} catch (Exception e) {
@@ -510,7 +512,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 				errorInstance = get(((ValidationException) e).getError().getType());
 			}
 
-			logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Error while deleting CDA of document with identifier %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.KO, startOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken);
+			logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,String.format("Error while deleting CDA of document with identifier %s", idDoc), OperationLogEnum.DELETE_CDA2, ResultLogEnum.KO, startOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,
+					idDoc);
 			throw e;
 		}
 
@@ -568,22 +571,24 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String warning = null;
 		Document docT = null;
 		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
+		String idDoc = "";
 		try {
 			//Valido request e jwt come se fosse una pubblicazione
 			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,EventTypeEnum.VALIDATION_FOR_PUBLICATION);
 			docT = Jsoup.parse(validationResult.getCda());
 			workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);
-
+			idDoc = CdaUtility.extractIdDoc(docT);
 			//Chiamo ms validator per la validazione
 			String issuer = validationResult.getJwtPayloadToken().getIss();
 			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId,issuer);
 
 			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, validationResult.getJwtPayloadToken(), EventTypeEnum.VALIDATION_FOR_PUBLICATION);
-
-			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(), null);
+			
+			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(), null, idDoc);
 			request.setAttribute("JWT_ISSUER", validationResult.getJwtPayloadToken().getIss());
 		} catch (final ValidationException e) {
-			errorHandlerSRV.validationExceptionHandler(startDateOperationValidation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT));
+			errorHandlerSRV.validationExceptionHandler(startDateOperationValidation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT),
+					idDoc);
 		}
 
 		final Date startDateOperationPublication = new Date();
@@ -635,10 +640,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 					EventTypeEnum.VALIDATION_FOR_REPLACE);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateValidationOperation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(),
-					null);
+					null,idDoc);
 			request.setAttribute("JWT_ISSUER", validationResult.getJwtPayloadToken().getIss());
 		} catch (final ValidationException e) {
-			errorHandlerSRV.validationExceptionHandler(startDateValidationOperation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT));
+			errorHandlerSRV.validationExceptionHandler(startDateValidationOperation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT),
+					idDoc);
 		}
 		final Date startDateReplacenOperation = new Date();
 		try {
@@ -670,7 +676,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), validationResult.getJwtPayloadToken());
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationResult.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationResult.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateReplacenOperation,
-					getDocumentType(validationResult.getDocument()), validationResult.getJwtPayloadToken(),null);
+					getDocumentType(validationResult.getDocument()), validationResult.getJwtPayloadToken(),null,idDoc);
 		} catch (ConnectionRefusedException ce) {		
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationResult.getDocument()));
 		} catch (final ValidationException e) {

@@ -120,4 +120,18 @@ public final class CdaUtility {
 			.build();
 	}
 
+	
+	public static String extractIdDoc(final Document docT) {
+		String out = "";
+		try {
+			String id = docT.select("id").get(0).attr("root");
+			String extension = docT.select("id").get(0).attr("extension");
+			out = id + "^" + extension;
+		} catch(Exception ex) {
+			log.error("Error while extracting id doc from cda", ex);
+			throw new BusinessException("Error while extracting id doc from cda", ex);
+		}
+		return out;
+	}
+
 }

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -42,9 +43,6 @@ import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfString;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AttachmentDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoAttachmentInPdfException;
 import lombok.AccessLevel;
@@ -61,8 +59,8 @@ public class PDFUtility {
 	    String out = null;
 	    final Map<String, AttachmentDTO> attachments = extractAttachments(pdf);
 	    if (!attachments.isEmpty()) {
-	        for (Entry<String, AttachmentDTO> att:attachments.entrySet()) {
-	            if (cdaAttachmentName.equals(att.getValue().getName())||cdaAttachmentName.equals(att.getValue().getFileName())) {
+	        for (Entry<String, AttachmentDTO> att : attachments.entrySet()) {
+	            if (cdaAttachmentName.equals(att.getValue().getName()) || cdaAttachmentName.equals(att.getValue().getFileName())) {
 	                out = PDFUtility.detectCharsetAndExtract(att.getValue().getContent());
 	                break;
 	            }
@@ -71,26 +69,71 @@ public class PDFUtility {
 	    return out;
 	}
 	
- 
-	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
-		Map<String,AttachmentDTO> out = new HashMap<>();
-	    try (PDDocument document = PDDocument.load(bytePDF)) {
-	        PDDocumentCatalog catalog = document.getDocumentCatalog();
-	        PDDocumentNameDictionary names = catalog.getNames();
-	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
 
-	        if (embeddedFiles != null) {
-	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
-	            if (embeddedFileNames != null) {
-	            	out.putAll(extractFiles(embeddedFileNames));
-	            } else {
-	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
-	            }
+//	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
+//		Map<String, AttachmentDTO> out = new HashMap<>();
+//	    try (PDDocument document = PDDocument.load(bytePDF)) {
+//	        PDDocumentCatalog catalog = document.getDocumentCatalog();
+//	        PDDocumentNameDictionary names = catalog.getNames();
+//	        PDEmbeddedFilesNameTreeNode embeddedFiles = names.getEmbeddedFiles();
+//
+//	        if (embeddedFiles != null) {
+//	            Map<String, PDComplexFileSpecification> embeddedFileNames = embeddedFiles.getNames();
+//	            if (embeddedFileNames != null) {
+//	            	out.putAll(extractFiles(embeddedFileNames));
+//	            } else {
+//	            	out.putAll(extractFilesFromKids(embeddedFiles.getKids()));
+//	            }
+//	        }
+//	    } catch (Exception e) {
+//	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
+//	    }
+//	    
+//	    return out;
+//	}
+	
+	private static Map<String, AttachmentDTO> extractAttachments(byte[] bytePDF) {
+	    Map<String, AttachmentDTO> out = new HashMap<>();
+	    PdfReader pdfReader = null;
+	    try {
+	        pdfReader = new PdfReader(bytePDF);
+	        PdfDictionary catalog = pdfReader.getCatalog();
+	        PdfDictionary names = catalog.getAsDict(PdfName.NAMES);
+	        if (names == null) return out;
+
+	        PdfDictionary embeddedFiles = names.getAsDict(new PdfName("EmbeddedFiles"));
+	        if (embeddedFiles == null) return out;
+
+	        PdfArray namesArray = embeddedFiles.getAsArray(PdfName.NAMES);
+	        if (namesArray == null) return out;
+
+	        // Itera a coppie: [nome, filespec, nome, filespec, ...]
+	        for (int i = 0; i < namesArray.size() - 1; i += 2) {
+	            String name = namesArray.getPdfObject(i).toString();
+	            PdfDictionary fileSpec = namesArray.getAsDict(i + 1);
+	            if (fileSpec == null) continue;
+
+	            PdfDictionary ef = fileSpec.getAsDict(PdfName.EF);
+	            if (ef == null) continue;
+
+	            PRStream stream = (PRStream) ef.getAsStream(PdfName.F);
+	            if (stream == null) continue;
+
+	            byte[] content = PdfReader.getStreamBytes(stream);
+	            String fileName = fileSpec.getAsString(PdfName.F) != null
+	                    ? fileSpec.getAsString(PdfName.F).toString() : name;
+
+	            out.put(name.toLowerCase(), AttachmentDTO.builder()
+	                    .fileName(fileName)
+	                    .name(name)
+	                    .content(content)
+	                    .build());
 	        }
 	    } catch (Exception e) {
 	        log.warn("Errore in fase di estrazione allegati da pdf.", e);
+	    } finally {
+	        if (pdfReader != null) pdfReader.close();
 	    }
-	    
 	    return out;
 	}
 
@@ -129,7 +172,9 @@ public class PDFUtility {
 	public static String unenvelopeA2(byte[] pdf) {
 		String out = null;
 		String errorMsg = "No CDA found.";
-		try (PdfReader pdfReader = new PdfReader(pdf)) {
+		PdfReader pdfReader = null;
+		try {
+			pdfReader = new PdfReader(pdf);
 			PdfDictionary catalog = pdfReader.getCatalog();
 			if (catalog != null) {
 				PdfDictionary names = catalog.getAsDict(PdfName.NAMES);
@@ -185,6 +230,10 @@ public class PDFUtility {
 		} catch (Exception e) {
 			log.warn("Errore in fase di recupero CDA da risorsa.", e);
 		} finally {
+			// FIX: always close PdfReader to release native memory
+			if (pdfReader != null) {
+				pdfReader.close();
+			}
 			log.warn(errorMsg);
 		}
 		return out;
@@ -192,7 +241,7 @@ public class PDFUtility {
 
 	public static boolean isPdf(byte[] pdf) {
 		boolean out = false;
-		if (pdf!=null && pdf.length > 4) {
+		if (pdf != null && pdf.length > 4) {
 			byte[] magicNumber = Arrays.copyOf(pdf, 4);
 			String strMagicNumber = new String(magicNumber);
 			out = strMagicNumber.equals("%PDF");
@@ -202,18 +251,27 @@ public class PDFUtility {
 
 	public static String detectCharsetAndExtract(byte[] bytes) {
 		Charset detectedCharset = StandardCharsets.UTF_8;
+		XMLStreamReader xmlStreamReader = null;
 		try {
 			XMLInputFactory factory = XMLInputFactory.newInstance();
 			factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
 			factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-			final XMLStreamReader xmlStreamReader = factory.createXMLStreamReader(new ByteArrayInputStream(bytes)); 
-			final String fileEncoding = xmlStreamReader.getEncoding(); 
+			xmlStreamReader = factory.createXMLStreamReader(new ByteArrayInputStream(bytes));
+			final String fileEncoding = xmlStreamReader.getEncoding();
 			detectedCharset = Charset.forName(fileEncoding);
 
 			return new String(bytes, detectedCharset);
 		} catch (Exception ex) {
 			log.error(String.format("Error while reading extracted CDA using detected encode: %s", detectedCharset), ex);
 			throw new BusinessException(String.format("Error while reading extracted CDA using detected encode: %s", detectedCharset), ex);
+		} finally {
+			if (xmlStreamReader != null) {
+				try {
+					xmlStreamReader.close();
+				} catch (XMLStreamException e) {
+					log.warn("Error while closing XMLStreamReader.", e);
+				}
+			}
 		}
 	}
 }
