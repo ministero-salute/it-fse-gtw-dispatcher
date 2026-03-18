@@ -91,16 +91,16 @@ public final class CdaUtility {
 	 * @param id The master identifier
 	 * @return {@code true} if the identifier is well-formed
 	 */
-	public static boolean isValidMasterId(String id) {
-		if (StringUtility.isNullOrEmpty(id)) return false;
-		if (isWhitespace(id)) return false;
-		if (!id.contains(MASTER_ID_SEPARATOR)) return true;
+    public static boolean isValidMasterId(String id) {
+        if (StringUtility.isNullOrEmpty(id)) return false;
+        if (isWhitespace(id)) return false;
 
-		String[] values = id.split("\\"+MASTER_ID_SEPARATOR);
-		if (values.length != 2) return false;
+        int lastSeparatorIndex = id.lastIndexOf(MASTER_ID_SEPARATOR);
+        if (lastSeparatorIndex == -1) return true;
 
-		return !values[0].isEmpty() && !values[1].isEmpty();
-	}
+        String identificativoDocumento = id.substring(lastSeparatorIndex + 1);
+        return !identificativoDocumento.isEmpty();
+    }
 
 	public static ErrorResponseDTO createMasterIdError() {
 		return ErrorResponseDTO.builder()
