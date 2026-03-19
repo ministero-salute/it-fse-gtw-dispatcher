@@ -96,7 +96,7 @@ public final class CdaUtility {
         if (isWhitespace(id)) return false;
 
         int lastSeparatorIndex = id.lastIndexOf(MASTER_ID_SEPARATOR);
-        if (lastSeparatorIndex == -1) return true;
+        if (lastSeparatorIndex == -1) return false;
 
         String identificativoDocumento = id.substring(lastSeparatorIndex + 1);
         return !identificativoDocumento.isEmpty();
