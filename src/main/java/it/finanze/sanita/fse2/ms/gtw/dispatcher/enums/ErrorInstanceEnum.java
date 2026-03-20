@@ -44,7 +44,8 @@ public enum ErrorInstanceEnum {
 	OLDER_DAY("/msg/max-day-limit-exceed", "Cannot publish documents older"),
 	EDS_DOCUMENT_MISSING("/msg/eds-document-missing", "Document cannot be found on the Server FHIR"),
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation error"),
-	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf");
+	SIGN_EXCEPTION("/msg/sign-error", "Sign not found on pdf"),
+	INVALID_ISSUER_SUB_MISMATCH("/msg/invalid-issuer-sub", "Issuer and JWT sub mismatch");
 	
 	private String instance;
 	private String description;

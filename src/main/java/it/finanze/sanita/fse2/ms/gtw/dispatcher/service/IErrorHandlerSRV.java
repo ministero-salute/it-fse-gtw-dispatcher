@@ -30,7 +30,8 @@ public interface IErrorHandlerSRV {
      * @param jwtToken
      * @param e
      */
-    void validationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken,  ValidationException e, String documentType);
+    void validationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken, 
+            ValidationException e, final String documentType, String idDocumento);
     /**
      * Handle connection refused exception for publication ep
      * @param requestBody

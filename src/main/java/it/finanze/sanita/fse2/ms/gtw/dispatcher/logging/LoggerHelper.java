@@ -64,7 +64,8 @@ public class LoggerHelper {
 	/* 
 	 * Implements structured logs, at all logging levels
 	 */
-	public void trace(String logType,String workflowInstanceId, String message, ILogEnum operation, ResultLogEnum result, Date startDateOperation, JWTPayloadDTO jwtPayloadDTO) {
+	public void trace(String logType,String workflowInstanceId, String message, ILogEnum operation, ResultLogEnum result, 
+			Date startDateOperation, JWTPayloadDTO jwtPayloadDTO, String idDocumento) {
 		
 		if(configSRV.isControlLogPersistenceEnable()) {
 			if(jwtPayloadDTO==null) {
@@ -85,6 +86,7 @@ public class LoggerHelper {
 					op_application_version(jwtPayloadDTO.getSubject_application_version()).
 					log_type(logType).
 					workflow_instance_id(workflowInstanceId).
+					idDocumento(idDocumento).
 					build();
 
 			if(!configSRV.isSubjectNotAllowed()) {
@@ -106,7 +108,8 @@ public class LoggerHelper {
 		
 	}
 
-	public void debug(String logType,String workflowInstanceId, String message,  ILogEnum operation, ResultLogEnum result, Date startDateOperation,JWTPayloadDTO jwtPayloadDTO) {
+	public void debug(String logType,String workflowInstanceId, String message,  ILogEnum operation, ResultLogEnum result, 
+			Date startDateOperation,JWTPayloadDTO jwtPayloadDTO, String idDocumento) {
 		
 		if(configSRV.isControlLogPersistenceEnable()) {
 			if(jwtPayloadDTO==null) {
@@ -127,6 +130,7 @@ public class LoggerHelper {
 					op_application_version(jwtPayloadDTO.getSubject_application_version()).
 					log_type(logType).
 					workflow_instance_id(workflowInstanceId).
+					idDocumento(idDocumento).
 					build();
 			
 			if(!configSRV.isSubjectNotAllowed()) {
@@ -147,7 +151,8 @@ public class LoggerHelper {
 	} 
 
 	public void info(String logType,String workflowInstanceId, String message, ILogEnum operation, ResultLogEnum result, Date startDateOperation,  
-			String documentType, JWTPayloadDTO jwtPayloadDTO, String typeIdExtension) {
+			String documentType, JWTPayloadDTO jwtPayloadDTO, String typeIdExtension,
+			String idDocumento) {
 		
 		if(configSRV.isControlLogPersistenceEnable()) {
 			if(jwtPayloadDTO==null) {
@@ -170,6 +175,7 @@ public class LoggerHelper {
 					log_type(logType).
 					workflow_instance_id(workflowInstanceId).
 					typeIdExtension(typeIdExtension).
+					idDocumento(idDocumento).
 					build();
 			
 			if(!configSRV.isSubjectNotAllowed()) {
@@ -190,7 +196,8 @@ public class LoggerHelper {
 		
 	} 
 
-	public void warn(String logType,String workflowInstanceId, String message, ILogEnum operation, ResultLogEnum result, Date startDateOperation,JWTPayloadDTO jwtPayloadToken) {
+	public void warn(String logType,String workflowInstanceId, String message, ILogEnum operation, ResultLogEnum result, Date startDateOperation,JWTPayloadDTO jwtPayloadToken,
+			String idDocumento) {
 		if(configSRV.isControlLogPersistenceEnable()) {
 			if(jwtPayloadToken==null) {
 				jwtPayloadToken = new JWTPayloadDTO(); 
@@ -210,6 +217,7 @@ public class LoggerHelper {
 					op_application_version(jwtPayloadToken.getSubject_application_version()).
 					log_type(logType).
 					workflow_instance_id(workflowInstanceId).
+					idDocumento(idDocumento).
 					build();
 			
 			if(!configSRV.isSubjectNotAllowed()) {
@@ -230,7 +238,7 @@ public class LoggerHelper {
 	} 
 
 	public void error(String logType,String workflowInstanceId, String message, ILogEnum operation, ResultLogEnum result, Date startDateOperation,
-			   ILogEnum error,  String documentType, JWTPayloadDTO jwtPayloadToken) {
+			   ILogEnum error,  String documentType, JWTPayloadDTO jwtPayloadToken, String idDocumento) {
 		if(configSRV.isControlLogPersistenceEnable()) {
 			if(jwtPayloadToken==null) {
 				jwtPayloadToken = new JWTPayloadDTO(); 
@@ -253,6 +261,7 @@ public class LoggerHelper {
 					op_application_version(jwtPayloadToken.getSubject_application_version()).
 					log_type(logType).
 					workflow_instance_id(workflowInstanceId).
+					idDocumento(idDocumento).
 					build();
 			
 			if(!configSRV.isSubjectNotAllowed()) {

@@ -25,21 +25,31 @@ public final class Constants {
  
 	public static final class Collections {
 
-		/** 
-		 * INI EDS Invocation Collection 
+		/**
+		 * INI EDS Invocation Collection
 		 */
 		public static final String INI_EDS_INVOCATION = "ini_eds_invocation";
 
-		/** 
+		/**
 		 * Collection where validated documents info is saved
 		 */
-		public static final String VALIDATED_DOCUMENTS = "validated_documents"; 
+		public static final String VALIDATED_DOCUMENTS = "validated_documents";
 		
-		/** 
-		 * Collection where validated documents info is saved
+		/**
+		 * Collection where audit info is saved
 		 */
 		public static final String AUDIT = "audit";
+		
+		/**
+		 * Collection where engines info is saved
+		 */
 		public static final String ENGINES = "engines";
+		
+		/**
+		 * Collection where routing table entries are saved
+		 * Maps JWT ISSUER to notification endpoints
+		 */
+		public static final String ROUTING_TABLE = "routing_table";
 		
 
 		private Collections() {

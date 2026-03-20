@@ -33,6 +33,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 		EdsResponseDTO output = null;
 
 		log.debug("EDS Client - Calling EDS to execute delete operation");
-		String endpoint = msUrlCFG.getEdsClientHost() + "/v1/documents/"+ oid + "/"+fiscalCode;
+		String endpoint = msUrlCFG.getEdsClientHost() + "/v1/documents/" + oid + "/" + fiscalCode;
 		try {
 			ResponseEntity<EdsResponseDTO> restExchange = restTemplate.exchange(endpoint, HttpMethod.DELETE, null, EdsResponseDTO.class);
 			output = restExchange.getBody();
@@ -108,5 +109,39 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 					);
 
 			return response.getBody();
+	}
+
+	@Override
+	public GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId) {
+		GetIngestionStatusResponseDTO output = null;
+
+		log.debug("EDS Client - Calling EDS to retrieve ingestion status from broker");
+		final URI uri = UriComponentsBuilder.fromUriString(msUrlCFG.getEdsClientHost())
+				.path("/v1/status/{workflowInstanceId}")
+				.buildAndExpand(workflowInstanceId)
+				.toUri();
+
+		try {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+			ResponseEntity<GetIngestionStatusResponseDTO> response = restTemplate.exchange(
+					uri,
+					HttpMethod.GET,
+					entity,
+					GetIngestionStatusResponseDTO.class);
+
+			output = response.getBody();
+			log.debug("EDS Client - Ingestion status retrieved successfully");
+		} catch (HttpStatusCodeException e1) {
+			errorHandler("eds", e1, "/status");
+		} catch (Exception e) {
+			log.error("Errore durante l'invocazione di EDS dell' API getEdsStatus(). ", e);
+			throw new BusinessException("Errore durante l'invocazione di EDS dell' API getEdsStatus(). ", e);
+		}
+
+		return output;
 	}
 }

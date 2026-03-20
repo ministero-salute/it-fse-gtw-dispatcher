@@ -584,37 +584,49 @@ public abstract class AbstractCTL {
 				.build();
 		throw new ValidationException(error);
 	}
+	
 	protected byte[] getAndValidateFile(final MultipartFile file) {
-		byte[] out = null;
-		
-		try {
-			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
-			if (file != null && file.getBytes().length > 0) {
-				out = file.getBytes();
+	    byte[] out = null;
 
-				result = RestExecutionResultEnum.DOCUMENT_TYPE_ERROR;
-				if (PDFUtility.isPdf(out)) {
-					result = null;
-				}
-			}
+	    try {
+	        RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
 
-			if (result != null) {
-				String errorInstance = ErrorInstanceEnum.NON_PDF_FILE.getInstance();
-				if (RestExecutionResultEnum.EMPTY_FILE_ERROR.equals(result)) {
-					errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
-				}
-				final ErrorResponseDTO error = ErrorResponseDTO.builder()
-					.type(result.getType()).title(result.getTitle())
-					.instance(errorInstance).detail(result.getTitle()).build();
-				throw new ValidationException(error);
-			}
-		} catch (final ValidationException validationE) {
-			throw validationE;
-		} catch (final Exception e) {
-			log.error("Generic error io in cda :", e);
-			throw new BusinessException(e);
-		}
-		return out;
+	        if (file != null) {
+	            out = file.getBytes();
+
+	            if (out.length > 0) {
+	                result = RestExecutionResultEnum.DOCUMENT_TYPE_ERROR;
+
+	                if (PDFUtility.isPdf(out)) {
+	                    result = null;
+	                }
+	            }
+	        }
+
+	        if (result != null) {
+	            String errorInstance = ErrorInstanceEnum.NON_PDF_FILE.getInstance();
+	            if (RestExecutionResultEnum.EMPTY_FILE_ERROR.equals(result)) {
+	                errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
+	            }
+
+	            final ErrorResponseDTO error = ErrorResponseDTO.builder()
+	                    .type(result.getType())
+	                    .title(result.getTitle())
+	                    .instance(errorInstance)
+	                    .detail(result.getTitle())
+	                    .build();
+
+	            throw new ValidationException(error);
+	        }
+
+	    } catch (ValidationException validationE) {
+	        throw validationE;
+	    } catch (Exception e) {
+	        log.error("Generic error io in cda :", e);
+	        throw new BusinessException(e);
+	    }
+
+	    return out;
 	}
 	
 	
@@ -921,7 +933,8 @@ public abstract class AbstractCTL {
 
 			}
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null);
+			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
+					idDoc);
 		} catch (MockEnabledException me) {
 			throw me;
 		} catch (final ValidationException e) {
@@ -932,7 +945,8 @@ public abstract class AbstractCTL {
 				errorInstance = get(((ValidationException) e).getError().getType());
 			}
 
-			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER,jwtPayloadToken);
+			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER,jwtPayloadToken,
+					idDoc);
 			throw e;
 		}
 
@@ -973,13 +987,6 @@ public abstract class AbstractCTL {
 				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId(extractedBundle));
 				directFhirDTO.setFilename(filename);
 			} 
-			
-//			else if (FhirUtility.isJson(inputBytes, filename)) {
-//				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
-//				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
-//				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId());
-//			}
-
 			return directFhirDTO;
 
 		} catch (final ValidationException validationE) {

@@ -14,7 +14,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Schema;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.StatusCheckDTO;
 import lombok.Getter;
 import lombok.Setter;

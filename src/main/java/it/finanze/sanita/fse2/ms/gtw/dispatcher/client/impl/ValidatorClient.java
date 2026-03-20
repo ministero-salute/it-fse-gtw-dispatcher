@@ -11,13 +11,11 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.response.ValidatorErrorDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.base.AbstractClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.response.ValidatorErrorDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.client.ValidationRequestDTO;
@@ -50,57 +49,55 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
+ 
+	@Override
+	@CircuitBreaker(name = "validationCDA", fallbackMethod = "validateFallback")
+	public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system) {
+	    
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.set("Content-Type", "application/json");
 
-    @Override
-    @CircuitBreaker(name = "validationCDA")
-    public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system) {
-        log.debug("Validator Client - Calling Validator to execute validation of CDA");
-        ValidationInfoDTO out = null;
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", "application/json");
+	    if (system != null && system != SystemTypeEnum.NONE) {
+	        headers.set(SYSTEM_TYPE_HEADER, system.value());
+	    }
 
-        if(system != null && system != SystemTypeEnum.NONE) {
-            headers.set(SYSTEM_TYPE_HEADER, system.value());
-        }
-        
-        ValidationRequestDTO req = new ValidationRequestDTO();
-        req.setCda(cda);
-        req.setWorkflowInstanceId(workflowInstanceId);
+	    ValidationRequestDTO req = new ValidationRequestDTO();
+	    req.setCda(cda);
+	    req.setWorkflowInstanceId(workflowInstanceId);
 
-        HttpEntity<?> entity = new HttpEntity<>(req, headers);
-        
-        ValidationResDTO response = null;
-        try {
-        	response = restTemplate.postForObject(msUrlCFG.getValidatorHost() + "/v1/validate", entity, ValidationResDTO.class);
-        	if(response!=null) {
-        		out = response.getResult();
-        	}
-        } catch(ResourceAccessException cex) {
-        	log.error("Connect error while call validation ep :" + cex);
-        	throw new ConnectionRefusedException(msUrlCFG.getValidatorHost(),"Connection refused");
-		} catch (HttpClientErrorException ex) {
-            throw new ValidationException(asValidationException(ex.getResponseBodyAsString()));
-        }
-        
-        return out;
-    }
+	    HttpEntity<?> entity = new HttpEntity<>(req, headers);
 
-    private static ErrorResponseDTO asValidationException(String message) {
-        return ErrorResponseDTO.builder()
-            .type(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
-            .title(RestExecutionResultEnum.VALIDATOR_ERROR.getTitle())
-            .instance(ErrorInstanceEnum.CDA_NOT_VALIDATED.getInstance())
-            .detail(fromErrorObject(message)).build();
-    }
+	    try {
+	        ValidationResDTO response = restTemplate.postForObject(msUrlCFG.getValidatorHost() + "/v1/validate", entity, ValidationResDTO.class);
+	        return response != null ? response.getResult() : null;
 
-    private static String fromErrorObject(String message) {
-        String out;
-        try {
-            out = new ObjectMapper().readValue(message, ValidatorErrorDTO.class).getError().getMessage();
-        } catch (JsonProcessingException e) {
-            out = "Impossibile deserializzare l'errore verificatosi sul gtw-validator";
-        }
-        return out;
-    }
+	    } catch (HttpClientErrorException ex) {
+	        throw new ValidationException(asValidationException(ex.getResponseBodyAsString()));
+	    }
+	}
+
+	// Chiamato quando il CB è OPEN
+	public ValidationInfoDTO validateFallback(String cda, String workflowInstanceId, SystemTypeEnum system, Throwable t) {
+	    log.error("Circuit breaker OPEN - validator ms non raggiungibile: {}", t.getMessage());
+	    throw new ConnectionRefusedException(msUrlCFG.getValidatorHost(), "Connection refused");
+	}
+	
+	 private static ErrorResponseDTO asValidationException(String message) {
+	        return ErrorResponseDTO.builder()
+	            .type(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
+	            .title(RestExecutionResultEnum.VALIDATOR_ERROR.getTitle())
+	            .instance(ErrorInstanceEnum.CDA_NOT_VALIDATED.getInstance())
+	            .detail(fromErrorObject(message)).build();
+	    }
+
+	    private static String fromErrorObject(String message) {
+	        String out;
+	        try {
+	            out = new ObjectMapper().readValue(message, ValidatorErrorDTO.class).getError().getMessage();
+	        } catch (JsonProcessingException e) {
+	            out = "Impossibile deserializzare l'errore verificatosi sul gtw-validator";
+	        }
+	        return out;
+	    }
 
 }

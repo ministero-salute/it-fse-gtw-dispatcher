@@ -59,8 +59,14 @@ public class MicroservicesURLCFG {
 	/**
 	 * Ms gtw-config host.
 	 */
-    @Value("${ms.url.gtw-config}")
-    private String configHost;
+	   @Value("${ms.url.gtw-config}")
+	   private String configHost;
+
+	/**
+	 * Ms gtw-status-manager host.
+	 */
+	@Value("${ms.url.status-manager-service}")
+	private String statusManagerHost;
 
 	@Value("${ms.url.ana-service}")
 	private String anaHost;
@@ -68,7 +74,7 @@ public class MicroservicesURLCFG {
 	@Value("${ms.ana-service.enable-validation}")
 	private Boolean anaEnableValidation;
 	
-    @Value("${ms-calls.are-from-govway}")
+	   @Value("${ms-calls.are-from-govway}")
 	private Boolean fromGovway;
 
 }

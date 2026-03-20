@@ -9,21 +9,29 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
+/**
+ * Validation exeception.
+ */
+/**
+ * Generic business exception.
+ */
+public class UnauthorizedException extends RuntimeException {
 
-public interface IEdsClient {
-
-	EdsResponseDTO delete(String oid, String fiscalCode);
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4420700371354323215L;
 	
-	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
 	
-	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
-
-	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
-
+	/**
+	 * Message constructor.
+	 * 
+	 * @param msg	Message to be shown.
+	 */
+	public UnauthorizedException(final String msg) {
+		super(msg);
+	}
+	
 }
