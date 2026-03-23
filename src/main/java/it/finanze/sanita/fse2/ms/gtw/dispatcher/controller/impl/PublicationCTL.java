@@ -76,6 +76,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -324,7 +325,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 			final org.jsoup.nodes.Document docT = Jsoup.parse(cda);
 
-			CorrelationDocumentTypeValidator.isValid(CdaUtility.getDocumentTypeEnum(docT), jsonObj.getTipoDocumentoLivAlto());
+			String typeCodeFromJwt = jwtPayloadToken.getResource_hl7_type();
+			CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractCode(typeCodeFromJwt)), jsonObj.getTipoDocumentoLivAlto());
 			
 			validation.setDocument(docT);
 		} catch (final ValidationException | NoRecordFoundException ve) {
