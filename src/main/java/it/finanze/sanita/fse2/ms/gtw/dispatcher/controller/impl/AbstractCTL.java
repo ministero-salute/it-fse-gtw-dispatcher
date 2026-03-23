@@ -90,6 +90,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformRes
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
@@ -116,6 +117,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validators.CorrelationDocumentTypeValidator;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -245,8 +247,8 @@ public abstract class AbstractCTL {
         return out;
     }
 
-	protected void validateUpdateMetadataReq(final PublicationMetadataReqDTO out) {
-		final String errorMsg = checkUpdateMandatoryElements(out);
+	protected void validateUpdateMetadataReq(final PublicationMetadataReqDTO out, final String resourceHl7Type) {
+		final String errorMsg = checkUpdateMandatoryElements(out,resourceHl7Type);
 
 		if (errorMsg != null) {
 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
@@ -346,7 +348,7 @@ public abstract class AbstractCTL {
     	return output;
     }
     
-	protected String checkUpdateMandatoryElements(final PublicationMetadataReqDTO jsonObj) {
+	protected String checkUpdateMandatoryElements(final PublicationMetadataReqDTO jsonObj, final String resourceHl7Type) {
 		String out = null;
 		
 		if (jsonObj.getTipoDocumentoLivAlto()==null) {
@@ -368,6 +370,8 @@ public abstract class AbstractCTL {
 				out = validateDescriptions(jsonObj.getDescriptions());
 			}
     	}
+		
+		CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractCode(resourceHl7Type)), jsonObj.getTipoDocumentoLivAlto());
 		return out;
 	}
 
@@ -872,7 +876,7 @@ public abstract class AbstractCTL {
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 
-			validateUpdateMetadataReq(requestBody);
+			validateUpdateMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type());
 			wif = createWorkflowInstanceId(idDoc);
 			final GetMergedMetadatiDTO metadatiToUpdate = iniClient.metadata(new MergedMetadatiRequestDTO(idDoc,jwtPayloadToken, requestBody,wif));
 			if(!StringUtility.isNullOrEmpty(metadatiToUpdate.getErrorMessage()) && !metadatiToUpdate.getErrorMessage().contains("Invalid region ip")) {
