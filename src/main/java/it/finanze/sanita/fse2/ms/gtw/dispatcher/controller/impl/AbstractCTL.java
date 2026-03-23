@@ -371,7 +371,7 @@ public abstract class AbstractCTL {
 			}
     	}
 		
-		CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractCode(resourceHl7Type)), jsonObj.getTipoDocumentoLivAlto());
+		CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(resourceHl7Type)), jsonObj.getTipoDocumentoLivAlto());
 		return out;
 	}
 

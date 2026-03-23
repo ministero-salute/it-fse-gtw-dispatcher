@@ -326,7 +326,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final org.jsoup.nodes.Document docT = Jsoup.parse(cda);
 
 			String typeCodeFromJwt = jwtPayloadToken.getResource_hl7_type();
-			CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractCode(typeCodeFromJwt)), jsonObj.getTipoDocumentoLivAlto());
+			CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)), jsonObj.getTipoDocumentoLivAlto());
 			
 			validation.setDocument(docT);
 		} catch (final ValidationException | NoRecordFoundException ve) {

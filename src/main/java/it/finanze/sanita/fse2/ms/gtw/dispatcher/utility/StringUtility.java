@@ -239,16 +239,24 @@ public final class StringUtility {
 		return sourceId;
 	}
 
-	
-	public static String extractCode(String input) {
-        if (input == null || input.isEmpty()) {
+
+    public static String extractHl7TypeCode(String input) {
+        if (input == null || input.isBlank()) {
             return null;
         }
+
         try {
-            return input.split("\\^")[0];
-        } catch (ArrayIndexOutOfBoundsException ex) {
-        	log.error("Errore durante l'estrazione del code dal jwt",ex);
-            throw new BusinessException("Errore durante l'estrazione del code dal jwt",ex);
+            String cleaned = input.trim()
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("'", "");
+
+            String[] parts = cleaned.split("\\^");
+            return parts.length > 0 && !parts[0].isBlank() ? parts[0] : null;
+
+        } catch (Exception ex) {
+            log.error("Errore durante l'estrazione del code dal jwt", ex);
+            throw new BusinessException("Errore durante l'estrazione del code dal jwt", ex);
         }
     }
 }
