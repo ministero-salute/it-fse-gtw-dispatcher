@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,7 +22,7 @@ import lombok.Setter;
 @Setter
 public class ResponseWifDTO extends ResponseDTO {
 
-	@Size(min = 0, max = 10000)
+	@Size(min = 0, max = Constants.App.MAX_SIZE_WARNING)
 	@Schema(description = "Dettaglio del warning")
 	private String warning;
 	

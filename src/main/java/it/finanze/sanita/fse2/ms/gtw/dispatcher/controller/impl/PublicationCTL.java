@@ -600,7 +600,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning; 
+		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
+		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
+			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
+		}
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationResult.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
 	}
 
@@ -677,6 +680,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
+		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
+		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
+			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
+		}
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationResult.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
 
 	}
