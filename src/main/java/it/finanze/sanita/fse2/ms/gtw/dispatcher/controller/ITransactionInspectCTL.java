@@ -78,10 +78,9 @@ public interface ITransactionInspectCTL {
 	TransactionInspectResDTO getEventsByTraceId(@Size(min = 1, max = 100) @PathVariable(required = true, name = "traceId") String traceId,HttpServletRequest request);
 
 	@Hidden
-	@PostMapping(value = "/status/eds", produces = MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(value = "/ingestion/status", produces = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(
-	        summary = "Aggiorna stato finale di esecuzione da EDS",
-	        description = "Aggiorna lo stato finale di esecuzione della transazione tramite EDS."
+			summary = "Endpoint Push Broker verso Gateway", description = "Riceve notifiche di stato dal Broker per aggiornare lo stato della transazione."
 	)
 	@ApiResponses(value = {
 	        @ApiResponse(responseCode = "200", description = "Evento di Status generato con successo", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CallbackTransactionDataResponseDTO.class))),

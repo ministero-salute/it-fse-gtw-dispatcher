@@ -169,13 +169,19 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
+		// Extract X-Callback-Url header if provided
+		final String callbackUrl = request.getHeader("X-Callback-Url");
+		if (callbackUrl != null && !callbackUrl.isEmpty()) {
+			log.info("X-Callback-Url header provided: {}", callbackUrl);
+		}
+
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
 			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
 			
-			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
@@ -193,8 +199,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationInfo.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
 	}
 
-	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO, ValidationCreationInputDTO validationInfo) {
-		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
+	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
+			ValidationCreationInputDTO validationInfo, final String callbackUrl) {
+		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(),
+				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), callbackUrl);
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -216,6 +224,12 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		final Date startDateOperation = new Date();
 		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
 
+		// Extract X-Callback-Url header if provided
+		final String callbackUrl = request.getHeader("X-Callback-Url");
+		if (callbackUrl != null && !callbackUrl.isEmpty()) {
+			log.info("X-Callback-Url header provided for replace: {}", callbackUrl);
+		}
+
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
@@ -235,7 +249,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(),
+					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0),
+					callbackUrl);
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
@@ -590,13 +606,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		}
 
 		final Date startDateOperationPublication = new Date();
+		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			//Eseguo le operazione di creazione
 			ValidationDataDTO dto = executePublicationReplace(validationResult, validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), validationResult.getFile(), validationResult.getCda());
 			validationResult.setValidationData(dto);
 
 			//Eseguo le operazione post creazione
-			postExecutionCreate(startDateOperationPublication, traceInfoDTO, validationResult);
+			postExecutionCreate(startDateOperationPublication, traceInfoDTO, validationResult, callbackUrl);
 		} catch (ConnectionRefusedException ce) {		
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationResult.getDocument()));
 		} catch (final ValidationException e) {
@@ -648,6 +665,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 					idDoc);
 		}
 		final Date startDateReplacenOperation = new Date();
+		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			//Eseguo le operazione di creazione
 			ValidationDataDTO dto = executePublicationReplace(validationResult,
@@ -666,7 +684,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(), validationResult.getFhirResource(), validationResult.getJwtPayloadToken(), response.getUuid().get(0));
+			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(),
+					validationResult.getFhirResource(), validationResult.getJwtPayloadToken(),
+					response.getUuid().get(0), callbackUrl);
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationResult.getValidationData().getWorkflowInstanceId());

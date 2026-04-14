@@ -46,13 +46,15 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 	private MongoPropertiesCFG mongoPropsCfg;
 
 	@Override
-	public Boolean insert(final String workflowInstanceId, final ResourceDTO fhirResourceDTO, final JWTPayloadDTO jwtPayloadToken) {
+	public Boolean insert(final String workflowInstanceId, final ResourceDTO fhirResourceDTO,
+			final JWTPayloadDTO jwtPayloadToken, final String callbackUrl) {
 		Boolean output = false;
 		try {
 
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
-													fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null, 
-													jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(), jwtPayloadToken.getSubject_organization_id());
+					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null,
+					jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(),
+					jwtPayloadToken.getSubject_organization_id(), callbackUrl);
 
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
@@ -60,17 +62,18 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 			log.error("Error while insert ini invocation item : " , ex);
 			throw new BusinessException("Error while insert ini invocation item : " , ex);
 		}
-		return output; 
+		return output;
 	}
 
 	private IniEdsInvocationETY buildETY(final String workflowInstanceId, final String bundleJson, final String submissionSetEntryJson,
-			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer, final String fiscalCode, final String rde) {
+			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer,
+			final String fiscalCode, final String rde, final String callbackUrl) {
 		IniEdsInvocationETY out = new IniEdsInvocationETY();
 
 		out.setWorkflowInstanceId(workflowInstanceId);
 		
 		if(!StringUtility.isNullOrEmpty(bundleJson)) {
-			out.setData(Document.parse(bundleJson));	
+			out.setData(Document.parse(bundleJson));
 		}
 
 		out.setIssuer(issuer);
@@ -81,6 +84,7 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 
 		out.setFiscalCode(fiscalCode);
 		out.setRde(rde);
+		out.setCallbackUrl(callbackUrl);
 
 		List<Document> metadata = new ArrayList<>();
 		
@@ -109,12 +113,14 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 	}
 
 	@Override
-	public Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken, final String identificativoDocumento) {
+	public Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken,
+			final String identificativoDocumento, final String callbackUrl) {
 		Boolean output = false;
 		try {
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
 													fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), identificativoDocumento,
-													jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(), jwtPayloadToken.getSubject_organization_id());
+					jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(),
+					jwtPayloadToken.getSubject_organization_id(), callbackUrl);
 													
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());

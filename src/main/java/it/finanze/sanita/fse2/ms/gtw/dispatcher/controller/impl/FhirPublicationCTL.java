@@ -120,15 +120,17 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
+		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
-            ResourceDTO resourceDTO = validationInfo.getFhirResource();
-            ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
-            //propagate metadata
+			ResourceDTO resourceDTO = validationInfo.getFhirResource();
+			ResourceDTO transactionResourceDTO = documentReferenceSRV
+					.convertDocumentToTransaction(resourceDTO.getBundleJson());
+			// propagate metadata
 			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
 			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
-            validationInfo.setFhirResource(transactionResourceDTO);
-            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+			validationInfo.setFhirResource(transactionResourceDTO);
+			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
@@ -149,8 +151,9 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	}
 
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
-			ValidationCreationInputDTO validationInfo) {
-		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
+			ValidationCreationInputDTO validationInfo, final String callbackUrl) {
+		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(),
+				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), callbackUrl);
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -175,16 +178,18 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
+		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-            validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO);
-            ResourceDTO resourceDTO = validationInfo.getFhirResource();
-            ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
-            //propagate metadata
-            transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
-            transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
-            validationInfo.setFhirResource(transactionResourceDTO);
-            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+			validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO);
+			ResourceDTO resourceDTO = validationInfo.getFhirResource();
+			ResourceDTO transactionResourceDTO = documentReferenceSRV
+					.convertDocumentToTransaction(resourceDTO.getBundleJson());
+			// propagate metadata
+			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
+			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
+			validationInfo.setFhirResource(transactionResourceDTO);
+				postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
 
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -198,7 +203,9 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(),
+					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0),
+					callbackUrl);
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
