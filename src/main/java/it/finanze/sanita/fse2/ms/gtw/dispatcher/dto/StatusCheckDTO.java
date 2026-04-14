@@ -62,4 +62,7 @@ public class StatusCheckDTO {
 	@Size(min = 0, max = 10000)
 	private String extra;
 	
+	@Size(min = 0, max = 1000)
+	private String detail;
+
 }
