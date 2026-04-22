@@ -47,14 +47,14 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 
 	@Override
 	public Boolean insert(final String workflowInstanceId, final ResourceDTO fhirResourceDTO,
-			final JWTPayloadDTO jwtPayloadToken, final String callbackUrl) {
+			final JWTPayloadDTO jwtPayloadToken) {
 		Boolean output = false;
 		try {
 
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
 					fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null,
 					jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(),
-					jwtPayloadToken.getSubject_organization_id(), callbackUrl);
+					jwtPayloadToken.getSubject_organization_id());
 
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
@@ -67,7 +67,7 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 
 	private IniEdsInvocationETY buildETY(final String workflowInstanceId, final String bundleJson, final String submissionSetEntryJson,
 			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer,
-			final String fiscalCode, final String rde, final String callbackUrl) {
+			final String fiscalCode, final String rde) {
 		IniEdsInvocationETY out = new IniEdsInvocationETY();
 
 		out.setWorkflowInstanceId(workflowInstanceId);
@@ -84,7 +84,6 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 
 		out.setFiscalCode(fiscalCode);
 		out.setRde(rde);
-		out.setCallbackUrl(callbackUrl);
 
 		List<Document> metadata = new ArrayList<>();
 		
@@ -114,13 +113,13 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 
 	@Override
 	public Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken,
-			final String identificativoDocumento, final String callbackUrl) {
+			final String identificativoDocumento) {
 		Boolean output = false;
 		try {
 			IniEdsInvocationETY etyToSave = buildETY(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
 													fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), identificativoDocumento,
 					jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(),
-					jwtPayloadToken.getSubject_organization_id(), callbackUrl);
+					jwtPayloadToken.getSubject_organization_id());
 													
 			etyToSave = iniInvocationRepo.insert(etyToSave);
 			output = !StringUtility.isNullOrEmpty(etyToSave.getId());
@@ -128,6 +127,6 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 			log.error("Error in replace while insert ini invocation item : " , ex);
 			throw new BusinessException("Error in replace while insert ini invocation item : " , ex);
 		}
-		return output; 
+		return output;
 	}
 }

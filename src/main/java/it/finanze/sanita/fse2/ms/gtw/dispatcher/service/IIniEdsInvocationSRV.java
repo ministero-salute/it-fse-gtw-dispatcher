@@ -18,10 +18,9 @@ import java.util.List;
 
 public interface IIniEdsInvocationSRV {
 	
-	Boolean insert(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken,
-			String callbackUrl);
+	Boolean insert(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken);
 
 	Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken,
-			String identificativoDocumento, String callbackUrl);
+			String identificativoDocumento);
 
 }

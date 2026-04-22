@@ -50,4 +50,6 @@ public class KafkaStatusManagerDTO {
 	
 	private String microserviceName;
 	
+	private String callbackUrl;
+
 }

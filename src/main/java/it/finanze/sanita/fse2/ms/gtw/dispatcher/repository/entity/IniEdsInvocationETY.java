@@ -52,8 +52,5 @@ public class IniEdsInvocationETY {
 	
 	@Field(name = "rde")
 	private String rde;
-	
-	@Field(name = "callback_url")
-	private String callbackUrl;
-	 
+
 }

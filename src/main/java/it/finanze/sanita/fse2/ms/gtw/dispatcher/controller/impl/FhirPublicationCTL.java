@@ -122,7 +122,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
-			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
+			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO, callbackUrl);
 			ResourceDTO resourceDTO = validationInfo.getFhirResource();
 			ResourceDTO transactionResourceDTO = documentReferenceSRV
 					.convertDocumentToTransaction(resourceDTO.getBundleJson());
@@ -153,7 +153,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
 			ValidationCreationInputDTO validationInfo, final String callbackUrl) {
 		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(),
-				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), callbackUrl);
+				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -163,7 +163,9 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(),
+				validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(),
+				validationInfo.getJwtPayloadToken(), callbackUrl);
 
 		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
 				idDoc);
@@ -181,7 +183,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-			validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO);
+			validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO, callbackUrl);
 			ResourceDTO resourceDTO = validationInfo.getFhirResource();
 			ResourceDTO transactionResourceDTO = documentReferenceSRV
 					.convertDocumentToTransaction(resourceDTO.getBundleJson());
@@ -204,8 +206,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(),
-					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0),
-					callbackUrl);
+					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
@@ -213,7 +214,9 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(),
+					validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null,
+					validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken(), callbackUrl);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
 					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
@@ -356,7 +359,8 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		return out;
 	}
  
-	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO) {
+	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request,
+			final boolean isReplace, final String idDoc, final LogTraceInfoDTO traceInfoDTO, final String callbackUrl) {
 		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION;
 		ValidationCreationInputDTO validationResult = publicationAndReplaceValidationFhirDiretto(file, request, isReplace,idDoc, traceInfoDTO,eventType);
 

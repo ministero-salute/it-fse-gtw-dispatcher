@@ -169,17 +169,13 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
-		// Extract X-Callback-Url header if provided
 		final String callbackUrl = request.getHeader("X-Callback-Url");
-		if (callbackUrl != null && !callbackUrl.isEmpty()) {
-			log.info("X-Callback-Url header provided: {}", callbackUrl);
-		}
 
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
-			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
+			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO, callbackUrl);
 			
 			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
 		} catch (ConnectionRefusedException ce) {
@@ -202,7 +198,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
 			ValidationCreationInputDTO validationInfo, final String callbackUrl) {
 		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(),
-				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), callbackUrl);
+				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -212,7 +208,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(),
+				validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(),
+				validationInfo.getJwtPayloadToken(), callbackUrl);
 
 		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
 				idDoc);
@@ -224,7 +222,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		final Date startDateOperation = new Date();
 		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
 
-		// Extract X-Callback-Url header if provided
 		final String callbackUrl = request.getHeader("X-Callback-Url");
 		if (callbackUrl != null && !callbackUrl.isEmpty()) {
 			log.info("X-Callback-Url header provided for replace: {}", callbackUrl);
@@ -235,7 +232,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-			validationInfo = publicationAndReplace(file, request, true,idDoc,traceInfoDTO);
+			validationInfo = publicationAndReplace(file, request, true, idDoc, traceInfoDTO, callbackUrl);
 
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -250,8 +247,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(),
-					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0),
-					callbackUrl);
+					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
@@ -259,7 +255,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(),
+					validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null,
+					validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken(), callbackUrl);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
 					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,idDoc);
@@ -280,9 +278,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 
-	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO) {
-		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION; 
-		ValidationCreationInputDTO validationResult = publicationAndReplaceValidation(file, request, isReplace,idDoc, traceInfoDTO,eventType);
+	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request,
+			final boolean isReplace, final String idDoc, final LogTraceInfoDTO traceInfoDTO, final String callbackUrl) {
+		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION;
+		ValidationCreationInputDTO validationResult = publicationAndReplaceValidation(file, request, isReplace, idDoc,
+				traceInfoDTO, eventType, callbackUrl);
 
 		validationResult.setValidationData(executePublicationReplace(validationResult,
 				validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), validationResult.getFile(),
@@ -292,7 +292,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 	}
 
-	private ValidationCreationInputDTO publicationAndReplaceValidation(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDocRep, final LogTraceInfoDTO traceInfoDTO,EventTypeEnum eventTypeEnum) {
+	private ValidationCreationInputDTO publicationAndReplaceValidation(final MultipartFile file,
+			final HttpServletRequest request, final boolean isReplace, final String idDocRep,
+			final LogTraceInfoDTO traceInfoDTO, EventTypeEnum eventTypeEnum, final String callbackUrl) {
 
 		final ValidationCreationInputDTO validation = new ValidationCreationInputDTO();
 		ValidationDataDTO validationInfo = new ValidationDataDTO();
@@ -321,7 +323,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 				try {
 					simulatedResult = accreditamentoSimulationSRV.runSimulation(idToCheck, bytePDF, isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION);
 				} catch(NoRecordFoundException noRecordFound) {
-					kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), "", EventStatusEnum.BLOCKING_ERROR, "Id documento non presente", jsonObj, jwtPayloadToken);
+					kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), "", EventStatusEnum.BLOCKING_ERROR,
+							"Id documento non presente", jsonObj, jwtPayloadToken, callbackUrl);
 					throw noRecordFound;
 				}
 
@@ -588,7 +591,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String idDoc = "";
 		try {
 			//Valido request e jwt come se fosse una pubblicazione
-			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,EventTypeEnum.VALIDATION_FOR_PUBLICATION);
+			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,
+					EventTypeEnum.VALIDATION_FOR_PUBLICATION, null);
 			docT = Jsoup.parse(validationResult.getCda());
 			workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);
 			idDoc = CdaUtility.extractIdDoc(docT);
@@ -643,7 +647,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
 		try {
 			//Valido request e jwt come se fosse una pubblicazione
-			validationResult = publicationAndReplaceValidation(file, request, true,idDoc,traceInfoDTO,EventTypeEnum.VALIDATION_FOR_REPLACE);
+			validationResult = publicationAndReplaceValidation(file, request, true, idDoc, traceInfoDTO,
+					EventTypeEnum.VALIDATION_FOR_REPLACE, null);
 
 			docT = Jsoup.parse(validationResult.getCda());
 			workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);
@@ -686,7 +691,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(),
 					validationResult.getFhirResource(), validationResult.getJwtPayloadToken(),
-					response.getUuid().get(0), callbackUrl);
+					response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationResult.getValidationData().getWorkflowInstanceId());
@@ -694,7 +699,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationResult.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), validationResult.getJwtPayloadToken());
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(),
+					validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null,
+					validationResult.getJsonObj(), validationResult.getJwtPayloadToken(), callbackUrl);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationResult.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationResult.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateReplacenOperation,
 					getDocumentType(validationResult.getDocument()), validationResult.getJwtPayloadToken(),null,idDoc);

@@ -136,20 +136,22 @@ public class KafkaSRV implements IKafkaSRV {
 			final EventStatusEnum eventStatus, final String message,
 			final JWTPayloadDTO jwtClaimDTO) {
 		sendStatusMessage(traceId, workflowInstanceId, EventTypeEnum.VALIDATION, eventStatus, message, null,
-				jwtClaimDTO, null);
+				jwtClaimDTO, null, null);
 	}
 
 	@Override
 	public void sendValidationStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
 			final JWTPayloadDTO jwtClaimDTO, EventTypeEnum eventTypeEnum) {
-		sendStatusMessage(traceId, workflowInstanceId, eventTypeEnum, eventStatus, message, null, jwtClaimDTO, null);
+		sendStatusMessage(traceId, workflowInstanceId, eventTypeEnum, eventStatus, message, null, jwtClaimDTO, null,
+				null);
 	}
 
 	@Override
 	public void sendPublicationStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
-			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO) {
+			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO,
+			final String callbackUrl) {
 
 		String identificativoDocumento = null;
 		AttivitaClinicaEnum tipoAttivita = null;
@@ -162,13 +164,14 @@ public class KafkaSRV implements IKafkaSRV {
 			}
 		}
 		sendStatusMessage(traceId, workflowInstanceId, EventTypeEnum.PUBLICATION, eventStatus, message,
-				identificativoDocumento, jwtClaimDTO, tipoAttivita);
+				identificativoDocumento, jwtClaimDTO, tipoAttivita, callbackUrl);
 	}
 
 	@Override
 	public void sendReplaceStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
-			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO) {
+			final PublicationCreateReplaceMetadataDTO publicationReq, final JWTPayloadDTO jwtClaimDTO,
+			final String callbackUrl) {
 
 		String identificativoDocumento = null;
 		AttivitaClinicaEnum tipoAttivita = null;
@@ -181,7 +184,7 @@ public class KafkaSRV implements IKafkaSRV {
 			}
 		}
 		sendStatusMessage(traceId, workflowInstanceId, EventTypeEnum.REPLACE, eventStatus, message,
-				identificativoDocumento, jwtClaimDTO, tipoAttivita);
+				identificativoDocumento, jwtClaimDTO, tipoAttivita, callbackUrl);
 	}
 
 	@Override
@@ -189,7 +192,7 @@ public class KafkaSRV implements IKafkaSRV {
 			EventStatusEnum eventStatus, JWTPayloadDTO jwt,
 			EventTypeEnum eventType) {
 		sendStatusMessage(traceId, workflowInstanceId, eventType, eventStatus, message, idDoc, jwt,
-				AttivitaClinicaEnum.PHR);
+				AttivitaClinicaEnum.PHR, null);
 	}
 
 	@Override
@@ -208,14 +211,15 @@ public class KafkaSRV implements IKafkaSRV {
 	public void sendUpdateStatus(String traceId, String workflowInstanceId, String idDoc, EventStatusEnum eventStatus,
 			JWTPayloadDTO jwt,
 			String message, EventTypeEnum event) {
-		sendStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null);
+		sendStatusMessage(traceId, workflowInstanceId, event, eventStatus, message, idDoc, jwt, null, null);
 	}
 
-    @Override
-    public void sendEdsUarStatus(final String workflowInstanceId, final EventStatusEnum eventStatus, final String message) {
-        sendStatusMessageNoJwt(null, workflowInstanceId, EventTypeEnum.UAR_FINAL_STATUS, eventStatus, message,
-                null, null);
-    }
+	@Override
+	public void sendEdsUarStatus(final String workflowInstanceId, final EventStatusEnum eventStatus,
+			final String message) {
+		sendStatusMessageNoJwt(null, workflowInstanceId, EventTypeEnum.UAR_FINAL_STATUS, eventStatus, message,
+				null, null, null);
+	}
 
 	private String sendObjectAsJson(Object o) {
 		String json;
@@ -242,12 +246,13 @@ public class KafkaSRV implements IKafkaSRV {
 
 
     private void sendStatusMessageNoJwt(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
-                                   final EventStatusEnum eventStatus, final String message, final String documentId, AttivitaClinicaEnum tipoAttivita) {
+			final EventStatusEnum eventStatus, final String message, final String documentId,
+			AttivitaClinicaEnum tipoAttivita, final String callbackUrl) {
         try {
             KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder()
                     .traceId(traceId).eventType(eventType).eventDate(new Date()).eventStatus(eventStatus)
                     .message(message).identificativoDocumento(documentId).tipoAttivita(tipoAttivita)
-                    .microserviceName(msName).build();
+					.microserviceName(msName).callbackUrl(callbackUrl).build();
 
             String json = truncateMessageIfNecessary(statusManagerMessage);
 
@@ -266,7 +271,7 @@ public class KafkaSRV implements IKafkaSRV {
 
 	private void sendStatusMessage(final String traceId, final String workflowInstanceId, final EventTypeEnum eventType,
 			final EventStatusEnum eventStatus, final String message, final String documentId,
-			final JWTPayloadDTO jwtClaimDTO, AttivitaClinicaEnum tipoAttivita) {
+			final JWTPayloadDTO jwtClaimDTO, AttivitaClinicaEnum tipoAttivita, final String callbackUrl) {
 		try {
 			KafkaStatusManagerDTO statusManagerMessage = KafkaStatusManagerDTO.builder()
 					.issuer(jwtClaimDTO != null ? jwtClaimDTO.getIss() : Constants.App.JWT_MISSING_ISSUER_PLACEHOLDER)
@@ -274,7 +279,7 @@ public class KafkaSRV implements IKafkaSRV {
 					.message(message).identificativoDocumento(documentId).tipoAttivita(tipoAttivita)
 					.subject(jwtClaimDTO != null ? jwtClaimDTO.getSub() : null)
 					.organizzazione(jwtClaimDTO != null ? jwtClaimDTO.getSubject_organization_id() : null)
-					.microserviceName(msName).build();
+					.microserviceName(msName).callbackUrl(callbackUrl).build();
 
 			String json = truncateMessageIfNecessary(statusManagerMessage);
 

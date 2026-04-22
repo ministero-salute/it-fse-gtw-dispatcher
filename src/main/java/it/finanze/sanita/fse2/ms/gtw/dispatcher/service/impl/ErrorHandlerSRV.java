@@ -60,7 +60,7 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         EventStatusEnum errorEventStatus = RestExecutionResultEnum.GENERIC_TIMEOUT.getEventStatusEnum();
 
         kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-                errorMessage, jsonObj, jwtPayloadToken);
+                errorMessage, jsonObj, jwtPayloadToken, null);
 
         final RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
 
@@ -114,10 +114,10 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
 
         if(isPublication) {
         	kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-        			errorMessage, jsonObj, jwtPayloadToken);
+                    errorMessage, jsonObj, jwtPayloadToken, null);
         } else {
         	kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-        			errorMessage, jsonObj, jwtPayloadToken);
+                    errorMessage, jsonObj, jwtPayloadToken, null);
         }
         
         RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
