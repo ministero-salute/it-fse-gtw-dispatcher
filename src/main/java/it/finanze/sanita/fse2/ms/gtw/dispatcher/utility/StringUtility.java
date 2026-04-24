@@ -13,16 +13,13 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.codec.binary.Hex;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
@@ -242,4 +239,24 @@ public final class StringUtility {
 		return sourceId;
 	}
 
+
+    public static String extractHl7TypeCode(String input) {
+        if (input == null || input.isBlank()) {
+            return null;
+        }
+
+        try {
+            String cleaned = input.trim()
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace("'", "");
+
+            String[] parts = cleaned.split("\\^");
+            return parts.length > 0 && !parts[0].isBlank() ? parts[0] : null;
+
+        } catch (Exception ex) {
+            log.error("Errore durante l'estrazione del code dal jwt", ex);
+            throw new BusinessException("Errore durante l'estrazione del code dal jwt", ex);
+        }
+    }
 }

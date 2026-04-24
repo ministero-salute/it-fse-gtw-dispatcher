@@ -20,6 +20,7 @@ public interface IIniEdsInvocationSRV {
 	
 	Boolean insert(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken);
 
-	Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken, String identificativoDocumento);
+	Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken,
+			String identificativoDocumento);
 
 }

@@ -24,7 +24,6 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.create
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
@@ -36,6 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -69,19 +69,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDTO;
@@ -92,6 +81,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformRes
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
@@ -121,6 +111,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultD
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validators.CorrelationDocumentTypeValidator;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -256,8 +247,8 @@ public abstract class AbstractCTL {
         return out;
     }
 
-	protected void validateUpdateMetadataReq(final UpdateMetadataReqDTO out) {
-		final String errorMsg = checkUpdateMandatoryElements(out);
+	protected void validateUpdateMetadataReq(final UpdateMetadataReqDTO out, final String resourceHl7Type) {
+		final String errorMsg = checkUpdateMandatoryElements(out,resourceHl7Type);
 
 		if (errorMsg != null) {
 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
@@ -356,7 +347,7 @@ public abstract class AbstractCTL {
     	return output;
     }
     
-	protected String checkUpdateMandatoryElements(final UpdateMetadataReqDTO jsonObj) {
+	protected String checkUpdateMandatoryElements(final UpdateMetadataReqDTO jsonObj,  final String resourceHl7Type) {
 		String out = null;
 		
 		if (jsonObj.getTipoDocumentoLivAlto()==null) {
@@ -378,6 +369,8 @@ public abstract class AbstractCTL {
 				out = validateDescriptions(jsonObj.getDescriptions());
 			}
     	}
+
+		CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(resourceHl7Type)), jsonObj.getTipoDocumentoLivAlto());
 		return out;
 	}
 
@@ -594,37 +587,49 @@ public abstract class AbstractCTL {
 				.build();
 		throw new ValidationException(error);
 	}
+
 	protected byte[] getAndValidateFile(final MultipartFile file) {
-		byte[] out = null;
-		
-		try {
-			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
-			if (file != null && file.getBytes().length > 0) {
-				out = file.getBytes();
+	    byte[] out = null;
 
-				result = RestExecutionResultEnum.DOCUMENT_TYPE_ERROR;
-				if (PDFUtility.isPdf(out)) {
-					result = null;
-				}
-			}
+	    try {
+	        RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
 
-			if (result != null) {
-				String errorInstance = ErrorInstanceEnum.NON_PDF_FILE.getInstance();
-				if (RestExecutionResultEnum.EMPTY_FILE_ERROR.equals(result)) {
-					errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
-				}
-				final ErrorResponseDTO error = ErrorResponseDTO.builder()
-					.type(result.getType()).title(result.getTitle())
-					.instance(errorInstance).detail(result.getTitle()).build();
-				throw new ValidationException(error);
-			}
-		} catch (final ValidationException validationE) {
-			throw validationE;
-		} catch (final Exception e) {
-			log.error("Generic error io in cda :", e);
-			throw new BusinessException(e);
-		}
-		return out;
+	        if (file != null) {
+	            out = file.getBytes();
+
+	            if (out.length > 0) {
+	                result = RestExecutionResultEnum.DOCUMENT_TYPE_ERROR;
+
+	                if (PDFUtility.isPdf(out)) {
+	                    result = null;
+	                }
+	            }
+	        }
+
+	        if (result != null) {
+	            String errorInstance = ErrorInstanceEnum.NON_PDF_FILE.getInstance();
+	            if (RestExecutionResultEnum.EMPTY_FILE_ERROR.equals(result)) {
+	                errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
+	            }
+
+	            final ErrorResponseDTO error = ErrorResponseDTO.builder()
+	                    .type(result.getType())
+	                    .title(result.getTitle())
+	                    .instance(errorInstance)
+	                    .detail(result.getTitle())
+	                    .build();
+
+	            throw new ValidationException(error);
+	        }
+
+	    } catch (ValidationException validationE) {
+	        throw validationE;
+	    } catch (Exception e) {
+	        log.error("Generic error io in cda :", e);
+	        throw new BusinessException(e);
+	    }
+
+	    return out;
 	}
 	
 	
@@ -883,7 +888,7 @@ public abstract class AbstractCTL {
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 
-			validateUpdateMetadataReq(requestBody);
+			validateUpdateMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type());
 			wif = createWorkflowInstanceId(idDoc);
 			final GetMergedMetadatiDTO metadatiToUpdate = iniClient.metadata(new MergedMetadatiRequestDTO(idDoc,jwtPayloadToken, requestBody,wif));
 			if(!StringUtility.isNullOrEmpty(metadatiToUpdate.getErrorMessage()) && !metadatiToUpdate.getErrorMessage().contains("Invalid region ip")) {
@@ -961,7 +966,8 @@ public abstract class AbstractCTL {
 
 			}
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null);
+			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
+					idDoc);
 		} catch (MockEnabledException me) {
 			throw me;
 		} catch (final ValidationException e) {
@@ -1012,14 +1018,7 @@ public abstract class AbstractCTL {
 				directFhirDTO.setSourceType(DirectFhirSourceEnum.PDF.getSource());
 				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId(extractedBundle));
 				directFhirDTO.setFilename(filename);
-			} 
-			
-//			else if (FhirUtility.isJson(inputBytes, filename)) {
-//				directFhirDTO.setFhir(new String(inputBytes, StandardCharsets.UTF_8));
-//				directFhirDTO.setSourceType(DirectFhirSourceEnum.JSON.getSource());
-//				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId());
-//			}
-
+			}
 			return directFhirDTO;
 
 		} catch (final ValidationException validationE) {

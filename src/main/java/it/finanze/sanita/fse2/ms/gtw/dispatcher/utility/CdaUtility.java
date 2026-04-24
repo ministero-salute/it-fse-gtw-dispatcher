@@ -83,6 +83,11 @@ public final class CdaUtility {
 		
 		return isNullOrEmpty(docType) ? Constants.App.MISSING_DOC_TYPE_PLACEHOLDER : docType;
 	}
+	
+	public static DocumentTypeEnum getDocumentTypeEnum(final Document cdaDocument) {
+		final String code = cdaDocument.select("code").get(0).attr("code");
+		return DocumentTypeEnum.getByCode(code);
+	}
 
 
 	/**
@@ -91,16 +96,16 @@ public final class CdaUtility {
 	 * @param id The master identifier
 	 * @return {@code true} if the identifier is well-formed
 	 */
-	public static boolean isValidMasterId(String id) {
-		if (StringUtility.isNullOrEmpty(id)) return false;
-		if (isWhitespace(id)) return false;
-		if (!id.contains(MASTER_ID_SEPARATOR)) return true;
+    public static boolean isValidMasterId(String id) {
+        if (StringUtility.isNullOrEmpty(id)) return false;
+        if (isWhitespace(id)) return false;
 
-		String[] values = id.split("\\"+MASTER_ID_SEPARATOR);
-		if (values.length != 2) return false;
+        int lastSeparatorIndex = id.lastIndexOf(MASTER_ID_SEPARATOR);
+        if (lastSeparatorIndex == -1) return false;
 
-		return !values[0].isEmpty() && !values[1].isEmpty();
-	}
+        String identificativoDocumento = id.substring(lastSeparatorIndex + 1);
+        return !identificativoDocumento.isEmpty();
+    }
 
 	public static ErrorResponseDTO createMasterIdError() {
 		return ErrorResponseDTO.builder()
@@ -118,6 +123,20 @@ public final class CdaUtility {
 			.instance(INVALID_REQ_ID_ERROR.getInstance())
 			.detail(INVALID_REQ_ID_ERROR.getDescription())
 			.build();
+	}
+
+	
+	public static String extractIdDoc(final Document docT) {
+		String out = "";
+		try {
+			String id = docT.select("id").get(0).attr("root");
+			String extension = docT.select("id").get(0).attr("extension");
+			out = id + "^" + extension;
+		} catch(Exception ex) {
+			log.error("Error while extracting id doc from cda", ex);
+			throw new BusinessException("Error while extracting id doc from cda", ex);
+		}
+		return out;
 	}
 
 }

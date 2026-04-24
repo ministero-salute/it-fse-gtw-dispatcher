@@ -52,7 +52,7 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         if (jsonObj == null) {
             cdaSRV.consumeHash(validationInfo.getHash());
         }
-
+        
         String errorMessage = ex.getMessage();
         String capturedErrorType = RestExecutionResultEnum.GENERIC_TIMEOUT.getType();
         String errorInstance = ErrorInstanceEnum.NO_INFO.getInstance();
@@ -60,16 +60,21 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         EventStatusEnum errorEventStatus = RestExecutionResultEnum.GENERIC_TIMEOUT.getEventStatusEnum();
 
         kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-                errorMessage, jsonObj, jwtPayloadToken);
+                errorMessage, jsonObj, jwtPayloadToken, null);
 
         final RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
 
+        String idDoc = "";
+        if (jsonObj != null && !StringUtility.isNullOrEmpty(jsonObj.getIdentificativoDoc())) {
+            idDoc = jsonObj.getIdentificativoDoc();
+        }
         if(isPublication) {
+        	
         	logger.error(Constants.App.LOG_TYPE_CONTROL,validationInfo.getWorkflowInstanceId(),errorMessage + " " + validationInfo.getWorkflowInstanceId(), OperationLogEnum.PUB_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(),  documentType, 
-        			jwtPayloadToken);
+        			jwtPayloadToken,idDoc);
         } else {
         	logger.error(Constants.App.LOG_TYPE_CONTROL,validationInfo.getWorkflowInstanceId(),errorMessage + " " + validationInfo.getWorkflowInstanceId(), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(),documentType,
-        			jwtPayloadToken);
+        			jwtPayloadToken,idDoc);
         }
         throw new ValidationPublicationErrorException(errorType, StringUtility.sanitizeMessage(errorType.getTitle()), errorInstance);
     }
@@ -80,14 +85,14 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         PublicationCreateReplaceMetadataDTO jsonObj, LogTraceInfoDTO traceInfoDTO, ValidationException e, boolean isPublication, final String documentType
     ) {
 
-        if (jsonObj == null) {
+    	if (jsonObj == null && validationInfo != null) {
             cdaSRV.consumeHash(validationInfo.getHash());
         }
 
-        String errorMessage = e.getMessage();
+    	String errorMessage = e != null ? e.getMessage() : "Validation error";
         String capturedErrorType = RestExecutionResultEnum.GENERIC_ERROR.getType();
         String errorInstance = ErrorInstanceEnum.NO_INFO.getInstance();
-        EventStatusEnum errorEventStatus =  RestExecutionResultEnum.GENERIC_ERROR.getEventStatusEnum();
+        EventStatusEnum errorEventStatus = RestExecutionResultEnum.GENERIC_ERROR.getEventStatusEnum();
         
         if (e.getError() != null) {
             errorMessage = e.getError().getDetail();
@@ -95,32 +100,49 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
             errorInstance = e.getError().getInstance();
             errorEventStatus = RestExecutionResultEnum.get(capturedErrorType).getEventStatusEnum();
         }
+        
+        if (e != null && e.getError() != null) {
+            errorMessage = e.getError().getDetail();
+            capturedErrorType = e.getError().getType();
+            errorInstance = e.getError().getInstance();
+
+            RestExecutionResultEnum mappedEnum = RestExecutionResultEnum.get(capturedErrorType);
+            if (mappedEnum != null) {
+                errorEventStatus = mappedEnum.getEventStatusEnum();
+            }
+        }
 
         if(isPublication) {
         	kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-        			errorMessage, jsonObj, jwtPayloadToken);
+                    errorMessage, jsonObj, jwtPayloadToken, null);
         } else {
         	kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
-        			errorMessage, jsonObj, jwtPayloadToken);
+                    errorMessage, jsonObj, jwtPayloadToken, null);
         }
         
+        RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
+        if (errorType == null) {
+            errorType = RestExecutionResultEnum.GENERIC_ERROR;
+        }
 
-        final RestExecutionResultEnum errorType = RestExecutionResultEnum.get(capturedErrorType);
-
-      
+        String idDoc = "";
+        if (jsonObj != null && !StringUtility.isNullOrEmpty(jsonObj.getIdentificativoDoc())) {
+            idDoc = jsonObj.getIdentificativoDoc();
+        }
+        
         if(isPublication) {
         	logger.error(Constants.App.LOG_TYPE_CONTROL,validationInfo.getWorkflowInstanceId(),errorMessage + " " + validationInfo.getWorkflowInstanceId(), OperationLogEnum.PUB_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(), documentType,
-        			jwtPayloadToken);
+        			jwtPayloadToken,idDoc);
         } else {
         	logger.error(Constants.App.LOG_TYPE_CONTROL,validationInfo.getWorkflowInstanceId(),errorMessage + " " + validationInfo.getWorkflowInstanceId(), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(), documentType, 
-        			jwtPayloadToken);
+        			jwtPayloadToken,idDoc);
         }
         throw new ValidationPublicationErrorException(errorType,StringUtility.sanitizeMessage(errorMessage), errorInstance);
     }
-
+    
     @Override
     public void validationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken, 
-        ValidationException e, final String documentType) {
+        ValidationException e, final String documentType, String idDocumento) {
         
         String errorMessage = e.getMessage();
         String capturedErrorType = RestExecutionResultEnum.GENERIC_ERROR.getType();
@@ -138,7 +160,7 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
 
         if (RestExecutionResultEnum.VOCABULARY_ERROR != RestExecutionResultEnum.get(capturedErrorType)) {
         	logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, errorMessage + " " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType, 
-        			jwtPayloadToken);
+        			jwtPayloadToken,idDocumento);
         }
         throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(errorMessage), workflowInstanceId, errorInstance);
     }
@@ -159,7 +181,7 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
     	final RestExecutionResultEnum validationResult = RestExecutionResultEnum.get(capturedErrorType);
     	kafkaSRV.sendUpdateStatus(traceInfoDTO.getTraceID(), workflowInstanceId, idDoc, EventStatusEnum.BLOCKING_ERROR, jwtPayloadToken, errorMessage, EventTypeEnum.UPDATE);
     	logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,e.getError().getDetail() + " " + workflowInstanceId, OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType, 
-    			jwtPayloadToken);
+    			jwtPayloadToken,idDoc);
     	throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(e.getError().getDetail()), workflowInstanceId, errorInstance);
     }
 

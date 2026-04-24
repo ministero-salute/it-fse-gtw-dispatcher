@@ -9,35 +9,34 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+/**
+ * Request DTO for updating an existing routing table entry
+ */
+@Data
 @NoArgsConstructor
-@AllArgsConstructor 
-public class PublicationResDTO extends ResponseDTO { 
-
-	@Size(min = 0, max = Constants.App.MAX_SIZE_WARNING)
-	@Schema(description = "Dettaglio del warning")
-	private String warning;
-		
-	@Size(min = 0, max = 256)
-	@Schema(description = "Identificativo del workflow instance id")
-	private String workflowInstanceId;
-
-	public PublicationResDTO(final LogTraceInfoDTO traceInfo, String inWarning,final String inWorkflowInstanceId) {
-		super(traceInfo);
-		warning = inWarning;
-		workflowInstanceId = inWorkflowInstanceId;
-	}
-	
+@AllArgsConstructor
+public class RoutingTableUpdateReqDTO {
+    
+    /**
+     * Notification endpoint URL (must be HTTPS)
+     * Optional - only updated if provided
+     */
+    @Pattern(regexp = "^https?://.*", message = "Notification endpoint must be a valid HTTPS URL")
+    @Size(max = 500, message = "Notification endpoint must not exceed 500 characters")
+    private String notificationEndpoint;
+    
+    /**
+     * Human-readable description
+     * Optional - only updated if provided
+     */
+    @Size(max = 500, message = "Description must not exceed 500 characters")
+    private String description;
 }

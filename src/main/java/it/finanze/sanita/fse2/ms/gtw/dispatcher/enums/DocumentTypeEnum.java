@@ -21,6 +21,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum DocumentTypeEnum {
+	
 	CODE_57833_6("57833-6", "Prescrizione farmaceutica"),
 	CODE_60591_5("60591-5", "Profilo Sanitario Sintetico"),
 	CODE_11502_2("11502-2", "Referto di Laboratorio"),
@@ -31,14 +32,14 @@ public enum DocumentTypeEnum {
 	CODE_68604_8("68604-8", "Referto di radiologia"),
 	CODE_11526_1("11526-1", "Referto di anatomia patologica"),
 	CODE_59284_0("59284-0", "Documento dei consensi"),
-	CODE_28653_4("28653-4", "Certificato di malattia"),
+	CODE_104531_9("104531-9", "Certificato di malattia"),
 	CODE_57832_8("57832-8", "Prescrizione diagnostica o specialistica"),
 	CODE_29304_3("29304-3", "Erogazione farmaceutica"),
 	CODE_11488_4("11488-4", "Referto specialistico"),
 	CODE_57827_8("57827-8", "Documento di esenzione"),
 	CODE_81223_0("81223-0", "Erogazione specialistica"),
 	CODE_18776_5("18776-5", "Piano terapeutico"),
-	CODE_97500_3("97500-3", "Certificazione verde Covid-19 (Digital Green Certificate)"),
+	CODE_97500_3("97500-3", "Certificazione verde Covid-19 (Digital Green Certificate)6"),
 	CODE_87273_9("87273-9", "Scheda singola vaccinazione"),
 	CODE_82593_5("82593-5", "Certificato vaccinale"),
 	CODE_97499_8("97499-8", "Certificato di guarigione da Covid-19"),

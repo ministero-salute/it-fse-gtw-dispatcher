@@ -9,21 +9,46 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
+import java.util.Date;
 
-public interface IEdsClient {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-	EdsResponseDTO delete(String oid, String fiscalCode);
-	
-	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
-	
-	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
-
-	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
-
+/**
+ * DTO for Routing Table entity
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RoutingTableDTO {
+    
+    /**
+     * MongoDB document ID
+     */
+    private String id;
+    
+    /**
+     * JWT Issuer identifier
+     */
+    private String issuer;
+    
+    /**
+     * Notification endpoint URL
+     */
+    private String notificationEndpoint;
+    
+    /**
+     * Human-readable description
+     */
+    private String description;
+    
+    /**
+     * Date when the entry was created
+     */
+    private Date insertionDate;
 }

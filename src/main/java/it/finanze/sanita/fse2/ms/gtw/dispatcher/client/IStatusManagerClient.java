@@ -11,19 +11,20 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 
-public interface IEdsClient {
+/**
+ * Client interface for status-manager microservice.
+ */
+public interface IStatusManagerClient {
 
-	EdsResponseDTO delete(String oid, String fiscalCode);
-	
-	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
-	
-	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
-
-	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
+	/**
+	 * Save transaction status synchronously.
+	 * 
+	 * @param request Transaction data request
+	 * @return Response with success flag
+	 */
+	CallbackTransactionDataResponseDTO saveTransactionStatus(CallbackTransactionDataRequestDTO request);
 
 }

@@ -11,20 +11,12 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISSING_DOC_TYPE_PLACEHOLDER;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISSING_WORKFLOW_PLACEHOLDER;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.BLOCKING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.EDS_DELETE;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_DELETE;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.RIFERIMENTI_INI;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.FHIR_MAPPING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.GENERIC_ERROR;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.INI_EXCEPTION;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.get;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createMasterIdError;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createReqMasterIdError;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createWorkflowInstanceId;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.getDocumentType;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
@@ -33,9 +25,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isN
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.FhirSRV;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,28 +51,20 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestD
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ProcessorOperationEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
@@ -95,7 +77,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -128,13 +109,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 	@Autowired
 	private ValidationCFG validationCFG;
-
-	@Autowired
-	private IEdsClient edsClient;
-	
-	@Autowired
-	private IConfigSRV configSRV;
-
+ 
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -145,15 +120,17 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
+		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
-			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
-            ResourceDTO resourceDTO = validationInfo.getFhirResource();
-            ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
-            //propagate metadata
+			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO, callbackUrl);
+			ResourceDTO resourceDTO = validationInfo.getFhirResource();
+			ResourceDTO transactionResourceDTO = documentReferenceSRV
+					.convertDocumentToTransaction(resourceDTO.getBundleJson());
+			// propagate metadata
 			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
 			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
-            validationInfo.setFhirResource(transactionResourceDTO);
-            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+			validationInfo.setFhirResource(transactionResourceDTO);
+			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
@@ -174,8 +151,9 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	}
 
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
-			ValidationCreationInputDTO validationInfo) {
-		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
+			ValidationCreationInputDTO validationInfo, final String callbackUrl) {
+		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(),
+				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -185,9 +163,12 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(),
+				validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(),
+				validationInfo.getJwtPayloadToken(), callbackUrl);
 
-		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
+		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
+				idDoc);
 	}
 
 	@Override
@@ -199,16 +180,18 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
+		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-            validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO);
-            ResourceDTO resourceDTO = validationInfo.getFhirResource();
-            ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
-            //propagate metadata
-            transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
-            transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
-            validationInfo.setFhirResource(transactionResourceDTO);
-            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+			validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO, callbackUrl);
+			ResourceDTO resourceDTO = validationInfo.getFhirResource();
+			ResourceDTO transactionResourceDTO = documentReferenceSRV
+					.convertDocumentToTransaction(resourceDTO.getBundleJson());
+			// propagate metadata
+			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
+			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
+			validationInfo.setFhirResource(transactionResourceDTO);
+				postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
 
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -222,7 +205,8 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(),
+					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
@@ -230,10 +214,13 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(),
+					validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null,
+					validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken(), callbackUrl);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
-					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
+					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
+					idDoc);
 		} catch (ConnectionRefusedException ce) {
 			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
@@ -372,7 +359,8 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		return out;
 	}
  
-	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO) {
+	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request,
+			final boolean isReplace, final String idDoc, final LogTraceInfoDTO traceInfoDTO, final String callbackUrl) {
 		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION;
 		ValidationCreationInputDTO validationResult = publicationAndReplaceValidationFhirDiretto(file, request, isReplace,idDoc, traceInfoDTO,eventType);
 

@@ -32,7 +32,7 @@ public class StatusCheckDTO {
 	@Size(min = 0, max = 50000)
 	private String message;
 
-	@Size(min = 0, max = 100)
+	@Size(min = 0, max = 256)
 	private String identificativoDocumento;
 
 	@Size(min = 0, max = 100)
@@ -62,4 +62,7 @@ public class StatusCheckDTO {
 	@Size(min = 0, max = 10000)
 	private String extra;
 	
+	@Size(min = 0, max = 1000)
+	private String detail;
+
 }

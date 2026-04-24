@@ -11,33 +11,55 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
 
-import jakarta.validation.constraints.Size;
+import java.util.Date;
+import java.util.List;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+/**
+ * Response DTO for routing table operations
+ */
+@Data
 @NoArgsConstructor
-@AllArgsConstructor 
-public class PublicationResDTO extends ResponseDTO { 
-
-	@Size(min = 0, max = Constants.App.MAX_SIZE_WARNING)
-	@Schema(description = "Dettaglio del warning")
-	private String warning;
-		
-	@Size(min = 0, max = 256)
-	@Schema(description = "Identificativo del workflow instance id")
-	private String workflowInstanceId;
-
-	public PublicationResDTO(final LogTraceInfoDTO traceInfo, String inWarning,final String inWorkflowInstanceId) {
-		super(traceInfo);
-		warning = inWarning;
-		workflowInstanceId = inWorkflowInstanceId;
-	}
-	
+@AllArgsConstructor
+@Builder
+public class RoutingTableResDTO {
+    
+    /**
+     * MongoDB document ID
+     */
+    private String id;
+    
+    /**
+     * JWT Issuer identifier
+     */
+    private String issuer;
+    
+    /**
+     * Notification endpoint URL
+     */
+    private String notificationEndpoint;
+    
+    /**
+     * Human-readable description
+     */
+    private String description;
+    
+    /**
+     * Date when the entry was created
+     */
+    private Date insertionDate;
+    
+    /**
+     * Response message
+     */
+    private String message;
+    
+    /**
+     * List of routing table entries (for findAll operation)
+     */
+    private List<RoutingTableResDTO> entries;
 }

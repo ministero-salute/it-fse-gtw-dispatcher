@@ -57,4 +57,12 @@ public class CollectionNaming {
         return Constants.Collections.ENGINES;
     }
     
+    @Bean("routingTableBean")
+    public String getRoutingTableCollection() {
+        if (profileUtility.isTestProfile()) {
+            return Constants.Profile.TEST_PREFIX + Constants.Collections.ROUTING_TABLE;
+        }
+        return Constants.Collections.ROUTING_TABLE;
+    }
+    
 }
