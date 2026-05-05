@@ -9,12 +9,12 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums;
 
 import lombok.Getter;
 
 @Getter
-public enum AttivitaClinica262Enum {
+public enum AttivitaClinicaAd263Enum {
 
 	PHR("PHR", "Personal Health Record Update"),
 	CON("CON", "Consulto"),
@@ -28,7 +28,7 @@ public enum AttivitaClinica262Enum {
 	private String code;
 	private String description;
 
-	private AttivitaClinica262Enum(String inCode, String inDescription) {
+	private AttivitaClinicaAd263Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -38,7 +38,7 @@ public enum AttivitaClinica262Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (AttivitaClinica262Enum value : values()) {
+		for (AttivitaClinicaAd263Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

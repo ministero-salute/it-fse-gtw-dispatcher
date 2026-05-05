@@ -14,28 +14,21 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad261.en
 import lombok.Getter;
 
 @Getter
-public enum TipoDocAltoLiv261Enum {
+public enum AttivitaClinicaAd261Enum {
 
-	WOR("WOR", "Documento di workflow"),
-	REF("REF", "Referto"),
-	LDO("LDO", "Lettera di dimissione ospedaliera"),
-	RIC("RIC", "Richiesta"),
-	SUM("SUM", "Sommario"),
-	TAC("TAC", "Taccuino"),
-	PRS("PRS", "Prescrizione"),
-	PRE("PRE", "Prestazioni"),
-	ESE("ESE", "Esenzione"),
-	PDC("PDC", "Piano di cura"),
-	VAC("VAC", "Vaccino"),
-	CER("CER", "Certificato per DGC"),
-	VRB("VRB", "Verbale"),
-	CON("CON", "Documento di consenso"),
-	CNT("CNT", "Documento di controllo");
+	PHR("PHR", "Personal Health Record Update"),
+	CON("CON", "Consulto"),
+	DIS("DIS", "Discharge"),
+	ERP("ERP", "Erogazione Prestazione Prenotata"),
+	Sistema_TS("Sistema TS", "Documenti sistema TS"),
+	INI("INI","Documenti INI"),
+	PN_DGC("PN-DGC","Documenti PN-DGC"),
+	OBS("OBS","Documento stato di salute");
 
 	private String code;
 	private String description;
 
-	private TipoDocAltoLiv261Enum(String inCode, String inDescription) {
+	private AttivitaClinicaAd261Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -45,7 +38,7 @@ public enum TipoDocAltoLiv261Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (TipoDocAltoLiv261Enum value : values()) {
+		for (AttivitaClinicaAd261Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

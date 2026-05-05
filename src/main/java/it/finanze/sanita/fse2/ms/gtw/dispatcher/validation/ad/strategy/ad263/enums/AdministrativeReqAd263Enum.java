@@ -13,21 +13,22 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.en
 
 import lombok.Getter;
 
-public enum HealthcareFacility263Enum {
+@Getter
+public enum AdministrativeReqAd263Enum {
 
-	Ospedale("Ospedale"),
-	Prevenzione("Prevenzione"),
-	Territorio("Territorio"),
-	SistemaTS("SistemaTS"),
-	Cittadino("Cittadino"),
-	MdsPN_DGC("MdsPN-DGC");
-	
-
-	@Getter
+	SSN("SSN", "Regime SSN"),
+	INPATIENT("INPATIENT", "Regime di ricovero"),
+	NOSSN("NOSSN", "Regime privato"),
+	SSR("SSR", "Regime SSR"),
+	DONOR("DONOR", "Regime donatori"),
+	AUTO("AUTO","Autoprodotto / Taccuino / Cittadino");
+	 
 	private String code;
+	private String description;
 
-	private HealthcareFacility263Enum(String inCode) {
+	private AdministrativeReqAd263Enum(String inCode, String inDescription) {
 		code = inCode;
+		description = inDescription;
 	}
 	
 	/**
@@ -35,7 +36,7 @@ public enum HealthcareFacility263Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (HealthcareFacility263Enum value : values()) {
+		for (AdministrativeReqAd263Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

@@ -9,11 +9,11 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums;
 
 import lombok.Getter;
 
-public enum PracticeSettingCode263Enum {
+public enum PracticeSettingCodeAd262Enum {
 
 	AD_PSC001("AD_PSC001", "Allergologia"),
 	AD_PSC002("AD_PSC002", "Day Hospital"),
@@ -59,7 +59,7 @@ public enum PracticeSettingCode263Enum {
 	AD_PSC048("AD_PSC048", "Nefrologia (Abilitazione Trapianto Rene)"),
 	AD_PSC049("AD_PSC049", "Terapia Intensiva"),
 	AD_PSC050("AD_PSC050", "Unità Coronarica"),
-	AD_PSC051("AD_PSC051", "Dermatologia"),
+	AD_PSC051("AD_PSC051", "Astanteria"),
 	AD_PSC052("AD_PSC052", "Dermatologia"),
 	AD_PSC054("AD_PSC054", "Emodialisi"),
 	AD_PSC055("AD_PSC055", "Farmacologia Clinica"),
@@ -72,7 +72,7 @@ public enum PracticeSettingCode263Enum {
 	AD_PSC064("AD_PSC064", "Oncologia"),
 	AD_PSC065("AD_PSC065", "Oncoematologia Pediatrica"),
 	AD_PSC066("AD_PSC066", "Oncoematologia"),
-	AD_PSC067("AD_PSC067", "Pensionato"),
+	AD_PSC067("AD_PSC067", "Pensionanti"),
 	AD_PSC068("AD_PSC068", "Pneumologia, Fisiopatologia Respiratoria, Tisiologia"),
 	AD_PSC069("AD_PSC069", "Radiologia"),
 	AD_PSC070("AD_PSC070", "Radioterapia"),
@@ -84,8 +84,7 @@ public enum PracticeSettingCode263Enum {
 	AD_PSC076("AD_PSC076", "Neurochirurgia Pediatrica"),
 	AD_PSC077("AD_PSC077", "Nefrologia Pediatrica"),
 	AD_PSC078("AD_PSC078", "Urologia Pediatrica"),
-	AD_SAC082("AD_SAC082", "Anestesia e Rianimazione*"),
-	AD_PSC094("AD_PSC094", "Terapia Intensiva"),
+	AD_PSC094("AD_PSC094", "Terapia semi-intensiva"),
 	AD_PSC096("AD_PSC096", "Terapia del dolore"),
 	AD_PSC097("AD_PSC097", "Detenuti"),
 	AD_PSC098("AD_PSC098", "Day Surgery"),
@@ -95,17 +94,15 @@ public enum PracticeSettingCode263Enum {
 	AD_PSC102("AD_PSC102", "Centro Trasfusionale e Immunoematologico"),
 	AD_PSC103("AD_PSC103", "Radiodiagnostica"),
 	AD_PSC104("AD_PSC104", "Neuroradiologia"),
-	AD_SAC106("AD_SAC106", "Pronto Soccorso e OBI*"),
 	AD_PSC107("AD_PSC107", "Poliambulatorio"),
 	AD_PSC109("AD_PSC109", "Centrale Operativa 118"),
 	AD_PSC121("AD_PSC121", "Comparti Operatori - Degenza Ordinaria"),
 	AD_PSC122("AD_PSC122", "Comparti Operatori - Day Surgery"),
 	AD_PSC126("AD_PSC126", "Libera Professione Degenza"),
-	AD_PSC127("AD_PSC127", "Hospice - Cure Palliative"),
-	AD_PSC129("AD_PSC129", "Trapianto Organi e Tessuti"),
-	AD_PSC130("AD_PSC130", "Medicina di Base"),
-	AD_PSC131("AD_PSC131", "Assistenza Territoriale"),
-	AD_PSC199("AD_PSC199", "Raccolta Consenso"),
+    AD_PSC129("AD_PSC120", "Trapianto Organi e Tessuti"),
+    AD_PSC130("AD_PSC130", "Medicina di Base"),
+    AD_PSC131("AD_PSC131", "Assistenza Territoriale"),
+    AD_PSC199("AD_PSC199", "Raccolta Consenso"),
 	AD_PSC999("AD_PSC999", "Altro");
 
 	@Getter
@@ -113,7 +110,7 @@ public enum PracticeSettingCode263Enum {
 	@Getter
 	private final String description;
 
-	PracticeSettingCode263Enum(String inCode, String inDescription) {
+	PracticeSettingCodeAd262Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -123,7 +120,7 @@ public enum PracticeSettingCode263Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (PracticeSettingCode263Enum value : values()) {
+		for (PracticeSettingCodeAd262Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

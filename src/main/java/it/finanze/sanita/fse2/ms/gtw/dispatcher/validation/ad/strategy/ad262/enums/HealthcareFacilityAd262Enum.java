@@ -9,28 +9,25 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums;
 
 import lombok.Getter;
 
-@Getter
-public enum AttivitaClinica263Enum {
+public enum HealthcareFacilityAd262Enum {
 
-	PHR("PHR", "Personal Health Record Update"),
-	CON("CON", "Consulto"),
-	DIS("DIS", "Discharge"),
-	ERP("ERP", "Erogazione Prestazione Prenotata"),
-	Sistema_TS("Sistema TS", "Documenti sistema TS"),
-	INI("INI","Documenti INI"),
-	PN_DGC("PN-DGC","Documenti PN-DGC"),
-	OBS("OBS","Documento stato di salute");
+	Ospedale("Ospedale"),
+	Prevenzione("Prevenzione"),
+	Territorio("Territorio"),
+	SistemaTS("SistemaTS"),
+	Cittadino("Cittadino"),
+	MdsPN_DGC("MdsPN-DGC");
+	
 
+	@Getter
 	private String code;
-	private String description;
 
-	private AttivitaClinica263Enum(String inCode, String inDescription) {
+	private HealthcareFacilityAd262Enum(String inCode) {
 		code = inCode;
-		description = inDescription;
 	}
 	
 	/**
@@ -38,7 +35,7 @@ public enum AttivitaClinica263Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (AttivitaClinica263Enum value : values()) {
+		for (HealthcareFacilityAd262Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

@@ -59,7 +59,6 @@ public class Ad21Strategy extends AbstractAffinityDomainStrategy {
                         "classification:urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a", // XDSDocumentEntry.classCode
                         "classification:urn:uuid:f4f85eac-e6cb-4883-b524-f2705394840f", // XDSDocumentEntry.confidentialityCode
                         "classification:urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d", // XDSDocumentEntry.formatCode
-                        "classification:urn:uuid:cccf5598-8b07-4b77-a05e-ae952c785ead", // XDSDocumentEntry.practiceSettingCode
                         "classification:urn:uuid:f0306f51-975f-434e-a61c-c59651d33983", // XDSDocumentEntry.typeCode
                         // ExternalIdentifiers (by scheme URN)
                         "externalId:urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427", // XDSDocumentEntry.patientId

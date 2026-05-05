@@ -14,7 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.en
 import lombok.Getter;
 
 @Getter
-public enum TipoDocAltoLiv262Enum {
+public enum TipoDocAltoLivAd262Enum {
 
 	WOR("WOR", "Documento di workflow"),
 	REF("REF", "Referto"),
@@ -31,12 +31,12 @@ public enum TipoDocAltoLiv262Enum {
 	VRB("VRB", "Verbale"),
 	CON("CON", "Documento di consenso"),
 	CNT("CNT", "Documento di controllo"),
-	CRT("CRT", "Certificato Amministrativo Generico");
+	CRT("CRT", "Certificato Amministrativo Generico"); //NEW
 
 	private String code;
 	private String description;
 
-	private TipoDocAltoLiv262Enum(String inCode, String inDescription) {
+	private TipoDocAltoLivAd262Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -46,7 +46,7 @@ public enum TipoDocAltoLiv262Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (TipoDocAltoLiv262Enum value : values()) {
+		for (TipoDocAltoLivAd262Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

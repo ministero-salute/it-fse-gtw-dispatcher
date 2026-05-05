@@ -16,12 +16,12 @@ import lombok.Getter;
 @Getter
 public enum AdministrativeReqAd25Enum {
 
-	SSN("SSN", "Regime SSN"),
-	INPATIENT("INPATIENT", "Regime di ricovero"),
-	NOSSN("NOSSN", "Regime privato"),
-	SSR("SSR", "Regime SSR"),
-	DONOR("DONOR", "Regime donatori");
-	 
+    SSN("SSN", "Regime SSN"),
+    INPATIENT("INPATIENT", "Regime di ricovero"),
+    NOSSN("NOSSN", "Regime privato"),
+    SSR("SSR", "Regime SSR"),
+    DONOR("DONOR", "Regime donatori");
+
 	private String code;
 	private String description;
 
@@ -29,7 +29,7 @@ public enum AdministrativeReqAd25Enum {
 		code = inCode;
 		description = inDescription;
 	}
-	
+
 	/**
 	 * Validates if a string value is a valid code for this enum
 	 */

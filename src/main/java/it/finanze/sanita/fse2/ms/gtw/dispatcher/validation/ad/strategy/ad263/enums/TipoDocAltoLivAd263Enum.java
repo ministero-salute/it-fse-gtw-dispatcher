@@ -9,24 +9,37 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums;
 
 import lombok.Getter;
 
 @Getter
-public enum AdministrativeReq262Enum {
+public enum TipoDocAltoLivAd263Enum {
 
-	SSN("SSN", "Regime SSN"),
-	INPATIENT("INPATIENT", "Regime di ricovero"),
-	NOSSN("NOSSN", "Regime privato"),
-	SSR("SSR", "Regime SSR"),
-	DONOR("DONOR", "Regime donatori"),
-	AUTO("AUTO","Autoprodotto / Taccuino / Cittadino");
-	 
+	WOR("WOR", "Documento di workflow"),
+	REF("REF", "Referto"),
+	LDO("LDO", "Lettera di dimissione sia ospedaliera, sia non ospedaliera"),
+	RIC("RIC", "Richiesta"),
+	SUM("SUM", "Sommario"),
+	TAC("TAC", "Taccuino"),
+	PRS("PRS", "Prescrizione"),
+	PRE("PRE", "Prestazioni"),
+	ESE("ESE", "Esenzione"),
+	PDC("PDC", "Piano di cura"),
+	VAC("VAC", "Vaccino"),
+	CER("CER", "Certificato per DGC"),
+	VRB("VRB", "Verbale"),
+	CON("CON", "Documento di consenso"),
+	CNT("CNT", "Documento di controllo"),
+	CRT("CRT", "Certificato Amministrativo Generico"),
+	LET("LET", "Lettera"), //NEW
+	PRO("PRO", "Promemoria"), //NEW
+	COL("COL", "Collezione documentale"); //NEW
+
 	private String code;
 	private String description;
 
-	private AdministrativeReq262Enum(String inCode, String inDescription) {
+	private TipoDocAltoLivAd263Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -36,7 +49,7 @@ public enum AdministrativeReq262Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (AdministrativeReq262Enum value : values()) {
+		for (TipoDocAltoLivAd263Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

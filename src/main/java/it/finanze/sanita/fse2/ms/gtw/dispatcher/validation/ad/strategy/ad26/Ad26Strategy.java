@@ -13,11 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad26;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.AttivitaClinicaAd21Enum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.HealthcareFacilityAd21Enum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.PracticeSettingCodeAd21Enum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.TipoDocAltoLivAd21Enum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad24.enums.AdministrativeReqAd24Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad26.enums.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +54,6 @@ public class Ad26Strategy extends AbstractAffinityDomainStrategy {
             "classification:urn:uuid:f4f85eac-e6cb-4883-b524-f2705394840f", // XDSDocumentEntry.confidentialityCode
             "classification:urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d", // XDSDocumentEntry.formatCode
             "classification:urn:uuid:f33fb8ac-18af-42cc-ae0e-ed0b0bdb91e1", // XDSDocumentEntry.healthcareFacilityTypeCode (NEW in 2.6)
-            "classification:urn:uuid:cccf5598-8b07-4b77-a05e-ae952c785ead", // XDSDocumentEntry.practiceSettingCode
             "classification:urn:uuid:f0306f51-975f-434e-a61c-c59651d33983", // XDSDocumentEntry.typeCode
             // ExternalIdentifiers (by scheme URN)
             "externalId:urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427", // XDSDocumentEntry.patientId
@@ -102,22 +97,22 @@ public class Ad26Strategy extends AbstractAffinityDomainStrategy {
     @Override
     protected void validateValueSetsInternal(UpdateMetadataReqDTO request, List<String> validationErrors) {
 
-        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd24Enum::isValidCode,
-                "administrativeRequest", "AdministrativeRequest", validationErrors);
+        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd26Enum::isValidCode,
+                "administrativeRequest", "XDSDocumentEntry.Slot – administrativeRequest", validationErrors);
 
-        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd21Enum::isValidCode,
-                "tipologiaStruttura", "HealthcareFacility", validationErrors);
+        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd26Enum::isValidCode,
+                "tipologiaStruttura", "XDSDocumentEntry.healthcareFacilityTypeCode", validationErrors);
 
         validateField(request.getAssettoOrganizzativo(),
-                PracticeSettingCodeAd21Enum::isValidCode,
-                "assettoOrganizzativo", "PracticeSettingCode", validationErrors);
+                PracticeSettingCodeAd26Enum::isValidCode,
+                "assettoOrganizzativo", "XDSDocumentEntry.practiceSettingCode", validationErrors);
 
         validateField(request.getTipoAttivitaClinica(),
-                AttivitaClinicaAd21Enum::isValidCode,
-                "tipoAttivitaClinica", "AttivitaClinica", validationErrors);
+                AttivitaClinicaAd26Enum::isValidCode,
+                "tipoAttivitaClinica", "XDSSubmissionSet.contentTypeCode", validationErrors);
 
         validateField(request.getTipoDocumentoLivAlto(),
-                TipoDocAltoLivAd21Enum::isValidCode,
-                "tipoDocumentoLivAlto", "TipoDocAltoLiv", validationErrors);
+                TipoDocAltoLivAd26Enum::isValidCode,
+                "tipoDocumentoLivAlto", "XDSDocumentEntry.classCode", validationErrors);
     }
 }

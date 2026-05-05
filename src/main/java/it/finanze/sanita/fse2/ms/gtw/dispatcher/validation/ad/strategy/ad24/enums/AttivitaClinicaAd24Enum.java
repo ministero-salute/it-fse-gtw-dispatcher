@@ -16,13 +16,16 @@ import lombok.Getter;
 @Getter
 public enum AttivitaClinicaAd24Enum {
 
-	PHR("PHR", "Personal Health Record Update"),
-	CON("CON", "Consulto"),
-	DIS("DIS", "Discharge"),
-	ERP("ERP", "Erogazione Prestazione Prenotata"),
-	Sistema_TS("Sistema TS", "Documenti sistema TS");
+    PHR("PHR", "Personal Health Record Update"),
+    CON("CON", "Consulto"),
+    DIS("DIS", "Discharge"),
+    ERP("ERP", "Erogazione Prestazione Prenotata"),
+    Sistema_TS("Sistema TS", "Documenti sistema TS"),
+    INI("INI","Documenti INI"),
+    PN_DGC("PN-DGC","Documenti PN-DGC"),
+    OBS("OBS","Documento stato di salute");
 
-	private String code;
+    private String code;
 	private String description;
 
 	private AttivitaClinicaAd24Enum(String inCode, String inDescription) {

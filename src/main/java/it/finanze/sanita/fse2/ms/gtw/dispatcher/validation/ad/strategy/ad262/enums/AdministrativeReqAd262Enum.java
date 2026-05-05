@@ -9,25 +9,26 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad261.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums;
 
 import lombok.Getter;
 
-public enum HealthcareFacility261Enum {
+@Getter
+public enum AdministrativeReqAd262Enum {
 
-	Ospedale("Ospedale"),
-	Prevenzione("Prevenzione"),
-	Territorio("Territorio"),
-	SistemaTS("SistemaTS"),
-	Cittadino("Cittadino"),
-	MdsPN_DGC("MdsPN-DGC");
-	
-
-	@Getter
+	SSN("SSN", "Regime SSN"),
+	INPATIENT("INPATIENT", "Regime di ricovero"),
+	NOSSN("NOSSN", "Regime privato"),
+	SSR("SSR", "Regime SSR"),
+	DONOR("DONOR", "Regime donatori"),
+	AUTO("AUTO","Autoprodotto / Taccuino / Cittadino"); //NEW
+	 
 	private String code;
+	private String description;
 
-	private HealthcareFacility261Enum(String inCode) {
+	private AdministrativeReqAd262Enum(String inCode, String inDescription) {
 		code = inCode;
+		description = inDescription;
 	}
 	
 	/**
@@ -35,7 +36,7 @@ public enum HealthcareFacility261Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (HealthcareFacility261Enum value : values()) {
+		for (AdministrativeReqAd262Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

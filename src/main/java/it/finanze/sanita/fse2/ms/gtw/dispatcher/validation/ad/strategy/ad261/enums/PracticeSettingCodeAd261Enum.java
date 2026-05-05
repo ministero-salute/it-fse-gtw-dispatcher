@@ -13,7 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad261.en
 
 import lombok.Getter;
 
-public enum PracticeSettingCode261Enum {
+public enum PracticeSettingCodeAd261Enum {
 
 	AD_PSC001("AD_PSC001", "Allergologia"),
 	AD_PSC002("AD_PSC002", "Day Hospital"),
@@ -30,8 +30,8 @@ public enum PracticeSettingCode261Enum {
 	AD_PSC013("AD_PSC013", "Chirurgia Toracica"),
 	AD_PSC014("AD_PSC014", "Chirurgia Vascolare"),
 	AD_PSC015("AD_PSC015", "Medicina Sportiva"),
-	AD_PSC016("AD_PSC016", "Ematologia e Immunoematologia"),
-	AD_PSC017("AD_PSC017", "Malattie Endocrine, del Ricambio e della Nutrizione"),
+    AD_PSC018("AD_PSC018", "Ematologia e Immunoematologia"),
+    AD_PSC019("AD_PSC019", "Malattie Endocrine, del Ricambio e della Nutrizione"),
 	AD_PSC020("AD_PSC020", "Immunologia"),
 	AD_PSC021("AD_PSC021", "Geriatria"),
 	AD_PSC024("AD_PSC024", "Malattie Infettive e Tropicali"),
@@ -84,7 +84,6 @@ public enum PracticeSettingCode261Enum {
 	AD_PSC076("AD_PSC076", "Neurochirurgia Pediatrica"),
 	AD_PSC077("AD_PSC077", "Nefrologia Pediatrica"),
 	AD_PSC078("AD_PSC078", "Urologia Pediatrica"),
-	AD_PSC082("AD_PSC082", "Anestesia e Rianimazione"),
 	AD_PSC094("AD_PSC094", "Terapia semi-intensiva"),
 	AD_PSC096("AD_PSC096", "Terapia del dolore"),
 	AD_PSC097("AD_PSC097", "Detenuti"),
@@ -95,13 +94,12 @@ public enum PracticeSettingCode261Enum {
 	AD_PSC102("AD_PSC102", "Centro Trasfusionale e Immunoematologico"),
 	AD_PSC103("AD_PSC103", "Radiodiagnostica"),
 	AD_PSC104("AD_PSC104", "Neuroradiologia"),
-	AD_PSC106("AD_PSC106", "Pronto Soccorso e OBI"),
 	AD_PSC107("AD_PSC107", "Poliambulatorio"),
 	AD_PSC109("AD_PSC109", "Centrale Operativa 118"),
 	AD_PSC121("AD_PSC121", "Comparti Operatori - Degenza Ordinaria"),
 	AD_PSC122("AD_PSC122", "Comparti Operatori - Day Surgery"),
 	AD_PSC126("AD_PSC126", "Libera Professione Degenza"),
-	AD_PSC127("AD_PSC127", "Trapianto Organi e Tessuti"),
+	AD_PSC129("AD_PSC129", "Trapianto Organi e Tessuti"),
 	AD_PSC130("AD_PSC130", "Medicina di Base"),
 	AD_PSC131("AD_PSC131", "Assistenza Territoriale"),
 	AD_PSC199("AD_PSC199", "Raccolta Consenso"),
@@ -112,7 +110,7 @@ public enum PracticeSettingCode261Enum {
 	@Getter
 	private final String description;
 
-	PracticeSettingCode261Enum(String inCode, String inDescription) {
+	PracticeSettingCodeAd261Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -122,7 +120,7 @@ public enum PracticeSettingCode261Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (PracticeSettingCode261Enum value : values()) {
+		for (PracticeSettingCodeAd261Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

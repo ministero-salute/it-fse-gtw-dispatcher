@@ -9,37 +9,26 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums;
 
 import lombok.Getter;
 
 @Getter
-public enum TipoDocAltoLiv263Enum {
+public enum AttivitaClinicaAd262Enum {
 
-	WOR("WOR", "Documento di workflow"),
-	REF("REF", "Referto"),
-	LDO("LDO", "Lettera di dimissione sia ospedaliera, sia non ospedaliera"),
-	RIC("RIC", "Richiesta"),
-	SUM("SUM", "Sommario"),
-	TAC("TAC", "Taccuino"),
-	PRS("PRS", "Prescrizione"),
-	PRE("PRE", "Prestazioni"),
-	ESE("ESE", "Esenzione"),
-	PDC("PDC", "Piano di cura"),
-	VAC("VAC", "Vaccino"),
-	CER("CER", "Certificato per DGC"),
-	VRB("VRB", "Verbale"),
-	CON("CON", "Documento di consenso"),
-	CNT("CNT", "Documento di controllo"),
-	CRT("CRT", "Certificato Amministrativo Generico"),
-	LET("LET", "Lettera"),
-	PRO("PRO", "Promemoria"),
-	COL("COL", "Collezione documentale");
+	PHR("PHR", "Personal Health Record Update"),
+	CON("CON", "Consulto"),
+	DIS("DIS", "Discharge"),
+	ERP("ERP", "Erogazione Prestazione Prenotata"),
+	Sistema_TS("Sistema TS", "Documenti sistema TS"),
+	INI("INI","Documenti INI"),
+	PN_DGC("PN-DGC","Documenti PN-DGC"),
+	OBS("OBS","Documento stato di salute");
 
 	private String code;
 	private String description;
 
-	private TipoDocAltoLiv263Enum(String inCode, String inDescription) {
+	private AttivitaClinicaAd262Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -49,7 +38,7 @@ public enum TipoDocAltoLiv263Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (TipoDocAltoLiv263Enum value : values()) {
+		for (AttivitaClinicaAd262Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

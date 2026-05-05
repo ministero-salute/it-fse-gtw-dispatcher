@@ -13,24 +13,21 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad261.en
 
 import lombok.Getter;
 
-@Getter
-public enum AttivitaClinica261Enum {
+public enum HealthcareFacilityAd261Enum {
 
-	PHR("PHR", "Personal Health Record Update"),
-	CON("CON", "Consulto"),
-	DIS("DIS", "Discharge"),
-	ERP("ERP", "Erogazione Prestazione Prenotata"),
-	Sistema_TS("Sistema TS", "Documenti sistema TS"),
-	INI("INI","Documenti INI"),
-	PN_DGC("PN-DGC","Documenti PN-DGC"),
-	OBS("OBS","Documento stato di salute");
+	Ospedale("Ospedale"),
+	Prevenzione("Prevenzione"),
+	Territorio("Territorio"),
+	SistemaTS("SistemaTS"),
+	Cittadino("Cittadino"),
+	MdsPN_DGC("MdsPN-DGC");
+	
 
+	@Getter
 	private String code;
-	private String description;
 
-	private AttivitaClinica261Enum(String inCode, String inDescription) {
+	private HealthcareFacilityAd261Enum(String inCode) {
 		code = inCode;
-		description = inDescription;
 	}
 	
 	/**
@@ -38,7 +35,7 @@ public enum AttivitaClinica261Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (AttivitaClinica261Enum value : values()) {
+		for (HealthcareFacilityAd261Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}

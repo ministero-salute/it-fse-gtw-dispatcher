@@ -15,13 +15,14 @@ import lombok.Getter;
 
 public enum HealthcareFacilityAd24Enum {
 
-	Ospedale("Ospedale"),
-	Prevenzione("Prevenzione"),
-	Territorio("Territorio"),
-	SistemaTS("SistemaTS");
-	
+    Ospedale("Ospedale"),
+    Prevenzione("Prevenzione"),
+    Territorio("Territorio"),
+    SistemaTS("SistemaTS"),
+    Cittadino("Cittadino"),
+    MdsPN_DGC("MdsPN-DGC");
 
-	@Getter
+    @Getter
 	private String code;
 
 	private HealthcareFacilityAd24Enum(String inCode) {

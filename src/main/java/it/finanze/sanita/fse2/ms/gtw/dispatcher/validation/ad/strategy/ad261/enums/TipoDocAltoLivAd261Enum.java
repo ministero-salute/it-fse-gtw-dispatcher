@@ -14,18 +14,28 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad261.en
 import lombok.Getter;
 
 @Getter
-public enum AdministrativeReq261Enum {
+public enum TipoDocAltoLivAd261Enum {
 
-	SSN("SSN", "Regime SSN"),
-	INPATIENT("INPATIENT", "Regime di ricovero"),
-	NOSSN("NOSSN", "Regime privato"),
-	SSR("SSR", "Regime SSR"),
-	DONOR("DONOR", "Regime donatori");
-	 
+	WOR("WOR", "Documento di workflow"),
+	REF("REF", "Referto"),
+	LDO("LDO", "Lettera di dimissione ospedaliera"),
+	RIC("RIC", "Richiesta"),
+	SUM("SUM", "Sommario"),
+	TAC("TAC", "Taccuino"),
+	PRS("PRS", "Prescrizione"),
+	PRE("PRE", "Prestazioni"),
+	ESE("ESE", "Esenzione"),
+	PDC("PDC", "Piano di cura"),
+	VAC("VAC", "Vaccino"),
+	CER("CER", "Certificato per DGC"),
+	VRB("VRB", "Verbale"),
+	CON("CON", "Documento di consenso"),
+	CNT("CNT", "Documento di controllo");
+
 	private String code;
 	private String description;
 
-	private AdministrativeReq261Enum(String inCode, String inDescription) {
+	private TipoDocAltoLivAd261Enum(String inCode, String inDescription) {
 		code = inCode;
 		description = inDescription;
 	}
@@ -35,7 +45,7 @@ public enum AdministrativeReq261Enum {
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (AdministrativeReq261Enum value : values()) {
+		for (TipoDocAltoLivAd261Enum value : values()) {
 			if (value.getCode().equals(code)) {
 				return true;
 			}
