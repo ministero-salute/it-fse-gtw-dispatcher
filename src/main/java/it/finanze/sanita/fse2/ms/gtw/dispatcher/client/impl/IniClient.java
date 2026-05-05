@@ -141,7 +141,7 @@ public class IniClient extends AbstractClient implements IIniClient {
 		try {
 			ResponseEntity<GetMergedMetadatiDTO> response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),GetMergedMetadatiDTO.class);
 			output = response.getBody();
-		} catch (Exception ex) {
+		} catch (ResourceAccessException ex) {
 			throw new BusinessException("Timeout error while call merge metadati"); 
 		}
 
