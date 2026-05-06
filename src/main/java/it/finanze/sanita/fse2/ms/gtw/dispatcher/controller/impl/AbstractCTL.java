@@ -890,13 +890,13 @@ public abstract class AbstractCTL {
 						java.time.LocalDate referenceDate = affinityDomainUtility
 								.extractCreationTime(metadatiToUpdate.getMarshallResponse());
                         log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
-						affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,
-								jwtPayloadToken);
+                        ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
 
 					    // ITI-57 Affinity Domain Validation
-						log.info("Performing Affinity Domain validation of update metadata for document: {}", idDoc);
-						ValidationResultDTO adValidationResult = affinityDomainValidationSRV
-								.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
+                        // TODO: consider using this to validate the actual IHE SOAP content sent to INI
+                        // log.info("Performing Affinity Domain validation of update metadata for document: {}", idDoc);
+                        // ValidationResultDTO adValidationResult = affinityDomainValidationSRV
+                        // 		.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
 
 						if (!adValidationResult.isValid()) {
 							log.error("Affinity Domain validation failed for document {}: {}",
