@@ -96,8 +96,8 @@ class DocumentReferenceTest extends AbstractTest {
 				
 		final String payload = new String(Base64.getDecoder().decode(chunks[1]));
 
-		// Building the object asserts that all required values are present
-		Boolean insert = iniEdsInvocationSRV.insert(workflowInstanceId, resourceDTO, JWTPayloadDTO.extractPayload(payload), null);
+		Boolean insert = iniEdsInvocationSRV.insert(workflowInstanceId, resourceDTO,
+				JWTPayloadDTO.extractPayload(payload));
 		assertTrue(insert);
 	}
 	

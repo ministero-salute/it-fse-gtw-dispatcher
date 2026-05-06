@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.AffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStrategy;
@@ -53,6 +54,7 @@ class AffinityDomainValidationSRVTest {
     private AffinityDomainValidationSRV service;
 
     private MetadataDTO metadata;
+    private JWTPayloadDTO jwtPayloadDTO;
 
     @BeforeEach
     void setUp() {
@@ -68,6 +70,30 @@ class AffinityDomainValidationSRVTest {
             "slot:submissionTime",
             "externalId:urn:uuid:sourceId"
         )));
+
+        // Initialize JWT payload for tests
+        jwtPayloadDTO = new JWTPayloadDTO(
+                "test-issuer", // iss
+                System.currentTimeMillis() / 1000, // iat
+                System.currentTimeMillis() / 1000 + 3600, // exp
+                "test-jti", // jti
+                "test-audience", // aud
+                "test-subject", // sub
+                "test-org-id", // subject_organization_id
+                "test-org", // subject_organization
+                "test-locality", // locality
+                "test-role", // subject_role
+                "RSSMRA80A01H501U", // person_id
+                true, // patient_consent
+                "TREATMENT", // purpose_of_use
+                "test-resource-type", // resource_hl7_type
+                "CREATE", // action_id
+                "test-hash", // attachment_hash
+                "test-app-id", // subject_application_id
+                "test-vendor", // subject_application_vendor
+                "1.0.0", // subject_application_version
+                false // use_subject_as_author
+        );
     }
 
     @Test
@@ -269,11 +295,11 @@ class AffinityDomainValidationSRVTest {
                 .valid(true)
                 .adVersion("TEST")
                 .build();
-        when(mockStrategy.validateUpdateMetadataReqDTO(request)).thenReturn(validResult);
+        when(mockStrategy.validateUpdateMetadataReqDTO(request, jwtPayloadDTO)).thenReturn(validResult);
         when(mockStrategy.versionId()).thenReturn("TEST");
         
         // Execute
-        ValidationResultDTO result = service.validateUpdateMetadataRequest(request, referenceDate);
+        ValidationResultDTO result = service.validateUpdateMetadataRequest(request, referenceDate, jwtPayloadDTO);
         
         // Verify
         assertNotNull(result);
@@ -281,7 +307,7 @@ class AffinityDomainValidationSRVTest {
         assertEquals("TEST", result.getAdVersion());
         
         verify(resolver).resolve(referenceDate);
-        verify(mockStrategy).validateUpdateMetadataReqDTO(request);
+        verify(mockStrategy).validateUpdateMetadataReqDTO(request, jwtPayloadDTO);
     }
 
     @Test
@@ -303,12 +329,12 @@ class AffinityDomainValidationSRVTest {
                 .errorCode("INVALID_VALUE")
                 .errorMessage("Invalid tipologiaStruttura value")
                 .build();
-        when(mockStrategy.validateUpdateMetadataReqDTO(request)).thenReturn(invalidResult);
+        when(mockStrategy.validateUpdateMetadataReqDTO(request, jwtPayloadDTO)).thenReturn(invalidResult);
         
         // Execute and verify exception is thrown
         it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException exception =
             assertThrows(it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException.class, () -> {
-                service.validateUpdateMetadataRequest(request, referenceDate);
+                    service.validateUpdateMetadataRequest(request, referenceDate, jwtPayloadDTO);
             });
         
         // Verify exception details
@@ -316,7 +342,7 @@ class AffinityDomainValidationSRVTest {
         assertTrue(exception.getError().getDetail().contains("Invalid tipologiaStruttura"));
         
         verify(resolver).resolve(referenceDate);
-        verify(mockStrategy).validateUpdateMetadataReqDTO(request);
+        verify(mockStrategy).validateUpdateMetadataReqDTO(request, jwtPayloadDTO);
     }
 
     @Test
@@ -332,7 +358,7 @@ class AffinityDomainValidationSRVTest {
         when(resolver.resolve(referenceDate)).thenThrow(new IllegalArgumentException("No strategy for date"));
         
         // Execute
-        ValidationResultDTO result = service.validateUpdateMetadataRequest(request, referenceDate);
+        ValidationResultDTO result = service.validateUpdateMetadataRequest(request, referenceDate, jwtPayloadDTO);
         
         // Verify
         assertNotNull(result);
@@ -351,10 +377,11 @@ class AffinityDomainValidationSRVTest {
         
         // Mock behavior
         when(resolver.resolve(referenceDate)).thenReturn(mockStrategy);
-        when(mockStrategy.validateUpdateMetadataReqDTO(null)).thenThrow(new NullPointerException("Request cannot be null"));
+        when(mockStrategy.validateUpdateMetadataReqDTO(null, jwtPayloadDTO))
+                .thenThrow(new NullPointerException("Request cannot be null"));
         
         // Execute
-        ValidationResultDTO result = service.validateUpdateMetadataRequest(null, referenceDate);
+        ValidationResultDTO result = service.validateUpdateMetadataRequest(null, referenceDate, jwtPayloadDTO);
         
         // Verify
         assertNotNull(result);
@@ -393,7 +420,9 @@ class AffinityDomainValidationSRVTest {
         }
 
         @Override
-        public ValidationResultDTO validateUpdateMetadataReqDTO(it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO request) {
+        public ValidationResultDTO validateUpdateMetadataReqDTO(
+                it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO request,
+                JWTPayloadDTO jwtPayloadToken) {
             return ValidationResultDTO.builder()
                     .valid(true)
                     .adVersion("TEST")
