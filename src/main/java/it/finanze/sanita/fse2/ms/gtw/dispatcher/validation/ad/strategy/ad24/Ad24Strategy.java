@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad24;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad24.enums.*;
@@ -84,7 +85,8 @@ public class Ad24Strategy extends AbstractAffinityDomainStrategy {
         }
 
         @Override
-        public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request) {
+        public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request,
+                        JWTPayloadDTO jwtPayloadToken) {
                 return validateUpdateMetadataReqDTOTemplate(request);
         }
 

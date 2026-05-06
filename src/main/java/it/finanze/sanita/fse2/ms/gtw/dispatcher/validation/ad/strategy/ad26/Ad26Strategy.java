@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad26;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad26.enums.*;
@@ -26,8 +27,7 @@ import java.util.Set;
 /**
  * Affinity Domain Strategy for version 2.6 (effective from June 2025)
  * Based on IHE ITI specifications for metadata update (ITI-57)
- * Adds SubjectApplication slot and healthcareFacilityTypeCode requirements compared to v2.5
- * 
+ *
  * @see AbstractAffinityDomainStrategy
  */
 @Slf4j
@@ -43,7 +43,6 @@ public class Ad26Strategy extends AbstractAffinityDomainStrategy {
             // Slots
             "slot:repositoryUniqueId", // XDSDocumentEntry.repositoryUniqueId
             "slot:sourcePatientId", // XDSDocumentEntry.sourcePatientId
-            "slot:urn:ihe:iti:xds:2024:SubjectApplication", // XDSDocumentEntry.SubjectApplication (NEW in 2.6)
             "slot:urn:ita:2022:documentSigned", // XDSDocumentEntry.documentSigned
             "slot:urn:ita:2022:administrativeRequest", // XDSDocumentEntry.administrativeRequest
             // Classifications (by scheme URN)
@@ -90,7 +89,8 @@ public class Ad26Strategy extends AbstractAffinityDomainStrategy {
     }
 
     @Override
-    public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request) {
+    public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request,
+                    JWTPayloadDTO jwtPayloadToken) {
         return validateUpdateMetadataReqDTOTemplate(request);
     }
 

@@ -45,16 +45,27 @@ public enum TipoDocAltoLivAd263Enum {
 	}
 	
 	/**
-	 * Validates if a string value is a valid code for this enum
+	 * Validates if a string value is a valid enum constant name
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
+		try {
+			valueOf(code);
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
+	public static TipoDocAltoLivAd263Enum getByCode(String code) {
+		if (code == null)
+			return null;
 		for (TipoDocAltoLivAd263Enum value : values()) {
 			if (value.getCode().equals(code)) {
-				return true;
+				return value;
 			}
 		}
-		return false;
+		return null;
 	}
 
 }

@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.enums.*;
@@ -43,7 +44,6 @@ public class Ad262Strategy extends AbstractAffinityDomainStrategy {
             "slot:creationTime",
             "slot:repositoryUniqueId", // XDSDocumentEntry.repositoryUniqueId
             "slot:sourcePatientId", // XDSDocumentEntry.sourcePatientId
-            "slot:urn:ihe:iti:xds:2024:SubjectApplication", // XDSDocumentEntry.SubjectApplication
             "slot:urn:ita:2022:documentSigned", // XDSDocumentEntry.documentSigned
             "slot:urn:ita:2022:administrativeRequest", // XDSDocumentEntry.administrativeRequest
             // Classifications (by scheme URN)
@@ -95,7 +95,8 @@ public class Ad262Strategy extends AbstractAffinityDomainStrategy {
     }
 
     @Override
-    public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request) {
+    public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request,
+                    JWTPayloadDTO jwtPayloadToken) {
         return validateUpdateMetadataReqDTOTemplate(request);
     }
 

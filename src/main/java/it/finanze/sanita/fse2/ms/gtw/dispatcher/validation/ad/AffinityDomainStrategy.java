@@ -13,6 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad;
 
 import java.time.LocalDate;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
@@ -53,6 +54,6 @@ public interface AffinityDomainStrategy {
      * @param request The update metadata request DTO to validate
      * @return ValidationResultDTO with validation results
      */
-    ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request);
+    ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request, JWTPayloadDTO jwtPayloadToken);
 
 }

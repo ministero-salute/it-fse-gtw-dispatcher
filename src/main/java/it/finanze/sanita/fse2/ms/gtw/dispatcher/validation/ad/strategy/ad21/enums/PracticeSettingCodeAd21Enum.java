@@ -116,15 +116,15 @@ public enum PracticeSettingCodeAd21Enum {
 	}
 	
 	/**
-	 * Validates if a string value is a valid code for this enum
+	 * Validates if a string value is a valid enum constant name
 	 */
 	public static boolean isValidCode(String code) {
 		if (code == null) return false;
-		for (PracticeSettingCodeAd21Enum value : values()) {
-			if (value.getCode().equals(code)) {
-				return true;
-			}
+		try {
+			valueOf(code);
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
 		}
-		return false;
 	}
 }

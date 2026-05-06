@@ -18,6 +18,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStra
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.PresentMetadataIndexer;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
@@ -80,11 +81,13 @@ public class AffinityDomainValidationSRV implements IAffinityDomainValidationSRV
     }
 
     @Override
-    public ValidationResultDTO validateUpdateMetadataRequest(UpdateMetadataReqDTO metadataReqDTO, LocalDate referenceDate) {
+    public ValidationResultDTO validateUpdateMetadataRequest(UpdateMetadataReqDTO metadataReqDTO,
+            LocalDate referenceDate,
+            JWTPayloadDTO jwtPayloadToken) {
         log.info("Validating UpdateMetadataReqDTO against AD resolved for date: {}", referenceDate);
         try {
             AffinityDomainStrategy strategy = strategyResolver.resolve(referenceDate);
-            ValidationResultDTO result = strategy.validateUpdateMetadataReqDTO(metadataReqDTO);
+            ValidationResultDTO result = strategy.validateUpdateMetadataReqDTO(metadataReqDTO, jwtPayloadToken);
 
             if (!result.isValid()) {
                 String detail = result.getErrorMessage() != null ? result.getErrorMessage() : "Invalid value in request";

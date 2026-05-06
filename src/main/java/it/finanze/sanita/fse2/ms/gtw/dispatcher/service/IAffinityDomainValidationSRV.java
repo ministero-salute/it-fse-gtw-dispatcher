@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 
@@ -45,5 +46,6 @@ public interface IAffinityDomainValidationSRV {
      * @param referenceDate  The reference date (retrieved from metadata creation date).
      * @return ValidationResultDTO with validation outcome.
      */
-    ValidationResultDTO validateUpdateMetadataRequest(UpdateMetadataReqDTO metadataReqDTO, LocalDate referenceDate);
+    ValidationResultDTO validateUpdateMetadataRequest(UpdateMetadataReqDTO metadataReqDTO, LocalDate referenceDate,
+            JWTPayloadDTO jwtPayloadToken);
 }

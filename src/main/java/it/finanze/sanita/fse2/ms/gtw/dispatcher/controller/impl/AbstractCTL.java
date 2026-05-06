@@ -71,7 +71,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDTO;
@@ -93,11 +92,11 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validators.CorrelationDocumentTypeValidator;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -356,7 +355,6 @@ public abstract class AbstractCTL {
 			}
     	}
 
-		CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(resourceHl7Type)), TipoDocAltoLivEnum.valueOf(jsonObj.getTipoDocumentoLivAlto()));
 		return out;
 	}
 
@@ -892,7 +890,8 @@ public abstract class AbstractCTL {
 						java.time.LocalDate referenceDate = affinityDomainUtility
 								.extractCreationTime(metadatiToUpdate.getMarshallResponse());
                         log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
-                        affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate);
+						affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,
+								jwtPayloadToken);
 
 					    // ITI-57 Affinity Domain Validation
 						log.info("Performing Affinity Domain validation of update metadata for document: {}", idDoc);

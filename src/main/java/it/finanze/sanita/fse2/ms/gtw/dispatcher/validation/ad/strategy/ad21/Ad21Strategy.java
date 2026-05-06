@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.AttivitaClinicaAd21Enum;
@@ -94,7 +95,8 @@ public class Ad21Strategy extends AbstractAffinityDomainStrategy {
         }
 
         @Override
-        public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request) {
+        public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request,
+                        JWTPayloadDTO jwtPayloadToken) {
                 return validateUpdateMetadataReqDTOTemplate(request);
         }
 
