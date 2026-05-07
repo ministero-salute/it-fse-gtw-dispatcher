@@ -35,6 +35,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -68,17 +70,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
@@ -87,21 +78,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.IssueSeverityEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
@@ -109,15 +85,18 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validators.CorrelationDocumentTypeValidator;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -160,6 +139,12 @@ public abstract class AbstractCTL {
 	
 	@Autowired
 	private IKafkaSRV kafkaSRV;
+
+	@Autowired
+	private IAffinityDomainValidationSRV affinityDomainValidationSRV;
+
+	@Autowired
+	private AffinityDomainUtility affinityDomainUtility;
 
 	@Autowired
 	private LoggerHelper logger;
@@ -247,7 +232,7 @@ public abstract class AbstractCTL {
         return out;
     }
 
-	protected void validateUpdateMetadataReq(final PublicationMetadataReqDTO out, final String resourceHl7Type) {
+	protected void validateUpdateMetadataReq(final UpdateMetadataReqDTO out, final String resourceHl7Type) {
 		final String errorMsg = checkUpdateMandatoryElements(out,resourceHl7Type);
 
 		if (errorMsg != null) {
@@ -255,7 +240,6 @@ public abstract class AbstractCTL {
 					.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
 					.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
 					.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
-
 					.detail(errorMsg).build();
 			throw new ValidationException(error);
 		}
@@ -348,7 +332,7 @@ public abstract class AbstractCTL {
     	return output;
     }
     
-	protected String checkUpdateMandatoryElements(final PublicationMetadataReqDTO jsonObj, final String resourceHl7Type) {
+	protected String checkUpdateMandatoryElements(final UpdateMetadataReqDTO jsonObj,  final String resourceHl7Type) {
 		String out = null;
 		
 		if (jsonObj.getTipoDocumentoLivAlto()==null) {
@@ -370,8 +354,7 @@ public abstract class AbstractCTL {
 				out = validateDescriptions(jsonObj.getDescriptions());
 			}
     	}
-		
-		CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(resourceHl7Type)), jsonObj.getTipoDocumentoLivAlto());
+
 		return out;
 	}
 
@@ -588,7 +571,7 @@ public abstract class AbstractCTL {
 				.build();
 		throw new ValidationException(error);
 	}
-	
+
 	protected byte[] getAndValidateFile(final MultipartFile file) {
 	    byte[] out = null;
 
@@ -869,7 +852,8 @@ public abstract class AbstractCTL {
     	return out;
     }
     
-    protected ResponseEntity<ResponseWifDTO> updateAbstract(final String idDoc, final PublicationMetadataReqDTO requestBody, boolean callUpdateV2,
+	protected ResponseEntity<ResponseWifDTO> updateAbstract(final String idDoc, final UpdateMetadataReqDTO requestBody,
+			boolean callUpdateV2,
 			final HttpServletRequest request) {
 		// Estrazione token
 		JWTPayloadDTO jwtPayloadToken = null;
@@ -901,6 +885,36 @@ public abstract class AbstractCTL {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime mock", RIFERIMENTI_INI);
 				} else {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
+
+					if (!StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
+						java.time.LocalDate referenceDate = affinityDomainUtility
+								.extractCreationTime(metadatiToUpdate.getMarshallResponse());
+                        log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
+                        ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
+
+					    // ITI-57 Affinity Domain Validation
+                        // TODO: consider using this to validate the actual IHE SOAP content sent to INI
+                        // log.info("Performing Affinity Domain validation of update metadata for document: {}", idDoc);
+                        // ValidationResultDTO adValidationResult = affinityDomainValidationSRV
+                        // 		.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
+
+						if (!adValidationResult.isValid()) {
+							log.error("Affinity Domain validation failed for document {}: {}",
+									idDoc, adValidationResult.getErrorMessage());
+
+							ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
+							final ErrorResponseDTO error = ErrorResponseDTO.builder()
+									.type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
+									.title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
+									.instance(errorInstance.getInstance())
+									.detail(adValidationResult.getErrorMessage())
+									.build();
+							throw new ValidationException(error);
+						}
+
+						log.info("Affinity Domain validation passed for document {} using AD version {}",
+								idDoc, adValidationResult.getAdVersion());
+					}
 				}
 
 				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
@@ -949,8 +963,7 @@ public abstract class AbstractCTL {
 				errorInstance = get(((ValidationException) e).getError().getType());
 			}
 
-			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER,jwtPayloadToken,
-					idDoc);
+			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken, idDoc);
 			throw e;
 		}
 
@@ -990,7 +1003,7 @@ public abstract class AbstractCTL {
 				directFhirDTO.setSourceType(DirectFhirSourceEnum.PDF.getSource());
 				directFhirDTO.setWii(FhirUtility.getWorkflowInstanceId(extractedBundle));
 				directFhirDTO.setFilename(filename);
-			} 
+			}
 			return directFhirDTO;
 
 		} catch (final ValidationException validationE) {
@@ -1053,12 +1066,12 @@ public abstract class AbstractCTL {
 		return out;
 	}
 	
-	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(PublicationMetadataReqDTO requestBody) {
+	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(UpdateMetadataReqDTO requestBody) {
 		DocumentReferenceDTO output = new DocumentReferenceDTO();
 		output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());
 		output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());
-		output.setFacilityTypeCode(requestBody.getTipologiaStruttura().getCode());
-		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo().getCode());
+		output.setFacilityTypeCode(requestBody.getTipologiaStruttura());
+		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo());
 		return output;
 	}
 }

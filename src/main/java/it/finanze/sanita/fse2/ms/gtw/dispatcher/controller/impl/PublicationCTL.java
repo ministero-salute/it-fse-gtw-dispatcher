@@ -65,6 +65,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateRep
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndReplaceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
@@ -105,7 +106,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validators.CorrelationDocumentTypeValidator;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.TipoDocAltoLivAd263Enum;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
@@ -307,6 +309,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION);
 			validation.setJwtPayloadToken(jwtPayloadToken);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
+
 			PublicationCreateReplaceWiiDTO jsonObj = getAndValidatePublicationReq(request.getParameter("requestBody"), isReplace);
 			validation.setJsonObj(jsonObj);
 
@@ -345,8 +348,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final org.jsoup.nodes.Document docT = Jsoup.parse(cda);
 
 			String typeCodeFromJwt = jwtPayloadToken.getResource_hl7_type();
-			CorrelationDocumentTypeValidator.isValid(DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)), jsonObj.getTipoDocumentoLivAlto());
-			
+
+			CorrelationDocumentType263Validator.isValid(
+					DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)),
+					TipoDocAltoLivAd263Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
+
 			validation.setDocument(docT);
 		} catch (final ValidationException | NoRecordFoundException ve) {
 			cdaSRV.consumeHash(validationInfo.getHash());
@@ -601,7 +607,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId,issuer);
 
 			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, validationResult.getJwtPayloadToken(), EventTypeEnum.VALIDATION_FOR_PUBLICATION);
-			
+
 			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(), null, idDoc);
 			request.setAttribute("JWT_ISSUER", validationResult.getJwtPayloadToken().getIss());
 		} catch (final ValidationException e) {
@@ -665,6 +671,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateValidationOperation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(),
 					null,idDoc);
 			request.setAttribute("JWT_ISSUER", validationResult.getJwtPayloadToken().getIss());
+
 		} catch (final ValidationException e) {
 			errorHandlerSRV.validationExceptionHandler(startDateValidationOperation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT),
 					idDoc);
@@ -720,7 +727,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 	@Override
-	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(@Size(min = 1, max = 256) String idDoc, PublicationMetadataReqDTO requestBody, HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, true,request);
+	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(@Size(min = 1, max = 256) String idDoc,
+			UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
+		return updateAbstract(idDoc, requestBody, true, request);
 	}
 }

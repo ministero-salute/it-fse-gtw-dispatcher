@@ -9,25 +9,37 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad24.enums;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class MergedMetadatiRequestDTO {
+public enum HealthcareFacilityAd24Enum {
+
+    Ospedale("Ospedale"),
+    Prevenzione("Prevenzione"),
+    Territorio("Territorio"),
+    SistemaTS("SistemaTS"),
+    Cittadino("Cittadino"),
+    MdsPN_DGC("MdsPN-DGC");
+
+    @Getter
+	private String code;
+
+	private HealthcareFacilityAd24Enum(String inCode) {
+		code = inCode;
+	}
 	
-    private String idDoc;
-    
-    private JWTPayloadDTO token;
-    
-    private UpdateMetadataReqDTO body;
-    
-    private String workflow_instance_id;
-    
+	/**
+	 * Validates if a string value is a valid enum constant name
+	 */
+	public static boolean isValidCode(String code) {
+		if (code == null) return false;
+		try {
+			valueOf(code);
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
 }
-	
