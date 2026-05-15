@@ -879,37 +879,35 @@ public abstract class AbstractCTL {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime mock", RIFERIMENTI_INI);
 				} else {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
-
-					if (!StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
-						java.time.LocalDate referenceDate = affinityDomainUtility
-								.extractCreationTime(metadatiToUpdate.getMarshallResponse());
-                        log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
-                        ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
-
-					    // ITI-57 Affinity Domain Validation
-                        // TODO: consider using this to validate the actual IHE SOAP content sent to INI
-                        // log.info("Performing Affinity Domain validation of update metadata for document: {}", idDoc);
-                        // ValidationResultDTO adValidationResult = affinityDomainValidationSRV
-                        // 		.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
-
-						if (!adValidationResult.isValid()) {
-							log.error("Affinity Domain validation failed for document {}: {}",
-									idDoc, adValidationResult.getErrorMessage());
-
-							ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
-							final ErrorResponseDTO error = ErrorResponseDTO.builder()
-									.type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
-									.title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
-									.instance(errorInstance.getInstance())
-									.detail(adValidationResult.getErrorMessage())
-									.build();
-							throw new MetadataValidationException(error);
-						}
-
-						log.info("Affinity Domain validation passed for document {} using AD version {}",
-								idDoc, adValidationResult.getAdVersion());
-					}
 				}
+
+                if (!StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
+                    java.time.LocalDate referenceDate = affinityDomainUtility
+                            .extractCreationTime(metadatiToUpdate.getMarshallResponse());
+                    log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
+                    ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
+
+                    // TODO: consider using this to validate the actual IHE SOAP content sent to INI (ITI-57 Affinity Domain Validation)
+                    // ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
+
+                    if (!adValidationResult.isValid()) {
+                        log.error("Affinity Domain validation failed for document {}: {}",
+                                idDoc, adValidationResult.getErrorMessage());
+
+                        ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
+                        final ErrorResponseDTO error = ErrorResponseDTO.builder()
+                                .type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
+                                .title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
+                                .instance(errorInstance.getInstance())
+                                .detail(adValidationResult.getErrorMessage())
+                                .build();
+                        throw new MetadataValidationException(error);
+                    }
+
+                    log.info("Affinity Domain validation passed for document {} using AD version {}",
+                            idDoc, adValidationResult.getAdVersion());
+                }
+
 
 				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
 					GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
