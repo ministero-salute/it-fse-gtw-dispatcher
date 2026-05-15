@@ -4,6 +4,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationErrorException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
@@ -33,8 +35,10 @@ public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
 		if (httpResponse.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
 			throw new BusinessException(error);
 		} else if(httpResponse.getStatusCode() == HttpStatus.NOT_FOUND){
-			throw new NoRecordFoundException(error);
-		} else {
+            throw new NoRecordFoundException(error);
+        } else if(httpResponse.getStatusCode() == HttpStatus.BAD_REQUEST){
+            throw new ValidationException(error);
+        } else {
 			throw new BusinessException("Generic error");
 		}
 	}
