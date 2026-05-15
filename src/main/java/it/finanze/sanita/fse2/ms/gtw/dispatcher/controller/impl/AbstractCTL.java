@@ -903,7 +903,7 @@ public abstract class AbstractCTL {
 									.instance(errorInstance.getInstance())
 									.detail(adValidationResult.getErrorMessage())
 									.build();
-							throw new ValidationException(error);
+							throw new MetadataValidationException(error);
 						}
 
 						log.info("Affinity Domain validation passed for document {} using AD version {}",
