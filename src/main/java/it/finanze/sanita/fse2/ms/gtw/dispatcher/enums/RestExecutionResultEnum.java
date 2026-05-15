@@ -19,6 +19,7 @@ public enum RestExecutionResultEnum {
 	OK("00", "Pubblicazione effettuata correttamente.", null, EventStatusEnum.SUCCESS),
 	MINING_CDA_ERROR("/msg/cda-element", "Errore in fase di estrazione del CDA.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR), 
 	VALIDATOR_ERROR("/msg/validator", "Errore di validazione", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
+    VALIDATION_EXCEPTION("/errors/validation", "Errore di validazione", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
 	FHIR_VALIDATOR_ERROR("/msg/validator", "Errore di validazione fhir", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
 	SYNTAX_ERROR("/msg/syntax", "Errore di sintassi.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
 	SEMANTIC_ERROR("/msg/semantic", "Errore semantico.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
@@ -47,7 +48,7 @@ public enum RestExecutionResultEnum {
 	OLDER_DAY("/msg/max-day-limit-exceed", "Error: document exceeded the maximum period to be published.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR),
 	SIMULATION_EXCEPTION("/msg/simulation-error", "Simulation Error.", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
 	SIGN_EXCEPTION("/msg/sign-error", "Sign error", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
-	NOT_IMPLEMENTED_EXCEPTION("/msg/not-implemented", "Not implemented", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
+    NOT_IMPLEMENTED_EXCEPTION("/msg/not-implemented", "Not implemented", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR),
 	UNAUTHORIZED("/msg/unauthorized", "Unauthorized access", ErrorLogEnum.KO_GENERIC, EventStatusEnum.BLOCKING_ERROR);
 
 
