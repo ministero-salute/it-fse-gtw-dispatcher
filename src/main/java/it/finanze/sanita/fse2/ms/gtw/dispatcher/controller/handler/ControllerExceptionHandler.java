@@ -13,6 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.handler;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Properties.MS_NAME;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,17 +35,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ServerResponseException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.UnauthorizedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationErrorException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationPublicationErrorException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.extern.slf4j.Slf4j;
 
@@ -97,31 +87,57 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(out, headers, status);
 	}
 
-	@ExceptionHandler(value = {ValidationException.class})
-	protected ResponseEntity<ErrorResponseDTO> handleGenericValidationException(final ValidationException ex, final WebRequest request) {
-		log.error("" , ex);  
-		Integer status = 400;
-		if (RestExecutionResultEnum.SEMANTIC_ERROR.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
-			status = 422;
-		}
+    @ExceptionHandler(value = {ValidationException.class})
+    protected ResponseEntity<ErrorResponseDTO> handleGenericValidationException(final ValidationException ex, final WebRequest request) {
+        log.error("" , ex);
+        Integer status = 400;
+        if (RestExecutionResultEnum.SEMANTIC_ERROR.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+            status = 422;
+        }
 
-		if (RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR_TOKEN.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
-			status = 401;
-		}
-		
-		if (RestExecutionResultEnum.INVALID_TOKEN_FIELD.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
-			status = 403;
-		}
+        if (RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR_TOKEN.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+            status = 401;
+        }
 
-		final HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+        if (RestExecutionResultEnum.INVALID_TOKEN_FIELD.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+            status = 403;
+        }
 
-		ErrorResponseDTO errorResponseDTO = ex.getError();
-		LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
-		errorResponseDTO.setSpanID(traceInfoDTO.getSpanID());
-		errorResponseDTO.setTraceID(traceInfoDTO.getTraceID());
-		return new ResponseEntity<>(ex.getError(), headers, status);
-	}
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+
+        ErrorResponseDTO errorResponseDTO = ex.getError();
+        LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
+        errorResponseDTO.setSpanID(traceInfoDTO.getSpanID());
+        errorResponseDTO.setTraceID(traceInfoDTO.getTraceID());
+        return new ResponseEntity<>(ex.getError(), headers, status);
+    }
+
+    @ExceptionHandler(value = {MetadataValidationException.class})
+    protected ResponseEntity<ErrorResponseDTO> handleMetadataValidationException(final MetadataValidationException ex, final WebRequest request) {
+        log.error("" , ex);
+        Integer status = 400;
+        if (RestExecutionResultEnum.SEMANTIC_ERROR.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+            status = 422;
+        }
+
+        if (RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR_TOKEN.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+            status = 401;
+        }
+
+        if (RestExecutionResultEnum.INVALID_TOKEN_FIELD.equals(RestExecutionResultEnum.get(ex.getError().getType()))) {
+            status = 403;
+        }
+
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
+
+        ErrorResponseDTO errorResponseDTO = ex.getError();
+        LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
+        errorResponseDTO.setSpanID(traceInfoDTO.getSpanID());
+        errorResponseDTO.setTraceID(traceInfoDTO.getTraceID());
+        return new ResponseEntity<>(ex.getError(), headers, status);
+    }
 
 	/**
 	 * 

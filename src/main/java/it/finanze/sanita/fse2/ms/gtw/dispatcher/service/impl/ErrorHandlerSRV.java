@@ -17,10 +17,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationErrorException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationPublicationErrorException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ICdaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
@@ -164,25 +161,44 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         }
         throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(errorMessage), workflowInstanceId, errorInstance);
     }
-    
+
     @Override
-    public void updateValidationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken, 
-    		ValidationException e, final String documentType,final String idDoc) {
+    public void updateValidationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken,
+                                                 ValidationException e, final String documentType,final String idDoc) {
 
-    	String errorMessage = e.getMessage();
-    	String capturedErrorType = RestExecutionResultEnum.GENERIC_ERROR.getType();
-    	String errorInstance = ErrorInstanceEnum.NO_INFO.getInstance();
-    	if (e.getError() != null) {
-    		errorMessage = e.getError().getDetail();
-    		capturedErrorType = e.getError().getType();
-    		errorInstance = e.getError().getInstance();
-    	}
+        String errorMessage = e.getMessage();
+        String capturedErrorType = RestExecutionResultEnum.GENERIC_ERROR.getType();
+        String errorInstance = ErrorInstanceEnum.NO_INFO.getInstance();
+        if (e.getError() != null) {
+            errorMessage = e.getError().getDetail();
+            capturedErrorType = e.getError().getType();
+            errorInstance = e.getError().getInstance();
+        }
 
-    	final RestExecutionResultEnum validationResult = RestExecutionResultEnum.get(capturedErrorType);
-    	kafkaSRV.sendUpdateStatus(traceInfoDTO.getTraceID(), workflowInstanceId, idDoc, EventStatusEnum.BLOCKING_ERROR, jwtPayloadToken, errorMessage, EventTypeEnum.UPDATE);
-    	logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,e.getError().getDetail() + " " + workflowInstanceId, OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType, 
-    			jwtPayloadToken,idDoc);
-    	throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(e.getError().getDetail()), workflowInstanceId, errorInstance);
+        final RestExecutionResultEnum validationResult = RestExecutionResultEnum.get(capturedErrorType);
+        kafkaSRV.sendUpdateStatus(traceInfoDTO.getTraceID(), workflowInstanceId, idDoc, EventStatusEnum.BLOCKING_ERROR, jwtPayloadToken, errorMessage, EventTypeEnum.UPDATE);
+        logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,e.getError().getDetail() + " " + workflowInstanceId, OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType,
+                jwtPayloadToken,idDoc);
+        throw new ValidationErrorException(validationResult, StringUtility.sanitizeMessage(e.getError().getDetail()), workflowInstanceId, errorInstance);
+    }
+    @Override
+    public void updateValidationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken,
+                                                 MetadataValidationException e, final String documentType, final String idDoc) {
+
+        String errorMessage = e.getMessage();
+        String capturedErrorType = RestExecutionResultEnum.GENERIC_ERROR.getType();
+        String errorInstance = ErrorInstanceEnum.NO_INFO.getInstance();
+        if (e.getError() != null) {
+            errorMessage = e.getError().getDetail();
+            capturedErrorType = e.getError().getType();
+            errorInstance = e.getError().getInstance();
+        }
+
+        final RestExecutionResultEnum validationResult = RestExecutionResultEnum.get(capturedErrorType);
+        kafkaSRV.sendUpdateStatus(traceInfoDTO.getTraceID(), workflowInstanceId, idDoc, EventStatusEnum.BLOCKING_ERROR, jwtPayloadToken, errorMessage, EventTypeEnum.UPDATE);
+        logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,e.getError().getDetail() + " " + workflowInstanceId, OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, validationResult.getErrorCategory(),  documentType,
+                jwtPayloadToken,idDoc);
+        throw e;
     }
 
 }

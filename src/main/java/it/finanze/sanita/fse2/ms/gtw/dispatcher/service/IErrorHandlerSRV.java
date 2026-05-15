@@ -16,6 +16,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 
 import java.util.Date;
@@ -59,8 +60,11 @@ public interface IErrorHandlerSRV {
      */
     void publicationValidationExceptionHandler(Date startDateOperation, ValidationDataDTO validationInfo, JWTPayloadDTO jwtPayloadToken,
                                                PublicationCreateReplaceMetadataDTO jsonObj, LogTraceInfoDTO traceInfoDTO, ValidationException e, boolean isPublication, final String documentType);
-    
-    void updateValidationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken, 
-    		ValidationException e, String documentType,String idDoc);
-    
+
+    void updateValidationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken,
+                                          ValidationException e, String documentType,String idDoc);
+
+    void updateValidationExceptionHandler(Date startDateOperation, LogTraceInfoDTO traceInfoDTO, String workflowInstanceId, JWTPayloadDTO jwtPayloadToken,
+                                          MetadataValidationException e, String documentType, String idDoc);
+
 }

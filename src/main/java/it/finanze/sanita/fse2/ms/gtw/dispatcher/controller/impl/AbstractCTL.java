@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -78,12 +79,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
@@ -92,7 +87,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
@@ -955,9 +949,11 @@ public abstract class AbstractCTL {
 					idDoc);
 		} catch (MockEnabledException me) {
 			throw me;
-		} catch (final ValidationException e) {
-			errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
-		} catch (Exception e) {
+        } catch (final ValidationException e) {
+            errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
+        } catch (final MetadataValidationException e) {
+            errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
+        } catch (Exception e) {
 			RestExecutionResultEnum errorInstance = RestExecutionResultEnum.GENERIC_ERROR;
 			if (e instanceof ValidationException) {
 				errorInstance = get(((ValidationException) e).getError().getType());
