@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStrategy;
@@ -97,12 +98,12 @@ public class AffinityDomainValidationSRV implements IAffinityDomainValidationSRV
                         .instance(ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD.getInstance())
                         .detail(detail)
                         .build();
-                throw new ValidationException(error);
+                throw new MetadataValidationException(error);
             }
 
             return ValidationResultDTO.builder().valid(true).adVersion(strategy.versionId()).build();
             
-        } catch (ValidationException ve) {
+        } catch (MetadataValidationException ve) {
             throw ve;
         } catch (Exception e) {
             log.error("Error while validating UpdateMetadataReqDTO", e);

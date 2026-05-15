@@ -6,6 +6,7 @@ import java.util.Set;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.TipoDocAltoLivAd263Enum;
 
@@ -64,7 +65,7 @@ public class CorrelationDocumentType263Validator {
 					.type(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
 					.instance(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
 					.detail("Uno tra tipo documento o tipo documento livello alto risulta essere null").build();
-			throw new ValidationException(error);
+			throw new MetadataValidationException(error);
 		}
 
 		Set<TipoDocAltoLivAd263Enum> correlation = CORRELATION_MAP.get(documentType);
@@ -76,7 +77,7 @@ public class CorrelationDocumentType263Validator {
 					.type(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
 					.instance(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
 					.detail("Non c'è correlazione tra tipo documento e tipo documento livello alto").build();
-			throw new ValidationException(error);
+			throw new MetadataValidationException(error);
 			
 		}
 		return allowed;
