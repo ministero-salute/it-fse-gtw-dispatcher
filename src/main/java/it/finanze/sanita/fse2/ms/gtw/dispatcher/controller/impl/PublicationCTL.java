@@ -49,6 +49,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.AccreditationSimulationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FHIRCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.ValidationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.IPublicationCTL;
@@ -164,6 +165,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	@Autowired
 	private BenchmarkCFG benchmarkCFG;
 
+	@Autowired
+	private FHIRCFG fhirCFG;
+
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -194,7 +198,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
-		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationInfo.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
+		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationInfo.getFhirResource() != null
+				? validationInfo.getFhirResource().getBundleJson()
+				: null;
+		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
+				validationInfo.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 	}
 
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
@@ -276,7 +284,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		}
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
-		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationInfo.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
+		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationInfo.getFhirResource() != null
+				? validationInfo.getFhirResource().getBundleJson()
+				: null;
+		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
+				validationInfo.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 	}
 
 
@@ -634,7 +646,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
 			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
 		}
-		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationResult.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
+		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null
+				? validationResult.getFhirResource().getBundleJson()
+				: null;
+		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
+				validationResult.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 	}
 
 	@Override
@@ -722,7 +738,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
 			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
 		}
-		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, validationResult.getValidationData().getWorkflowInstanceId()), HttpStatus.ACCEPTED);
+		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null
+				? validationResult.getFhirResource().getBundleJson()
+				: null;
+		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
+				validationResult.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 
 	}
 

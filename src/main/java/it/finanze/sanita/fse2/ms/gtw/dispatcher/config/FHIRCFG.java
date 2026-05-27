@@ -17,4 +17,10 @@ public class FHIRCFG {
     @Value("${fhir.attachment.name}")
     private String fhirAttachmentName;
 
+    /**
+     * Enable/disable FHIR bundle in publication response.
+     */
+    @Value("${fhir.bundle.response.enable:false}")
+    private boolean enableBundleInResponse;
+
 }

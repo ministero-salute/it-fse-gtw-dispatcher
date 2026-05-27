@@ -34,10 +34,21 @@ public class PublicationResDTO extends ResponseDTO {
 	@Schema(description = "Identificativo del workflow instance id")
 	private String workflowInstanceId;
 
+	@Schema(description = "FHIR Bundle JSON risultante dalla trasformazione del documento CDA")
+	private String fhirBundle;
+
 	public PublicationResDTO(final LogTraceInfoDTO traceInfo, String inWarning,final String inWorkflowInstanceId) {
 		super(traceInfo);
 		warning = inWarning;
 		workflowInstanceId = inWorkflowInstanceId;
+	}
+
+	public PublicationResDTO(final LogTraceInfoDTO traceInfo, String inWarning, final String inWorkflowInstanceId,
+			String inFhirBundle) {
+		super(traceInfo);
+		warning = inWarning;
+		workflowInstanceId = inWorkflowInstanceId;
+		fhirBundle = inFhirBundle;
 	}
 	
 }
