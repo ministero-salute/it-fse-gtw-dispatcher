@@ -311,8 +311,8 @@ class AffinityDomainValidationSRVTest {
     }
 
     @Test
-    @DisplayName("Should throw ValidationException when UpdateMetadataReqDTO validation fails")
-    void shouldThrowValidationExceptionWhenUpdateMetadataReqDTOValidationFails() {
+    @DisplayName("Should throw MetadataValidationException when UpdateMetadataReqDTO validation fails")
+    void shouldThrowMetadataValidationExceptionWhenUpdateMetadataReqDTOValidationFails() {
         // Prepare request
         it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO request =
             new it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO();
@@ -332,8 +332,8 @@ class AffinityDomainValidationSRVTest {
         when(mockStrategy.validateUpdateMetadataReqDTO(request, jwtPayloadDTO)).thenReturn(invalidResult);
         
         // Execute and verify exception is thrown
-        it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException exception =
-            assertThrows(it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException.class, () -> {
+        it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException exception =
+            assertThrows(it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException.class, () -> {
                     service.validateUpdateMetadataRequest(request, referenceDate, jwtPayloadDTO);
             });
         
