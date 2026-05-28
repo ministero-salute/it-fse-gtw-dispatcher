@@ -65,4 +65,12 @@ public class CollectionNaming {
         return Constants.Collections.ROUTING_TABLE;
     }
     
+    @Bean("issuersBean")
+    public String getIssuersCollection() {
+        if (profileUtility.isTestProfile()) {
+            return Constants.Profile.TEST_PREFIX + Constants.Collections.ISSUERS;
+        }
+        return Constants.Collections.ISSUERS;
+    }
+
 }

@@ -99,6 +99,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAccreditamentoSimulatio
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IFhirSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IIssuerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ISignSRV;
@@ -168,6 +169,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	@Autowired
 	private FHIRCFG fhirCFG;
 
+	@Autowired
+	private IIssuerSRV issuerSRV;
+
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -198,9 +202,12 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
-		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationInfo.getFhirResource() != null
-				? validationInfo.getFhirResource().getBundleJson()
-				: null;
+		String fhirBundle = null;
+		if (fhirCFG.isEnableBundleInResponse()
+				&& issuerSRV.isFhirBundleEnabledForIssuer(validationInfo.getJwtPayloadToken().getIss())) {
+			fhirBundle = validationInfo.getFhirResource().getBundleJson();
+		}
+
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
 				validationInfo.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 	}
@@ -284,9 +291,13 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		}
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
-		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationInfo.getFhirResource() != null
-				? validationInfo.getFhirResource().getBundleJson()
-				: null;
+
+		String fhirBundle = null;
+		if (fhirCFG.isEnableBundleInResponse()
+				&& issuerSRV.isFhirBundleEnabledForIssuer(validationInfo.getJwtPayloadToken().getIss())) {
+			fhirBundle = validationInfo.getFhirResource().getBundleJson();
+		}
+
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
 				validationInfo.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 	}
@@ -646,9 +657,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
 			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
 		}
-		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null
-				? validationResult.getFhirResource().getBundleJson()
-				: null;
+
+		String fhirBundle = null;
+		if (fhirCFG.isEnableBundleInResponse()
+				&& validationResult.getFhirResource() != null
+				&& issuerSRV.isFhirBundleEnabledForIssuer(validationResult.getJwtPayloadToken().getIss())) {
+			fhirBundle = validationResult.getFhirResource().getBundleJson();
+		}
+
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
 				validationResult.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 	}
@@ -738,9 +754,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
 			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
 		}
-		String fhirBundle = fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null
-				? validationResult.getFhirResource().getBundleJson()
-				: null;
+
+		String fhirBundle = null;
+		if (fhirCFG.isEnableBundleInResponse()
+				&& validationResult.getFhirResource() != null
+				&& issuerSRV.isFhirBundleEnabledForIssuer(validationResult.getJwtPayloadToken().getIss())) {
+			fhirBundle = validationResult.getFhirResource().getBundleJson();
+		}
+
 		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning,
 				validationResult.getValidationData().getWorkflowInstanceId(), fhirBundle), HttpStatus.ACCEPTED);
 

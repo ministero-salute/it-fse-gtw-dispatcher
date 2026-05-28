@@ -51,6 +51,10 @@ public final class Constants {
 		 */
 		public static final String ROUTING_TABLE = "routing_table";
 		
+		/**
+		 * Collection where issuer configurations are saved
+		 */
+		public static final String ISSUERS = "issuers";
 
 		private Collections() {
 
