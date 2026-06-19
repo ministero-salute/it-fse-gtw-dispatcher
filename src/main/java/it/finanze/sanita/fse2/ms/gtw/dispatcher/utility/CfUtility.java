@@ -26,15 +26,16 @@ public class CfUtility {
 	public static final int CF_STP_OK = 4;
 
 	public static String extractFiscalCodeFromJwtSub(final String sub) {
-		String subjectFiscalCode = Constants.App.JWT_MISSING_SUBJECT;
-		final String [] chunks = sub!=null ? sub.split("&") : new String[] {};
+	    String subjectFiscalCode = Constants.App.JWT_MISSING_SUBJECT;
+	    final String[] chunks = sub != null ? sub.split("&(?:amp;)*") : new String[] {};
 
-		// Checking if the system is MEF, in that case the fiscal code is the first element of the array
-		if (chunks.length > 1 && Constants.OIDS.OID_MEF.equals(chunks[1])) {
-			subjectFiscalCode = chunks[0].split("\\^\\^\\^")[0];
-		}
-		return subjectFiscalCode;
+	    // Checking if the system is MEF, in that case the fiscal code is the first element of the array
+	    if (chunks.length > 1 && Constants.OIDS.OID_MEF.equals(chunks[1])) {
+	        subjectFiscalCode = chunks[0].split("\\^\\^\\^")[0];
+	    }
+	    return subjectFiscalCode;
 	}
+	
 
 	public static int validaCF(String cfIn) {
 		// gli esiti per cf16 sono gli stessi di cf11

@@ -20,8 +20,6 @@ public class ValidationCreationInputDTO {
     
     private ValidationDataDTO validationData;
 
-    private JWTPayloadDTO jwtPayloadToken;
-
     private String cda;
 
     private PublicationCreateReplaceWiiDTO jsonObj;

@@ -25,7 +25,6 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResult
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createMasterIdError;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createReqMasterIdError;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createWorkflowInstanceId;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.getDocumentType;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isNullOrEmpty;
@@ -49,8 +48,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.AccreditationSimulationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.BenchmarkCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FHIRCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FHIRCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.ValidationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.IPublicationCTL;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AccreditamentoSimulationDTO;
@@ -181,17 +180,19 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		final String callbackUrl = request.getHeader("X-Callback-Url");
 
+		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
+		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
-			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO, callbackUrl);
+			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO, jwtPayloadToken,callbackUrl);
 			
-			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, callbackUrl);
+			postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo,jwtPayloadToken,callbackUrl);
 		} catch (ConnectionRefusedException ce) {
-			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
-			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationInfo.getDocument()));
 		}
 
 		String warning = "";
@@ -204,7 +205,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse()
-				&& issuerSRV.isFhirBundleEnabledForIssuer(validationInfo.getJwtPayloadToken().getIss())) {
+				&& issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {
 			fhirBundle = validationInfo.getFhirResource().getBundleJson();
 		}
 
@@ -213,9 +214,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
-			ValidationCreationInputDTO validationInfo, final String callbackUrl) {
-		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(),
-				validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
+			ValidationCreationInputDTO validationInfo, JWTPayloadDTO jwtPayloadToken,final String callbackUrl) {
+		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -225,16 +225,16 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(),
-				validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(),
-				validationInfo.getJwtPayloadToken(), callbackUrl);
+		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken,
+				callbackUrl);
 
-		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,
-				idDoc);
+		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, 
+				startDateOperation, getDocumentType(validationInfo.getDocument()), jwtPayloadToken,null);
 	}
 
 	@Override
-	public ResponseEntity<PublicationResDTO> replace(final String idDoc, final PublicationUpdateReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
+	public ResponseEntity<PublicationResDTO> replace(final String idDoc, final PublicationUpdateReqDTO requestBody, final MultipartFile file, 
+			final HttpServletRequest request) {
 
 		final Date startDateOperation = new Date();
 		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
@@ -244,16 +244,18 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			log.info("X-Callback-Url header provided for replace: {}", callbackUrl);
 		}
 
+		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.REPLACE);
+		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-			validationInfo = publicationAndReplace(file, request, true, idDoc, traceInfoDTO, callbackUrl);
+			validationInfo = publicationAndReplace(file, request, true,idDoc,traceInfoDTO,jwtPayloadToken,callbackUrl);
 
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
-			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, validationInfo.getJwtPayloadToken());
+			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, jwtPayloadToken);
 			IniReferenceResponseDTO response = iniClient.reference(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
@@ -263,8 +265,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(),
-					validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
@@ -272,16 +273,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(),
-					validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null,
-					validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken(), callbackUrl);
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
-					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null,idDoc);
+					getDocumentType(validationInfo.getDocument()), jwtPayloadToken,null);
 		} catch (ConnectionRefusedException ce) {
-			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
-			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, e, false, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, e, false, getDocumentType(validationInfo.getDocument()));
 		}
 
 		String warning = "";
@@ -303,23 +302,27 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 
-	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request,
-			final boolean isReplace, final String idDoc, final LogTraceInfoDTO traceInfoDTO, final String callbackUrl) {
-		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION;
-		ValidationCreationInputDTO validationResult = publicationAndReplaceValidation(file, request, isReplace, idDoc,
-				traceInfoDTO, eventType, callbackUrl);
+	@Override
+	public ResponseEntity<ResponseWifDTO> updateMetadata(final String idDoc, final PublicationMetadataReqDTO requestBody, final HttpServletRequest request) {
+		return updateAbstract(idDoc, requestBody, false,request);
+	}
+
+	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,
+			final String idDoc, final LogTraceInfoDTO traceInfoDTO, JWTPayloadDTO jwtPayloadToken,final String callbackUrl) {
+		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION; 
+		ValidationCreationInputDTO validationResult = publicationAndReplaceValidation(file, request, isReplace,idDoc, traceInfoDTO,eventType, jwtPayloadToken);
 
 		validationResult.setValidationData(executePublicationReplace(validationResult,
-				validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), validationResult.getFile(),
+				jwtPayloadToken, validationResult.getJsonObj(), validationResult.getFile(),
 				validationResult.getCda()));
 
 		return validationResult;
 
 	}
 
-	private ValidationCreationInputDTO publicationAndReplaceValidation(final MultipartFile file,
-			final HttpServletRequest request, final boolean isReplace, final String idDocRep,
-			final LogTraceInfoDTO traceInfoDTO, EventTypeEnum eventTypeEnum, final String callbackUrl) {
+	private ValidationCreationInputDTO publicationAndReplaceValidation(final MultipartFile file, final HttpServletRequest request, 
+			final boolean isReplace,final String idDocRep, final LogTraceInfoDTO traceInfoDTO,EventTypeEnum eventTypeEnum, JWTPayloadDTO jwtPayloadToken,
+		final String callbackUrl) {
 
 		final ValidationCreationInputDTO validation = new ValidationCreationInputDTO();
 		ValidationDataDTO validationInfo = new ValidationDataDTO();
@@ -329,10 +332,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 
 		try {
-			final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION);
-			validation.setJwtPayloadToken(jwtPayloadToken);
-			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-
 			PublicationCreateReplaceWiiDTO jsonObj = getAndValidatePublicationReq(request.getParameter("requestBody"), isReplace);
 			validation.setJsonObj(jsonObj);
 
@@ -366,7 +365,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final String cda = extractCDA(bytePDF, jsonObj.getMode());
 			validation.setCda(cda);
 
-			validateJWT(validation.getJwtPayloadToken(), cda);
+			validateJWT(jwtPayloadToken, cda);
 
 			final org.jsoup.nodes.Document docT = Jsoup.parse(cda);
 
@@ -408,7 +407,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		final String documentSha256 = encodeSHA256(bytePDF);
 		validation.setDocumentSha(documentSha256);
 
-		validateDocumentHash(documentSha256, validation.getJwtPayloadToken());
+		validateDocumentHash(documentSha256, jwtPayloadToken);
 
 		ResourceDTO fhirMappingResult = callFhirMappingEngine(validationInfo.getTransformID(), validationInfo.getEngineID(), jwtPayloadToken, jsonObj, bytePDF, cda,documentSha256);
 		validation.setFhirResource(fhirMappingResult);
@@ -616,41 +615,42 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String workflowInstanceId = Constants.App.MISSING_WORKFLOW_PLACEHOLDER;
 		String warning = null;
 		Document docT = null;
+		
+		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
+		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
 		String idDoc = "";
 		try {
 			//Valido request e jwt come se fosse una pubblicazione
-			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,
-					EventTypeEnum.VALIDATION_FOR_PUBLICATION, null);
+			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,EventTypeEnum.VALIDATION_FOR_PUBLICATION,jwtPayloadToken);
 			docT = Jsoup.parse(validationResult.getCda());
 			workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);
 			idDoc = CdaUtility.extractIdDoc(docT);
 			//Chiamo ms validator per la validazione
-			String issuer = validationResult.getJwtPayloadToken().getIss();
+			String issuer = jwtPayloadToken.getIss();
 			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId,issuer);
 
-			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, validationResult.getJwtPayloadToken(), EventTypeEnum.VALIDATION_FOR_PUBLICATION);
+			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, jwtPayloadToken, EventTypeEnum.VALIDATION_FOR_PUBLICATION);
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(), null, idDoc);
-			request.setAttribute("JWT_ISSUER", validationResult.getJwtPayloadToken().getIss());
+			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),jwtPayloadToken, null);
+			request.setAttribute("JWT_ISSUER", issuer);
 		} catch (final ValidationException e) {
-			errorHandlerSRV.validationExceptionHandler(startDateOperationValidation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT),
-					idDoc);
+			errorHandlerSRV.validationExceptionHandler(startDateOperationValidation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, CdaUtility.getDocumentType(docT));
 		}
 
 		final Date startDateOperationPublication = new Date();
 		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			//Eseguo le operazione di creazione
-			ValidationDataDTO dto = executePublicationReplace(validationResult, validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), validationResult.getFile(), validationResult.getCda());
+			ValidationDataDTO dto = executePublicationReplace(validationResult, jwtPayloadToken, validationResult.getJsonObj(), validationResult.getFile(), validationResult.getCda());
 			validationResult.setValidationData(dto);
 
 			//Eseguo le operazione post creazione
-			postExecutionCreate(startDateOperationPublication, traceInfoDTO, validationResult, callbackUrl);
+			postExecutionCreate(startDateOperationPublication, traceInfoDTO, validationResult, jwtPayloadToken,callbackUrl);
 		} catch (ConnectionRefusedException ce) {		
-			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationResult.getDocument()));
+			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationResult.getDocument()));
 		} catch (final ValidationException e) {
-			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
+			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
 		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
@@ -659,9 +659,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		}
 
 		String fhirBundle = null;
-		if (fhirCFG.isEnableBundleInResponse()
-				&& validationResult.getFhirResource() != null
-				&& issuerSRV.isFhirBundleEnabledForIssuer(validationResult.getJwtPayloadToken().getIss())) {
+		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {
 			fhirBundle = validationResult.getFhirResource().getBundleJson();
 		}
 
@@ -682,43 +680,40 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String workflowInstanceId = Constants.App.MISSING_WORKFLOW_PLACEHOLDER;
 		String warning = null;
 		Document docT = null;
+		
+		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.REPLACE);
+		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
 		try {
 			//Valido request e jwt come se fosse una pubblicazione
-			validationResult = publicationAndReplaceValidation(file, request, true, idDoc, traceInfoDTO,
-					EventTypeEnum.VALIDATION_FOR_REPLACE, null);
+			validationResult = publicationAndReplaceValidation(file, request, true,idDoc,traceInfoDTO,EventTypeEnum.VALIDATION_FOR_REPLACE, jwtPayloadToken);
 
 			docT = Jsoup.parse(validationResult.getCda());
 			workflowInstanceId = CdaUtility.getWorkflowInstanceId(docT);
 
 			// Get JWT
-			String issuer = validationResult.getJwtPayloadToken().getIss();
+			String issuer = jwtPayloadToken.getIss();
 
 			//Chiamo ms validator per la validazione
 			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
 
-			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, validationResult.getJwtPayloadToken(),
-					EventTypeEnum.VALIDATION_FOR_REPLACE);
+			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, jwtPayloadToken, EventTypeEnum.VALIDATION_FOR_REPLACE);
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateValidationOperation, CdaUtility.getDocumentType(docT),validationResult.getJwtPayloadToken(),
-					null,idDoc);
-			request.setAttribute("JWT_ISSUER", validationResult.getJwtPayloadToken().getIss());
-
+			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateValidationOperation, CdaUtility.getDocumentType(docT),jwtPayloadToken, null);
 		} catch (final ValidationException e) {
-			errorHandlerSRV.validationExceptionHandler(startDateValidationOperation, traceInfoDTO, workflowInstanceId, validationResult.getJwtPayloadToken(), e, CdaUtility.getDocumentType(docT),
-					idDoc);
+			errorHandlerSRV.validationExceptionHandler(startDateValidationOperation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, CdaUtility.getDocumentType(docT));
 		}
 		final Date startDateReplacenOperation = new Date();
 		String callbackUrl = request.getHeader("X-Callback-Url");
 		try {
 			//Eseguo le operazione di creazione
 			ValidationDataDTO dto = executePublicationReplace(validationResult,
-					validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), validationResult.getFile(),
+					jwtPayloadToken, validationResult.getJsonObj(), validationResult.getFile(),
 					validationResult.getCda());
 			validationResult.setValidationData(dto);
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationResult.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
-			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, validationResult.getJwtPayloadToken());
+			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, jwtPayloadToken);
 			IniReferenceResponseDTO response = iniClient.reference(iniReq, null);
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
@@ -728,9 +723,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(),
-					validationResult.getFhirResource(), validationResult.getJwtPayloadToken(),
-					response.getUuid().get(0));
+			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(), validationResult.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationResult.getValidationData().getWorkflowInstanceId());
@@ -738,16 +731,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationResult.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(),
-					validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null,
-					validationResult.getJsonObj(), validationResult.getJwtPayloadToken(), callbackUrl);
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), jwtPayloadToken);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationResult.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationResult.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateReplacenOperation,
-					getDocumentType(validationResult.getDocument()), validationResult.getJwtPayloadToken(),null,idDoc);
+					getDocumentType(validationResult.getDocument()), jwtPayloadToken,null);
 		} catch (ConnectionRefusedException ce) {		
-			errorHandlerSRV.connectionRefusedExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationResult.getDocument()));
+			errorHandlerSRV.connectionRefusedExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationResult.getDocument()));
 		} catch (final ValidationException e) {
-			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
+			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
 		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
