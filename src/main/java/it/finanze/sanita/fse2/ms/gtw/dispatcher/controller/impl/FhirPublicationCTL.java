@@ -11,20 +11,12 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISSING_DOC_TYPE_PLACEHOLDER;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISSING_WORKFLOW_PLACEHOLDER;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.BLOCKING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.EDS_DELETE;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_DELETE;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.RIFERIMENTI_INI;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.FHIR_MAPPING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.GENERIC_ERROR;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.INI_EXCEPTION;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.get;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createMasterIdError;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createReqMasterIdError;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.createWorkflowInstanceId;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.getDocumentType;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
@@ -32,10 +24,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isN
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
-import java.util.Objects;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.FhirSRV;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,33 +45,23 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PersonDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationCreationInputDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ProcessorOperationEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
@@ -95,7 +74,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -128,13 +106,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 	@Autowired
 	private ValidationCFG validationCFG;
-
-	@Autowired
-	private IEdsClient edsClient;
-	
-	@Autowired
-	private IConfigSRV configSRV;
-
+ 
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -142,22 +114,24 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
+		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.FHIR_CREATE);
+		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
-			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO);
+			validationInfo = publicationAndReplace(file, request, false, null, traceInfoDTO,jwtPayloadToken);
             ResourceDTO resourceDTO = validationInfo.getFhirResource();
             ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
             //propagate metadata
 			transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
 			transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
             validationInfo.setFhirResource(transactionResourceDTO);
-            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo,jwtPayloadToken);
 		} catch (ConnectionRefusedException ce) {
-			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, ce, true, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
-			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationInfo.getDocument()));
 		} catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -174,8 +148,8 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	}
 
 	private void postExecutionCreate(final Date startDateOperation, final LogTraceInfoDTO traceInfoDTO,
-			ValidationCreationInputDTO validationInfo) {
-		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken());
+			ValidationCreationInputDTO validationInfo, JWTPayloadDTO jwtPayloadToken) {
+		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
 
 		String idDoc = validationInfo.getJsonObj().getIdentificativoDoc();
 
@@ -185,9 +159,9 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken);
 
-		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
+		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, startDateOperation, getDocumentType(validationInfo.getDocument()), jwtPayloadToken,null);
 	}
 
 	@Override
@@ -196,23 +170,26 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		final Date startDateOperation = new Date();
 		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
 
+		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.FHIR_REPLACE);
+		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
+		
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
 		validationInfo.setValidationData(new ValidationDataDTO(null, false, MISSING_WORKFLOW_PLACEHOLDER, null, null, new Date()));
 
 		try {
 			if(!isValidMasterId(idDoc)) throw new ValidationException(createReqMasterIdError());
-            validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO);
+            validationInfo = publicationAndReplace(file, request, true, null, traceInfoDTO,jwtPayloadToken);
             ResourceDTO resourceDTO = validationInfo.getFhirResource();
             ResourceDTO transactionResourceDTO = documentReferenceSRV.convertDocumentToTransaction(resourceDTO.getBundleJson());
             //propagate metadata
             transactionResourceDTO.setDocumentEntryJson(resourceDTO.getDocumentEntryJson());
             transactionResourceDTO.setSubmissionSetEntryJson(resourceDTO.getSubmissionSetEntryJson());
             validationInfo.setFhirResource(transactionResourceDTO);
-            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo);
+            postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo,jwtPayloadToken);
 
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
-			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, validationInfo.getJwtPayloadToken());
+			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, jwtPayloadToken);
 			IniReferenceResponseDTO response = iniClient.reference(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
@@ -222,7 +199,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
@@ -230,14 +207,14 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), validationInfo.getJwtPayloadToken());
+			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
-					getDocumentType(validationInfo.getDocument()), validationInfo.getJwtPayloadToken(),null);
+					getDocumentType(validationInfo.getDocument()), jwtPayloadToken,null);
 		} catch (ConnectionRefusedException ce) {
-			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.connectionRefusedExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, ce, false, getDocumentType(validationInfo.getDocument()));
 		} catch (final ValidationException e) {
-			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), validationInfo.getJwtPayloadToken(), validationInfo.getJsonObj(), traceInfoDTO, e, false, getDocumentType(validationInfo.getDocument()));
+			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperation, validationInfo.getValidationData(), jwtPayloadToken, validationInfo.getJsonObj(), traceInfoDTO, e, false, getDocumentType(validationInfo.getDocument()));
 		} catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -269,7 +246,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		final String documentSha256 = encodeSHA256(bytePDF);
 		validation.setDocumentSha(documentSha256);
 
-		validateDocumentHash(documentSha256, validation.getJwtPayloadToken());
+		validateDocumentHash(documentSha256, jwtPayloadToken);
 
 		ResourceDTO fhirMappingResult = buildMetadata(validationInfo.getTransformID(), validationInfo.getEngineID(), jwtPayloadToken, jsonObj, bytePDF, bundle,documentSha256);
 		validation.setFhirResource(fhirMappingResult);
@@ -337,54 +314,22 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 	    return new PersonDto(fiscalCode, oid);
 	}
 
-
-	private DeleteRequestDTO buildRequestForIni(final String identificativoDocumento, final List<String> uuid, final JWTPayloadDTO jwtPayloadToken,
-			final String documentType, String applicationId, String applicationVendor, String applicationVersion,
-			final String workflowInstanceId, String authorInstitution, List<String> administrativeRequest) {
-		DeleteRequestDTO out = null;
-		try {
-			out = DeleteRequestDTO.builder().
-					action_id(jwtPayloadToken.getAction_id()).
-					idDoc(identificativoDocumento).
-					uuid(uuid).
-					iss(jwtPayloadToken.getIss()).
-					locality(jwtPayloadToken.getLocality()).
-					patient_consent(jwtPayloadToken.getPatient_consent()).
-					person_id(jwtPayloadToken.getPerson_id()).
-					purpose_of_use(jwtPayloadToken.getPurpose_of_use()).
-					resource_hl7_type(jwtPayloadToken.getResource_hl7_type()).
-					sub(jwtPayloadToken.getSub()).
-					subject_organization_id(jwtPayloadToken.getSubject_organization_id()).
-					subject_organization(jwtPayloadToken.getSubject_organization()).
-					subject_role(jwtPayloadToken.getSubject_role()).
-					documentType(documentType).
-					subject_application_id(applicationId).
-					subject_application_vendor(applicationVendor).
-					subject_application_version(applicationVersion).
-					workflow_instance_id(workflowInstanceId).
-					author_institution(authorInstitution).
-					administrative_request(administrativeRequest).
-					build();
-		} catch(Exception ex) {
-			log.error("Error while build request delete for ini : " , ex);
-			throw new BusinessException("Error while build request delete for ini : " , ex);
-		}
-		return out;
-	}
  
-	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO) {
+	private ValidationCreationInputDTO publicationAndReplace(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDoc, final LogTraceInfoDTO traceInfoDTO,
+			JWTPayloadDTO jwtPayloadToken) {
 		EventTypeEnum eventType = isReplace ? EventTypeEnum.REPLACE : EventTypeEnum.PUBLICATION;
-		ValidationCreationInputDTO validationResult = publicationAndReplaceValidationFhirDiretto(file, request, isReplace,idDoc, traceInfoDTO,eventType);
+		ValidationCreationInputDTO validationResult = publicationAndReplaceValidationFhirDiretto(file, request, isReplace,idDoc, traceInfoDTO,eventType,jwtPayloadToken);
 
 		String bundleJson = validationResult.getFhirResource()!=null ? validationResult.getFhirResource().getBundleJson() : "";
 		validationResult.setValidationData(executePublicationReplace(validationResult,
-				validationResult.getJwtPayloadToken(), validationResult.getJsonObj(), validationResult.getFile(), bundleJson));
+				jwtPayloadToken, validationResult.getJsonObj(), validationResult.getFile(), bundleJson));
 
 		return validationResult;
 
 	}
 	
-	private ValidationCreationInputDTO publicationAndReplaceValidationFhirDiretto(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDocRep, final LogTraceInfoDTO traceInfoDTO,EventTypeEnum eventTypeEnum) {
+	private ValidationCreationInputDTO publicationAndReplaceValidationFhirDiretto(final MultipartFile file, final HttpServletRequest request, final boolean isReplace,final String idDocRep, 
+			final LogTraceInfoDTO traceInfoDTO,EventTypeEnum eventTypeEnum, JWTPayloadDTO jwtPayloadToken) {
 
 		final ValidationCreationInputDTO validation = new ValidationCreationInputDTO();
 		ValidationDataDTO validationInfo = new ValidationDataDTO();
@@ -393,9 +338,6 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		validation.setValidationData(validationInfo);
 
 		try {
-			final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, isReplace ? EventTypeEnum.FHIR_REPLACE : EventTypeEnum.FHIR_CREATE);
-			validation.setJwtPayloadToken(jwtPayloadToken);
-			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 			PublicationCreateReplaceWiiDTO jsonObj = getAndValidatePublicationReq(request.getParameter("requestBody"), isReplace);
 			validation.setJsonObj(jsonObj);
 
@@ -412,7 +354,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			}
 			validation.getFhirResource().setBundleJson(fhirBundle);
 
-			validateJWTFhirDiretto(validation.getJwtPayloadToken(), fhirBundle);
+			validateJWTFhirDiretto(jwtPayloadToken, fhirBundle);
 
 		} catch (final ValidationException | NoRecordFoundException ve) {
 			cdaSRV.consumeHash(validationInfo.getHash());
