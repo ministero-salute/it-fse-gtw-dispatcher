@@ -220,6 +220,11 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 				throw new IniException(response.getErrorMessage(),validationInfo.getValidationData().getWorkflowInstanceId());
 			}
 
+			if (response.getUuid() == null || response.getUuid().isEmpty()) {
+				log.error("Errore. Nessun riferimento UUID trovato per il documento: {}", idDoc);
+				throw new IniException("Errore. Nessun riferimento trovato.",
+						validationInfo.getValidationData().getWorkflowInstanceId());
+			}
 
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), validationInfo.getJwtPayloadToken(), response.getUuid().get(0));
