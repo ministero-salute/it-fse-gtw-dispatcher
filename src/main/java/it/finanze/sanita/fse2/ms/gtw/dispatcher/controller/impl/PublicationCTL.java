@@ -260,10 +260,15 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			IniReferenceResponseDTO response = iniClient.reference(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
-				log.error("Errore. Nessun riferimento trovato.");
+				log.error("Errore. Nessun riferimento trovato: {}", response.getErrorMessage());
 				throw new IniException(response.getErrorMessage(),validationInfo.getValidationData().getWorkflowInstanceId());
 			}
 
+			if (response.getUuid() == null || response.getUuid().isEmpty()) {
+				log.error("Errore. Nessun riferimento UUID trovato per il documento: {}", idDoc);
+				throw new IniException("Errore. Nessun riferimento trovato.",
+						validationInfo.getValidationData().getWorkflowInstanceId());
+			}
 
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
@@ -714,10 +719,15 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			IniReferenceResponseDTO response = iniClient.reference(iniReq, null);
 
 			if(!isNullOrEmpty(response.getErrorMessage())) {
-				log.error("Errore. Nessun riferimento trovato.");
+				log.error("Errore. Nessun riferimento trovato: {}", response.getErrorMessage());
 				throw new IniException(response.getErrorMessage(),workflowInstanceId);
 			}
 
+			// Controllo difensivo: verifica che la lista UUID non sia null o vuota
+			if (response.getUuid() == null || response.getUuid().isEmpty()) {
+				log.error("Errore. Nessun riferimento UUID trovato per il documento: {}", idDoc);
+				throw new IniException("Errore. Nessun riferimento trovato.", workflowInstanceId);
+			}
 
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(), validationResult.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
