@@ -1,7 +1,6 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,9 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -22,8 +18,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.FhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AuthorSlotDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentEntryDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
@@ -39,7 +45,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -155,6 +160,11 @@ public class FhirSRV implements IFhirSRV {
         documentReferenceDTO.setServiceStartTime(requestBody.getDataInizioPrestazione());
         documentReferenceDTO.setServiceStopTime(requestBody.getDataFinePrestazione());
         documentReferenceDTO.setIdentificativoDoc(requestBody.getIdentificativoDoc());
+        
+        if(requestBody!=null && !requestBody.getAdministrativeRequest().isEmpty()) {
+        	documentReferenceDTO.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest().stream().map(e-> e.name()).collect(Collectors.toList()));	
+        }
+		
 
         return documentReferenceDTO;
     }
