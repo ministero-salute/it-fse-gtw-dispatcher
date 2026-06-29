@@ -160,8 +160,8 @@ public class FhirSRV implements IFhirSRV {
         documentReferenceDTO.setServiceStartTime(requestBody.getDataInizioPrestazione());
         documentReferenceDTO.setServiceStopTime(requestBody.getDataFinePrestazione());
         documentReferenceDTO.setIdentificativoDoc(requestBody.getIdentificativoDoc());
-        
-        if(requestBody!=null && !requestBody.getAdministrativeRequest().isEmpty()) {
+
+        if (requestBody != null && requestBody.getAdministrativeRequest() != null && !requestBody.getAdministrativeRequest().isEmpty()) {
         	documentReferenceDTO.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest().stream().map(e-> e.name()).collect(Collectors.toList()));	
         }
 		
