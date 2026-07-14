@@ -110,8 +110,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.TipoDocAltoLivAd263Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.TipoDocAltoLivAd264Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.CorrelationDocumentType264Validator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
@@ -377,9 +377,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 			String typeCodeFromJwt = jwtPayloadToken.getResource_hl7_type();
 
-			CorrelationDocumentType263Validator.isValid(
+			CorrelationDocumentType264Validator.isValid(
 					DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)),
-					TipoDocAltoLivAd263Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
+					TipoDocAltoLivAd264Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
 
 			validation.setDocument(docT);
 		} catch (final ValidationException | NoRecordFoundException ve) {

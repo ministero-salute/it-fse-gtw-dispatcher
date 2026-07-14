@@ -9,13 +9,14 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.*;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.*;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Affinity Domain Strategy for version 2.6.3 (effective from March 2026)
+ * Affinity Domain Strategy for version 2.6.4 (effective from ? 2026)
  * Based on IHE ITI specifications for metadata update (ITI-57)
  * Includes validation logic specific to this AD version
  * 
@@ -43,11 +44,11 @@ import java.util.Set;
  */
 @Slf4j
 @Component
-public class Ad263Strategy extends AbstractAffinityDomainStrategy {
+public class Ad264Strategy extends AbstractAffinityDomainStrategy {
 
     // Version metadata
-    private static final String VERSION_ID = "2.6.3";
-    private static final LocalDate EFFECTIVE_FROM = LocalDate.of(2026, 3, 1);
+    private static final String VERSION_ID = "2.6.4";
+    private static final LocalDate EFFECTIVE_FROM = LocalDate.of(2026, 10, 1);
 
     // Mandatory field definitions - immutable sets
     private static final Set<String> MANDATORY_DOCUMENT_ENTRY_FIELDS = Set.of(
@@ -114,10 +115,11 @@ public class Ad263Strategy extends AbstractAffinityDomainStrategy {
     @Override
     public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request,
                     JWTPayloadDTO jwtPayloadToken) {
-                CorrelationDocumentType263Validator.isValid(
-                        DocumentType263Enum.getByCode(
-                                StringUtility.extractHl7TypeCode(jwtPayloadToken.getResource_hl7_type())),
-                        TipoDocAltoLivAd263Enum.valueOf(request.getTipoDocumentoLivAlto()));
+
+            CorrelationDocumentType264Validator.isValid(
+                            DocumentTypeEnum.getByCode(
+                                            StringUtility.extractHl7TypeCode(jwtPayloadToken.getResource_hl7_type())),
+                            TipoDocAltoLivAd264Enum.valueOf(request.getTipoDocumentoLivAlto()));
 
             return validateUpdateMetadataReqDTOTemplate(request);
     }
@@ -125,22 +127,22 @@ public class Ad263Strategy extends AbstractAffinityDomainStrategy {
     @Override
     protected void validateValueSetsInternal(UpdateMetadataReqDTO request, List<String> validationErrors) {
 
-        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd263Enum::isValidCode,
+        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd264Enum::isValidCode,
                 "administrativeRequest", "XDSDocumentEntry.Slot – administrativeRequest", validationErrors);
 
-        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd263Enum::isValidCode,
+        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd264Enum::isValidCode,
                 "tipologiaStruttura", "XDSDocumentEntry.healthcareFacilityTypeCod", validationErrors);
 
         validateField(request.getAssettoOrganizzativo(),
-                PracticeSettingCodeAd263Enum::isValidCode,
+                PracticeSettingCodeAd264Enum::isValidCode,
                 "assettoOrganizzativo", "XDSDocumentEntry.practiceSettingCode", validationErrors);
 
         validateField(request.getTipoAttivitaClinica(),
-                AttivitaClinicaAd263Enum::isValidCode,
+                AttivitaClinicaAd264Enum::isValidCode,
                 "tipoAttivitaClinica", "XDSSubmissionSet.contentTypeCode", validationErrors);
 
         validateField(request.getTipoDocumentoLivAlto(),
-                TipoDocAltoLivAd263Enum::isValidCode,
+                TipoDocAltoLivAd264Enum::isValidCode,
                 "tipoDocumentoLivAlto", "XDSDocumentEntry.classCode", validationErrors);
     }
 
