@@ -37,4 +37,10 @@ public class IndexerValueDTO {
      * Enum of the operation to perform on EDS
      */
     private ProcessorOperationEnum edsDPOperation;
+
+    /**
+     * Whether the document was published to EDS (non-mock issuer).
+     * true = EDS operation should be performed; false = mock regime, skip EDS.
+     */
+    private Boolean edsPublished;
 }

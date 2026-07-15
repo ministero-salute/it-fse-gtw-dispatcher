@@ -23,4 +23,13 @@ public interface IIssuerSRV {
      * @return true if bundle should be included, false otherwise
      */
     boolean isFhirBundleEnabledForIssuer(String issuerName);
+
+    /**
+     * Check if EDS is enabled (non-mock) for the given issuer.
+     * Returns true when the issuer's mockUar == false (real EDS), false otherwise.
+     *
+     * @param issuerName The issuer name from JWT token
+     * @return true if EDS operations should be performed, false if mock regime
+     */
+    boolean isEdsEnabledForIssuer(String issuerName);
 }

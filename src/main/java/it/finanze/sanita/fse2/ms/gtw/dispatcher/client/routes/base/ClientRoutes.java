@@ -28,7 +28,8 @@ public final class ClientRoutes {
         public static final String DELETE_PATH = "ini-delete";
         public static final String UPDATE_PATH = "ini-update";
         public static final String REFERENCE_PATH = "get-reference";
-        public static final  String METADATA_PATH = "get-merged-metadati";
+        public static final String METADATA_PATH = "get-merged-metadati";
+        public static final String GET_DOCUMENT_METADATA_PATH = "get-document-metadata";
     }
 
     @NoArgsConstructor(access = PRIVATE)

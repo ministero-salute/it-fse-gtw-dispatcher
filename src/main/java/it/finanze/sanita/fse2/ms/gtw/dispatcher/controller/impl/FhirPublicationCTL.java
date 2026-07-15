@@ -38,6 +38,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.ValidationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.IFhirPublicationCTL;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.GetDocumentMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IndexerValueDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PersonDto;
@@ -50,7 +51,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateRep
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
@@ -104,7 +104,13 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 
 	@Autowired
 	private ValidationCFG validationCFG;
- 
+
+	@Autowired
+	private it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IIssuerSRV issuerSRV;
+
+	@Autowired
+	private it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV configSRV;
+
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
 		final Date startDateOperation = new Date();
@@ -156,6 +162,7 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 		kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
 		kafkaValue.setIdDoc(idDoc);
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
+		kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken,callbackUrl);
@@ -191,26 +198,29 @@ public class FhirPublicationCTL extends AbstractCTL implements IFhirPublicationC
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
 			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, jwtPayloadToken);
-			IniReferenceResponseDTO response = iniClient.reference(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
-
-			if(!isNullOrEmpty(response.getErrorMessage())) {
-				log.error("Errore. Nessun riferimento trovato.");
-				throw new IniException(response.getErrorMessage(),validationInfo.getValidationData().getWorkflowInstanceId());
+			GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
+	
+			if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
+				String errMsg = docMetadata != null ? docMetadata.getErrorMessage() : "Risposta null da get-document-metadata";
+				log.error("Errore. Nessun riferimento trovato: {}", errMsg);
+				throw new IniException(errMsg, validationInfo.getValidationData().getWorkflowInstanceId());
 			}
-
-			if (response.getUuid() == null || response.getUuid().isEmpty()) {
+	
+			String uuid = docMetadata.getUuid();
+			if (uuid == null || uuid.isEmpty()) {
 				log.error("Errore. Nessun riferimento UUID trovato per il documento: {}", idDoc);
 				throw new IniException("Errore. Nessun riferimento trovato.",
 						validationInfo.getValidationData().getWorkflowInstanceId());
 			}
-
+	
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
-
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, uuid);
+	
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
 			kafkaValue.setIdDoc(idDoc);
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+			kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && "TRUE".equals(docMetadata.getEdsPublished()));
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken,callbackUrl);
