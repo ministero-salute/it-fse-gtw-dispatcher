@@ -13,6 +13,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.*;
@@ -114,10 +116,11 @@ public class Ad263Strategy extends AbstractAffinityDomainStrategy {
     @Override
     public ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request,
                     JWTPayloadDTO jwtPayloadToken) {
-                CorrelationDocumentType263Validator.isValid(
-                        DocumentType263Enum.getByCode(
-                                StringUtility.extractHl7TypeCode(jwtPayloadToken.getResource_hl7_type())),
-                        TipoDocAltoLivAd263Enum.valueOf(request.getTipoDocumentoLivAlto()));
+
+            CorrelationDocumentType263Validator.isValid(
+                            DocumentTypeEnum.getByCode(
+                                            StringUtility.extractHl7TypeCode(jwtPayloadToken.getResource_hl7_type())),
+                            TipoDocAltoLivAd263Enum.valueOf(request.getTipoDocumentoLivAlto()));
 
             return validateUpdateMetadataReqDTOTemplate(request);
     }
