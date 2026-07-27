@@ -35,9 +35,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -71,6 +68,18 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataOscuramentoReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
@@ -79,18 +88,39 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.IssueSeverityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -1062,10 +1092,99 @@ public abstract class AbstractCTL {
 	
 	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(UpdateMetadataReqDTO requestBody) {
 		DocumentReferenceDTO output = new DocumentReferenceDTO();
-		output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());
-		output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());
-		output.setFacilityTypeCode(requestBody.getTipologiaStruttura());
-		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo());
+		if(requestBody.getAdministrativeRequest()!=null && requestBody.getAdministrativeRequest().size()>0) {
+			output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());	
+		}
+		
+		if(requestBody.getAttiCliniciRegoleAccesso()!=null && requestBody.getAttiCliniciRegoleAccesso().size()>0) {
+			output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());	
+		}
+		
+		if(!StringUtility.isNullOrEmpty(requestBody.getTipologiaStruttura())) {
+			output.setFacilityTypeCode(requestBody.getTipologiaStruttura());	
+		}
+		
+		if(!StringUtility.isNullOrEmpty(requestBody.getAssettoOrganizzativo())) {
+			output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo());
+		}
+		
 		return output;
 	}
+	
+	
+	protected ResponseEntity<ResponseWifDTO> updateOscuramento(final String idDoc, final UpdateMetadataOscuramentoReqDTO requestBody, final HttpServletRequest request) {
+		// Estrazione token
+		JWTPayloadDTO jwtPayloadToken = null;
+		final Date startDateOperation = new Date();
+		LogTraceInfoDTO logTraceDTO = getLogTraceInfo();
+		String wif = "";
+
+		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","update","traceId", logTraceDTO.getTraceID(),"wif", wif,"idDoc", idDoc);
+
+		String warning = null;
+
+		if(!isValidMasterId(idDoc)) throw new ValidationException(createMasterIdError());
+
+		try {
+			request.setAttribute("UPDATE_REQ", requestBody);
+			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
+			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
+
+			//					validateUpdateMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type()); //TODO - Va cambiato il metodo 
+			wif = createWorkflowInstanceId(idDoc);
+
+			if(!configSRV.isRemoveEds()) {
+				GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
+				UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
+				req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
+				//				req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody)); //TODO - Va cambiato il metodo
+				TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
+				EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()));
+				if(edsResponse.isEsito()) {
+					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
+				} else {
+					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, "Update EDS fallito", EDS_UPDATE);
+					throw new EdsException(edsResponse.getMessageError());
+				}
+			}
+
+			IniTraceResponseDTO res = null;
+			//				IniTraceResponseDTO res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken,metadatiToUpdate.getDocumentType(),wif,
+			//						metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()),callUpdateV2); //TODO - Cambiare anche questo
+			// Check response errors
+			if(Boolean.FALSE.equals(res.getEsito())) {
+				// Send to indexer
+				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, EventStatusEnum.BLOCKING_ERROR, jwtPayloadToken, "Errore durante l'aggiornamento dell'oscuramento", INI_UPDATE);
+				//TODO - Rilanciata eccezione
+			} else {
+				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update ini effettuato correttamente", INI_UPDATE);
+			}
+
+
+			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
+					idDoc);
+		} catch (final ValidationException e) {
+			errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
+		} catch (final MetadataValidationException e) {
+			errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
+		} catch (Exception e) {
+			RestExecutionResultEnum errorInstance = RestExecutionResultEnum.GENERIC_ERROR;
+			if (e instanceof ValidationException) {
+				errorInstance = get(((ValidationException) e).getError().getType());
+			}
+
+			logger.error(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Error while updating CDA metadata of document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.KO, startDateOperation, errorInstance.getErrorCategory(), MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken, idDoc);
+			throw e;
+		}
+
+		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","update","traceId", logTraceDTO.getTraceID(),"wif", wif,"idDoc", idDoc);
+
+		ResponseWifDTO output = new ResponseWifDTO(wif, logTraceDTO, warning);
+		if(!StringUtility.isNullOrEmpty(warning)) {
+			return new ResponseEntity<>(output, HttpStatus.ACCEPTED);
+		} else {
+			return new ResponseEntity<>(output, HttpStatus.OK);
+		}
+
+	} 
 }
