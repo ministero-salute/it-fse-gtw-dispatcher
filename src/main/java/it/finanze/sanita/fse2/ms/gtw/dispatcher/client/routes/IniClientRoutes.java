@@ -45,6 +45,10 @@ public final class IniClientRoutes {
         return base().pathSegment(apiVersion, UPDATE_PATH).build().toUriString();
     }
 
+    public String updateOscuramentoCatena(String apiVersion) {
+        return base().pathSegment(apiVersion, UPDATE_PATH_OSCURAMENTO_CATENA).build().toUriString();
+    }
+
     public String references(String id) {
         return base().pathSegment(API_VERSION, REFERENCE_PATH, id).build().toUriString();
     }

@@ -20,8 +20,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class IniMetadataUpdateOscuramentoReqDTO {
-	
-//    private String marshallData;
     
     private JWTPayloadDTO token;
     
@@ -29,11 +27,7 @@ public class IniMetadataUpdateOscuramentoReqDTO {
     
     private String lid;
     
-//    private String documentType;
-//    
-//    private String workflow_instance_id;
-//    
-//    private List<String> administrative_request;
-//    
-//    private String author_institution;
+    private String wif;
+    
+    private String uniqueId;
 }

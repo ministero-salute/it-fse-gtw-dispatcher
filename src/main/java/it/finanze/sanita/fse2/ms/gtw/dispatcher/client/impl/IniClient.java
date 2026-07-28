@@ -38,6 +38,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.GetDocumentMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateOscuramentoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
@@ -121,6 +122,28 @@ public class IniClient extends AbstractClient implements IIniClient {
 				endpoint = routes.update("v1");
 				response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),IniTraceResponseDTO.class);	
 			}
+			
+			// Retrieve body
+			output = response.getBody();
+		} catch (RestClientResponseException ex) {
+			toServerResponseEx(routes.identifier(), routes.microservice(), ex, UPDATE_PATH);
+		}
+
+		return output;
+	}
+
+	@Override
+	public IniTraceResponseDTO updateOscuramentoCatena(IniMetadataUpdateOscuramentoReqDTO request) {
+
+		String endpoint = "";;
+		IniTraceResponseDTO output = null;
+
+		log.debug("{} - Executing request: {}", routes.identifier(), endpoint);
+
+		try {
+			ResponseEntity<IniTraceResponseDTO> response = null;
+			endpoint = routes.updateOscuramentoCatena("v1");
+			response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),IniTraceResponseDTO.class);
 			
 			// Retrieve body
 			output = response.getBody();

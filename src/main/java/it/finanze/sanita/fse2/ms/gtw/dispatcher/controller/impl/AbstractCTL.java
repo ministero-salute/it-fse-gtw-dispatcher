@@ -69,6 +69,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateOscuramentoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
@@ -269,6 +270,19 @@ public abstract class AbstractCTL {
 		}
 	}
 
+	protected void validateUpdateOscuramenteMetadataReq(final UpdateMetadataOscuramentoReqDTO out, final String resourceHl7Type) {
+		final String errorMsg = checkUpdateOscuramentoMandatoryElements(out,resourceHl7Type);
+
+		if (errorMsg != null) {
+			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
+					.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
+					.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
+					.detail(errorMsg).build();
+			throw new ValidationException(error);
+		}
+	}
+
     protected String checkValidationMandatoryElements(final ValidationCDAReqDTO jsonObj) {
 		String out = null;
 
@@ -378,6 +392,24 @@ public abstract class AbstractCTL {
 				out = validateDescriptions(jsonObj.getDescriptions());
 			}
     	}
+
+		return out;
+	}
+
+	protected String checkUpdateOscuramentoMandatoryElements(final UpdateMetadataOscuramentoReqDTO jsonObj,  final String resourceHl7Type) {
+		String out = null;
+		
+		if (jsonObj.getLid()==null) {
+    		out = "Il campo tipo documento lid deve essere valorizzato.";
+    	} 
+		
+		if (out==null && jsonObj.getAttiCliniciRegoleAccesso() != null) {
+			for (String attoClinico : jsonObj.getAttiCliniciRegoleAccesso()) {
+				if (EventCodeEnum.fromValue(attoClinico)==null) {
+					out = "Il campo atti clinici " + attoClinico + " non è consentito";
+				}
+			}
+		} 
 
 		return out;
 	}
@@ -1110,6 +1142,16 @@ public abstract class AbstractCTL {
 		
 		return output;
 	}
+
+	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateOscuramentoDto(UpdateMetadataOscuramentoReqDTO requestBody) {
+		DocumentReferenceDTO output = new DocumentReferenceDTO();
+		
+		if(requestBody.getAttiCliniciRegoleAccesso()!=null && requestBody.getAttiCliniciRegoleAccesso().size()>0) {
+			output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());	
+		}
+		
+		return output;
+	}
 	
 	
 	protected ResponseEntity<ResponseWifDTO> updateOscuramento(final String idDoc, final UpdateMetadataOscuramentoReqDTO requestBody, final HttpServletRequest request) {
@@ -1130,14 +1172,14 @@ public abstract class AbstractCTL {
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 
-			//					validateUpdateMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type()); //TODO - Va cambiato il metodo 
+			validateUpdateOscuramenteMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type()); 
 			wif = createWorkflowInstanceId(idDoc);
 
 			if(!configSRV.isRemoveEds()) {
 				GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
 				UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
 				req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
-				//				req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody)); //TODO - Va cambiato il metodo
+				req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateOscuramentoDto(requestBody)); 
 				TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
 				EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()));
 				if(edsResponse.isEsito()) {
@@ -1148,9 +1190,7 @@ public abstract class AbstractCTL {
 				}
 			}
 
-			IniTraceResponseDTO res = null;
-			//				IniTraceResponseDTO res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken,metadatiToUpdate.getDocumentType(),wif,
-			//						metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()),callUpdateV2); //TODO - Cambiare anche questo
+			IniTraceResponseDTO res = iniClient.updateOscuramentoCatena(new IniMetadataUpdateOscuramentoReqDTO(jwtPayloadToken, requestBody.getAttiCliniciRegoleAccesso(), requestBody.getLid(), wif, idDoc));
 			// Check response errors
 			if(Boolean.FALSE.equals(res.getEsito())) {
 				// Send to indexer
@@ -1160,9 +1200,7 @@ public abstract class AbstractCTL {
 				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update ini effettuato correttamente", INI_UPDATE);
 			}
 
-
-			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
-					idDoc);
+			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null, idDoc);
 		} catch (final ValidationException e) {
 			errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
 		} catch (final MetadataValidationException e) {

@@ -792,6 +792,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 	@Override
 	public ResponseEntity<ResponseWifDTO> updateMetadataOscuramentoACatena(String idDoc, UpdateMetadataOscuramentoReqDTO requestBody, HttpServletRequest request) {
-		
+		return updateOscuramento(idDoc, requestBody, request);
 	}
 }
