@@ -287,13 +287,12 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			log.debug("Executing replace of document: {}", idDoc);
 			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, uuid);
 
-            if("TRUE".equals(docMetadata.getEdsPublished())) {
-                final IndexerValueDTO kafkaValue = new IndexerValueDTO();
-                kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
-                kafkaValue.setIdDoc(idDoc);
-                kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
-                kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-            }
+			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
+			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
+			kafkaValue.setIdDoc(idDoc);
+			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue),
+					validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 
             kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken, callbackUrl);
 
