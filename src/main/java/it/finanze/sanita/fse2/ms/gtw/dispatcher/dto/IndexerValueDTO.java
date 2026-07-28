@@ -39,8 +39,13 @@ public class IndexerValueDTO {
     private ProcessorOperationEnum edsDPOperation;
 
     /**
-     * Whether the document was published to EDS (non-mock issuer).
-     * true = EDS operation should be performed; false = mock regime, skip EDS.
+     * Whether the document was published to EDS.
+     * true = this EDS operation should be performed; false = skip this EDS
+     * operation.
+     * valorized with:
+     * (!configSRV.isRemoveEds()) for create flow
+     * (!configSRV.isRemoveEds() && "TRUE".equals(docMetadata2.getEdsPublished()))
+     * for replace flow
      */
     private Boolean edsPublished;
 }
