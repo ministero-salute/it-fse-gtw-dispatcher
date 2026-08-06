@@ -110,6 +110,7 @@ public class ControllerExceptionHandler extends ResponseEntityExceptionHandler {
         LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
         errorResponseDTO.setSpanID(traceInfoDTO.getSpanID());
         errorResponseDTO.setTraceID(traceInfoDTO.getTraceID());
+        errorResponseDTO.setStatus(status);
         return new ResponseEntity<>(ex.getError(), headers, status);
     }
 

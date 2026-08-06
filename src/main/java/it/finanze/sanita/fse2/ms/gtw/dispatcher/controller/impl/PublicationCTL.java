@@ -616,11 +616,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String warning = null;
 		Document docT = null;
 		
-		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
-		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
-		String idDoc = "";
-		try {
+		JWTPayloadDTO jwtPayloadToken = null;
+        ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
+        String idDoc = "";
+
+        try {
+
+            jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
+            request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 			//Valido request e jwt come se fosse una pubblicazione
 			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,EventTypeEnum.VALIDATION_FOR_PUBLICATION,jwtPayloadToken,null);
 			docT = Jsoup.parse(validationResult.getCda());
@@ -635,6 +638,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),jwtPayloadToken, null,
 					idDoc);
 			request.setAttribute("JWT_ISSUER", issuer);
+
 		} catch (final ValidationException e) {
 			errorHandlerSRV.validationExceptionHandler(startDateOperationValidation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, CdaUtility.getDocumentType(docT),idDoc);
 		}
@@ -682,10 +686,12 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String warning = null;
 		Document docT = null;
 		
-		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.REPLACE);
-		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
-		try {
+		JWTPayloadDTO jwtPayloadToken = null;
+        ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
+
+        try {
+            jwtPayloadToken= extractAndValidateJWT(request, EventTypeEnum.REPLACE);
+            request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 			//Valido request e jwt come se fosse una pubblicazione
 			validationResult = publicationAndReplaceValidation(file, request, true,idDoc,traceInfoDTO,EventTypeEnum.VALIDATION_FOR_REPLACE, jwtPayloadToken,null);
 
@@ -764,7 +770,13 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 	@Override
-	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(@Size(min = 1, max = 256) String idDoc, UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
+	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(String idDoc, UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
 		return updateAbstract(idDoc, requestBody, true, request);
+	}
+
+	@Override
+	public ResponseEntity<ResponseWifDTO> updateMetadata(String idDoc, UpdateMetadataReqDTO requestBody,
+			HttpServletRequest request) {
+		return updateAbstract(idDoc, requestBody, false,request);
 	}
 }
