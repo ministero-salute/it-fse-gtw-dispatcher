@@ -883,7 +883,8 @@ public abstract class AbstractCTL {
 					validateAffinityDomainIfNeeded(metadatiToUpdate, idDoc, jwtPayloadToken, requestBody);
 				}
 				
-				boolean updateEds = !configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds()) ;//&& Aggiungere lettura flag INI;
+				boolean updateEds = !configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds()) 
+						&& "TRUE".equals(metadatiToUpdate.getEdsPublished());
 				if(updateEds) {
 					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate);
 				}
