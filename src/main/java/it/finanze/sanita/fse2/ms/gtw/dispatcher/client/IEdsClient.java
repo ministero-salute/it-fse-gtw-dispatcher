@@ -18,7 +18,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusR
 
 public interface IEdsClient {
 
-	EdsResponseDTO delete(String oid, String fiscalCode);
+	EdsResponseDTO delete(String oid, String fiscalCode, String jwtToken);
 	
 	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
 	
