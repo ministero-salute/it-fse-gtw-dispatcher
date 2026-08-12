@@ -91,13 +91,17 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 
 
 	@Override
-	public GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier) {
+	public GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier, String jwtToken) {
 			final URI uri = UriComponentsBuilder.fromUriString(msUrlCFG.getEdsClientHost())
 					.path("/v1/document/{fiscalCode}/{masterIdentifier}").buildAndExpand(fiscalCode, masterIdentifier)
 					.toUri();
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			if (jwtToken != null && !jwtToken.isEmpty()) {
+				headers.set("Agid-JWT-Signature", jwtToken);
+			}
 
 			HttpEntity<Void> entity = new HttpEntity<>(headers);
 

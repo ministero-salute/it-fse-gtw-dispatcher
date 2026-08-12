@@ -22,7 +22,7 @@ public interface IEdsClient {
 	
 	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
 	
-	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
+	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier, String jwtToken);
 
 	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
 
