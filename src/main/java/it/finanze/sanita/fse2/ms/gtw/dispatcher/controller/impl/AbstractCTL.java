@@ -24,6 +24,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.create
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isValidMasterId;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
@@ -910,7 +911,10 @@ public abstract class AbstractCTL {
 
 
 				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
-					GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
+					String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
+					String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
+					log.info("Base64 encode:" + base64Encoded);
+					GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc, base64Encoded);
 					UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
 					req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
 					req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody));

@@ -30,6 +30,8 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isNullOrEmpty;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -64,7 +66,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestD
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
@@ -492,7 +493,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
 			if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(iniReference.getMockEds())) {
-				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id());
+				String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
+				String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
+				log.info("Base64 encode:"+base64Encoded);
+				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id(), base64Encoded);
 				// Exit if necessary
 				Objects.requireNonNull(edsResponse, "PublicationCTL returned an error - edsResponse is null!");
 
