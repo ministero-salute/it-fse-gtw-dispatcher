@@ -100,6 +100,15 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 		isValidLocality(payload.getLocality());
 	}
 
+	@Override
+	public void validatePayloadForUpdateOscuramento(JWTPayloadDTO payload) {
+		validateFiscalCodes(payload);
+		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
+		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.SYSADMIN));
+		validateRoleCoherence(payload, Set.of(RoleEnum.NOR));
+		validateOscuramentoLocality(payload.getLocality());
+	}
+
 	private void performCommonValidation(JWTPayloadDTO payload) {
 		validateMandatoryFields(payload);
 		validateFiscalCodes(payload);
@@ -123,6 +132,31 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	private void validateFiscalCodes(JWTPayloadDTO payload) {
 		checkFiscalCode(payload.getSub(), "sub");
+	}
+
+	private void validateRoleCoherence(JWTPayloadDTO payload, Set<RoleEnum> expectedRoles) {
+		RoleEnum role = RoleEnum.get(payload.getSubject_role());
+		if (!expectedRoles.contains(role)) {
+			ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getType())
+					.title(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getTitle())
+					.instance(ErrorInstanceEnum.JWT_MALFORMED_FIELD.getInstance())
+					.detail("Il campo subject_role non è coerente con l'operazione richiesta")
+					.build();
+			throw new ValidationException(error);
+		}
+	}
+
+	private void validateOscuramentoLocality(String locality) {
+		if (!"------".equals(locality)) {
+			ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getType())
+					.title(RestExecutionResultEnum.INVALID_TOKEN_FIELD.getTitle())
+					.instance(ErrorInstanceEnum.JWT_MALFORMED_FIELD.getInstance())
+					.detail("Il campo locality deve essere valorizzato con '------' per l'operazione di oscuramento")
+					.build();
+			throw new ValidationException(error);
+		}
 	}
 
 	private void validateFieldsValue(JWTPayloadDTO payload) {

@@ -431,6 +431,9 @@ public abstract class AbstractCTL {
 			case UPDATE:
 				jwtSRV.validatePayloadForUpdate(token.getPayload());
 				break;
+			case UPDATE_OSCURAMENTO:
+				jwtSRV.validatePayloadForUpdateOscuramento(token.getPayload());
+				break;
 			case DELETE:
 				jwtSRV.validatePayloadForDelete(token.getPayload());
 				break;
@@ -1173,7 +1176,7 @@ public abstract class AbstractCTL {
 
 		try {
 			request.setAttribute("UPDATE_REQ", requestBody);
-			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
+			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE_OSCURAMENTO);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 
 			validateUpdateOscuramenteMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type()); 

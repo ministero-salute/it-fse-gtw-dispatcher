@@ -52,6 +52,14 @@ public interface IJwtSRV {
 	void validatePayloadForValidation(JWTPayloadDTO payload);
 
 	/**
+	 * Validate the payload of the JWT token for the update-oscuramento operation.
+	 * Expected: action_id=UPDATE, purpose_of_use=SYSADMIN, subject_role=NOR, locality="------"
+	 *
+	 * @param payload The payload of the JWT token.
+	 */
+	void validatePayloadForUpdateOscuramento(JWTPayloadDTO payload);
+
+	/**
 	 * Returns the mapping between issuer and system
 	 *
 	 * @param issuer The issuer of the JWT token
