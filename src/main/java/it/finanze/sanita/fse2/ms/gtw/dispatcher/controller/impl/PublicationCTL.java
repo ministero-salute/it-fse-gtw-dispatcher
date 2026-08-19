@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -107,6 +108,13 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ISignSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.TipoDocAltoLivAd263Enum;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Size;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *  Publication controller.
@@ -493,7 +501,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// [2] Send delete request to EDS
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
-			if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(iniReference.getMockEds()) && "TRUE".equals(iniEdsPublished)) {
+			if(!configSRV.isRemoveEds() && "TRUE".equals(iniEdsPublished)) {
 				String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
 				String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
 				log.info("Base64 encode:"+base64Encoded);

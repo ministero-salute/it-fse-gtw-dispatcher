@@ -1180,7 +1180,9 @@ public abstract class AbstractCTL {
 			wif = createWorkflowInstanceId(idDoc);
 
 			if(!configSRV.isRemoveEds()) {
-				GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
+				String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
+				String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
+				GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc,base64Encoded);
 				UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
 				req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
 				req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateOscuramentoDto(requestBody)); 
@@ -1199,7 +1201,7 @@ public abstract class AbstractCTL {
 			if(Boolean.FALSE.equals(res.getEsito())) {
 				// Send to indexer
 				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, EventStatusEnum.BLOCKING_ERROR, jwtPayloadToken, "Errore durante l'aggiornamento dell'oscuramento", INI_UPDATE);
-				//TODO - Rilanciata eccezione
+				throw new IniException(res.getMessage(), wif);
 			} else {
 				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update ini effettuato correttamente", INI_UPDATE);
 			}
