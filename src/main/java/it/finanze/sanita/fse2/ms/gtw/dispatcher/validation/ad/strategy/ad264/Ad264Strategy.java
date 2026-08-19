@@ -13,7 +13,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.*;
@@ -48,7 +47,7 @@ public class Ad264Strategy extends AbstractAffinityDomainStrategy {
 
     // Version metadata
     private static final String VERSION_ID = "2.6.4";
-    private static final LocalDate EFFECTIVE_FROM = LocalDate.of(2026, 10, 1);
+    private static final LocalDate EFFECTIVE_FROM = LocalDate.of(2026, 8, 4);
 
     // Mandatory field definitions - immutable sets
     private static final Set<String> MANDATORY_DOCUMENT_ENTRY_FIELDS = Set.of(
@@ -117,7 +116,7 @@ public class Ad264Strategy extends AbstractAffinityDomainStrategy {
                     JWTPayloadDTO jwtPayloadToken) {
 
             CorrelationDocumentType264Validator.isValid(
-                            DocumentTypeEnum.getByCode(
+                            DocumentType264Enum.getByCode(
                                             StringUtility.extractHl7TypeCode(jwtPayloadToken.getResource_hl7_type())),
                             TipoDocAltoLivAd264Enum.valueOf(request.getTipoDocumentoLivAlto()));
 

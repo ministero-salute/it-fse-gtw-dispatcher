@@ -7,6 +7,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.DocumentType264Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.TipoDocAltoLivAd264Enum;
 
 
@@ -57,7 +58,7 @@ public class CorrelationDocumentType264Validator {
 					Map.entry(DocumentTypeEnum.CODE_111827_2, Set.of(TipoDocAltoLivAd264Enum.CNT))
 					);
 
-	public static boolean isValid(DocumentTypeEnum documentType, TipoDocAltoLivAd264Enum documentClass) {
+	public static boolean isValid(DocumentType264Enum documentType, TipoDocAltoLivAd264Enum documentClass) {
 
 		if (documentType == null || documentClass == null) {
 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
