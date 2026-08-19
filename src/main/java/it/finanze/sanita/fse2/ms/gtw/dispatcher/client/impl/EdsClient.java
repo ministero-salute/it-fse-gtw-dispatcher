@@ -20,8 +20,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -35,7 +33,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -47,25 +44,28 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
-
+ 
 	@Override
-	public EdsResponseDTO delete(final String oid, final String fiscalCode) {
-		EdsResponseDTO output = null;
+	public EdsResponseDTO delete(String oid, String fiscalCode, String jwtToken) {
+		
+	    // Creazione headers
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+	    
+	    // Aggiunta JWT header se presente
+	    if (jwtToken != null && !jwtToken.isEmpty()) {
+	        headers.set("Agid-JWT-Signature", jwtToken);
+	    }
+	    
+	    // Creazione HttpEntity con headers
+	    HttpEntity<Void> entity = new HttpEntity<>(headers);
+	    
+	    String endpoint = msUrlCFG.getEdsClientHost() + "/v1/documents/" + oid + "/" + fiscalCode;
 
-		log.debug("EDS Client - Calling EDS to execute delete operation");
-		String endpoint = msUrlCFG.getEdsClientHost() + "/v1/documents/" + oid + "/" + fiscalCode;
-		try {
-			ResponseEntity<EdsResponseDTO> restExchange = restTemplate.exchange(endpoint, HttpMethod.DELETE, null, EdsResponseDTO.class);
-			output = restExchange.getBody();
-			log.debug("EDS Client - Deletion operation executed successfully");
-		} catch (HttpStatusCodeException e1) {
-			errorHandler("eds", e1, "/delete");
-		} catch (Exception e) {
-			log.error("Errore durante l'invocazione di EDS dell' API delete(). ", e);
-			throw new BusinessException("Errore durante l'invocazione di EDS dell' API delete(). ", e);
-		}
-
-		return output;
+	    // Passa entity con headers al restTemplate
+	    ResponseEntity<EdsResponseDTO> restExchange = restTemplate.exchange(endpoint, HttpMethod.DELETE, entity, EdsResponseDTO.class);
+	    
+	    return restExchange.getBody();
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 
 
 	@Override
-	public GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier) {
+	public GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier, String jwtToken) {
 			final URI uri = UriComponentsBuilder.fromUriString(msUrlCFG.getEdsClientHost())
 					.path("/v1/document/{fiscalCode}/{masterIdentifier}").buildAndExpand(fiscalCode, masterIdentifier)
 					.toUri();
@@ -99,12 +99,13 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
 
+			if (jwtToken != null && !jwtToken.isEmpty()) {
+				headers.set("Agid-JWT-Signature", jwtToken);
+			}
+
 			HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-			ResponseEntity<GetDocumentReferenceResDTO> response = restTemplate.exchange(
-					uri,
-					HttpMethod.GET,
-					entity,
+			ResponseEntity<GetDocumentReferenceResDTO> response = restTemplate.exchange(uri, HttpMethod.GET, entity,
 					GetDocumentReferenceResDTO.class
 					);
 

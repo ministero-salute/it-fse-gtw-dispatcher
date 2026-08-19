@@ -18,11 +18,11 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetIngestionStatusR
 
 public interface IEdsClient {
 
-	EdsResponseDTO delete(String oid, String fiscalCode);
+	EdsResponseDTO delete(String oid, String fiscalCode, String jwtToken);
 	
 	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
 	
-	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier);
+	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier, String jwtToken);
 
 	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
 

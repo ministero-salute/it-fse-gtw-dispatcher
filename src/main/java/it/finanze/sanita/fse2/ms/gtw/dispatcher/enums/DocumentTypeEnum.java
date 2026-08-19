@@ -34,13 +34,13 @@ public enum DocumentTypeEnum {
 	CODE_59284_0("59284-0", "Documento dei consensi"),
 	CODE_104531_9("104531-9", "Certificato di malattia"),
 	CODE_57832_8("57832-8", "Prescrizione diagnostica o specialistica"),
-	CODE_60593_1("60593-1", "Erogazione farmaceutica"),
+	CODE_29304_3("29304-3", "Erogazione farmaceutica"),
 	CODE_11488_4("11488-4", "Referto specialistico"),
 	CODE_57827_8("57827-8", "Documento di esenzione"),
 	CODE_81223_0("81223-0", "Erogazione specialistica"),
 	CODE_18776_5("18776-5", "Piano terapeutico"),
 	CODE_97500_3("97500-3", "Certificazione verde Covid-19 (Digital Green Certificate)6"),
-	CODE_87273_9("87273-9", "Scheda di singola vaccinazione"),
+	CODE_87273_9("87273-9", "Scheda singola vaccinazione"),
 	CODE_82593_5("82593-5", "Certificato vaccinale"),
 	CODE_97499_8("97499-8", "Certificato di guarigione da Covid-19"),
 	CODE_55750_4("55750-4", "Resoconto relativo alla sicurezza del paziente"),
@@ -58,12 +58,12 @@ public enum DocumentTypeEnum {
 	CODE_53576_5("53576-5", "Documento contenente dati Taccuino, Bundle di tipo collection"),
 	CODE_101881_1("101881-1", "Tessera portatori di impianto"),
 	CODE_108276_7("108276-7", "Lettera di invito per screening o altri percorsi di prevenzione"),
-	CODE_111490_9("111490-9", "Lettera di invito per vaccinazione"),
-	CODE_112062_5("112062-5", "Relazione di Telemonitoraggio"),
+	LOINC_CODE_1("[LOINC_CODE]", "Lettera di invito per vaccinazione"),
+	LOINC_CODE_2("[LOINC_CODE]", "Relazione di Telemonitoraggio"),
 	CODE_75496_0("75496-0", "Referto di Televisita"),
 	CODE_85208_7("85208-7", "Referto di Teleconsulto"),
-	CODE_112063_3("112063-3", "Referto di Teleassistenza"),
-	CODE_111827_2("111827-2", "Report settimanale di telemonitoraggio");
+	LOINC_CODE_3("[LOINC_CODE]", "Referto di Teleassistenza"),
+	LOINC_CODE_4("[LOINC_CODE]", "Report settimanale di telemonitoraggio");
 
     private final String code;
 

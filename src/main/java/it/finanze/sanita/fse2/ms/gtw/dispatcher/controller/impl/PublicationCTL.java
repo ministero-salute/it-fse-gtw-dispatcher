@@ -16,9 +16,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.App.MISS
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.BLOCKING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum.SUCCESS;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.EDS_DELETE;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.EDS_UPDATE;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_DELETE;
-import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.INI_UPDATE;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum.RIFERIMENTI_INI;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.FHIR_MAPPING_ERROR;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum.GENERIC_ERROR;
@@ -32,12 +30,13 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isNullOrEmpty;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,28 +62,21 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationCreationInputDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataOscuramentoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndReplaceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetMergedMetadatiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
@@ -100,7 +92,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
@@ -116,14 +107,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ISignSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.CorrelationDocumentType264Validator;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.TipoDocAltoLivAd264Enum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Size;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  *  Publication controller.
@@ -386,9 +369,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 			String typeCodeFromJwt = jwtPayloadToken.getResource_hl7_type();
 
-			CorrelationDocumentType264Validator.isValid(
+			CorrelationDocumentType263Validator.isValid(
 					DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)),
-					TipoDocAltoLivAd264Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
+					TipoDocAltoLivAd263Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
 
 			validation.setDocument(docT);
 		} catch (final ValidationException | NoRecordFoundException ve) {
@@ -510,8 +493,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// [2] Send delete request to EDS
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
-			if(!configSRV.isRemoveEds() && "TRUE".equals(iniEdsPublished)) {
-				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id());
+			if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(iniReference.getMockEds()) && "TRUE".equals(iniEdsPublished)) {
+				String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
+				String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
+				log.info("Base64 encode:"+base64Encoded);
+				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id(), base64Encoded);
 				// Exit if necessary
 				Objects.requireNonNull(edsResponse, "PublicationCTL returned an error - edsResponse is null!");
 
@@ -635,11 +621,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String warning = null;
 		Document docT = null;
 		
-		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
-		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
-		String idDoc = "";
-		try {
+		JWTPayloadDTO jwtPayloadToken = null;
+        ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
+        String idDoc = "";
+
+        try {
+
+            jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
+            request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 			//Valido request e jwt come se fosse una pubblicazione
 			validationResult = publicationAndReplaceValidation(file, request, false, null, traceInfoDTO,EventTypeEnum.VALIDATION_FOR_PUBLICATION,jwtPayloadToken,null);
 			docT = Jsoup.parse(validationResult.getCda());
@@ -654,6 +643,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			logger.info(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId, "Validation CDA completed for workflow instance Id " + workflowInstanceId, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperationValidation, CdaUtility.getDocumentType(docT),jwtPayloadToken, null,
 					idDoc);
 			request.setAttribute("JWT_ISSUER", issuer);
+
 		} catch (final ValidationException e) {
 			errorHandlerSRV.validationExceptionHandler(startDateOperationValidation, traceInfoDTO, workflowInstanceId, jwtPayloadToken, e, CdaUtility.getDocumentType(docT),idDoc);
 		}
@@ -701,10 +691,12 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		String warning = null;
 		Document docT = null;
 		
-		final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.REPLACE);
-		request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-		ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
-		try {
+		JWTPayloadDTO jwtPayloadToken = null;
+        ValidationCreationInputDTO validationResult = new ValidationCreationInputDTO();
+
+        try {
+            jwtPayloadToken= extractAndValidateJWT(request, EventTypeEnum.REPLACE);
+            request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 			//Valido request e jwt come se fosse una pubblicazione
 			validationResult = publicationAndReplaceValidation(file, request, true,idDoc,traceInfoDTO,EventTypeEnum.VALIDATION_FOR_REPLACE, jwtPayloadToken,null);
 
@@ -785,12 +777,18 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	}
 
 	@Override
-	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(@Size(min = 1, max = 256) String idDoc, UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
+	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(String idDoc, UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
 		return updateAbstract(idDoc, requestBody, true, request);
 	}
 
 	@Override
 	public ResponseEntity<ResponseWifDTO> updateMetadataOscuramentoACatena(String idDoc, UpdateMetadataOscuramentoReqDTO requestBody, HttpServletRequest request) {
 		return updateOscuramento(idDoc, requestBody, request);
+	}
+
+	@Override
+	public ResponseEntity<ResponseWifDTO> updateMetadata(String idDoc, UpdateMetadataReqDTO requestBody,
+			HttpServletRequest request) {
+		return updateAbstract(idDoc, requestBody, false,request);
 	}
 }
