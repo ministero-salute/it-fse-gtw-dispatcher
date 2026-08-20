@@ -919,7 +919,7 @@ public abstract class AbstractCTL {
 					req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
 					req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody));
 					TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
-					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()));
+					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()),base64Encoded);
 					if(edsResponse.isEsito()) {
 						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
 					} else {
