@@ -46,7 +46,6 @@ import java.util.function.Predicate;
  * </ul>
  * 
  * @see AffinityDomainStrategy
- * @since 2.1
  */
 @Slf4j
 public abstract class AbstractAffinityDomainStrategy implements AffinityDomainStrategy {
@@ -54,31 +53,7 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
     // Standard error codes used across all AD versions
     protected static final String ERROR_CODE_MISSING_MANDATORY = "MISSING_MANDATORY_FIELD";
     protected static final String ERROR_CODE_INVALID_VALUE_SET = "INVALID_VALUE_SET";
-    protected static final String ERROR_CODE_UNSUPPORTED_FEATURE = "UNSUPPORTED_FEATURE";
 
-    /**
-     * Collects missing mandatory fields by comparing present fields against required fields.
-     * 
-     * <p>This method handles null presentFields gracefully by treating all mandatory fields
-     * as missing when presentFields is null.
-     *
-     * @param presentFields Set of fields present in the metadata (can be null)
-     * @param mandatoryFields Set of mandatory fields to check (must not be null)
-     * @param prefix Prefix for error messages (e.g., "DocumentEntry", "SubmissionSet")
-     * @param missingFields List to collect missing field names (will be modified)
-     */
-    protected void collectMissingFields(Set<String> presentFields, Set<String> mandatoryFields,
-                                       String prefix, List<String> missingFields) {
-        if (presentFields == null) {
-            // If presentFields is null, all mandatory fields are missing
-            mandatoryFields.forEach(field -> missingFields.add(prefix + "." + field));
-            return;
-        }
-
-        mandatoryFields.stream()
-                .filter(field -> !presentFields.contains(field))
-                .forEach(field -> missingFields.add(prefix + "." + field));
-    }
 
     /**
      * Validates a single field against a validation predicate.
@@ -123,23 +98,6 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
                             fieldName, fieldValue, codeType, versionId()));
                 }
             }
-        }
-    }
-
-    /**
-     * Validates that a single-value field is not present (unsupported feature).
-     *
-     * <p>Checks if a field value is not null and adds an error if it's present,
-     * indicating the field is not supported in this AD version.
-     *
-     * @param fieldValue The field value to check (can be null)
-     * @param fieldName Name of the field for error messages
-     * @param validationErrors List to collect validation errors (will be modified)
-     */
-    protected void validateUnsupportedField(String fieldValue, String fieldName, List<String> validationErrors) {
-        if (fieldValue != null) {
-            validationErrors.add(String.format(
-                    "%s metadato non supportato da AD %s", fieldName, versionId()));
         }
     }
 
@@ -205,64 +163,6 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
                 .errorMessage(errorMessage)
                 .missingFields(errors != null ? errors : Collections.emptyList())
                 .build();
-    }
-
-    /**
-     * Template method for validating mandatory metadata fields.
-     * 
-     * <p>Implements the common validation flow used by all AD versions:
-     * <ol>
-     *   <li>Null check on metadata object</li>
-     *   <li>Collect missing DocumentEntry fields</li>
-     *   <li>Collect missing SubmissionSet fields</li>
-     *   <li>Build success or error result</li>
-     * </ol>
-     * 
-     * <p>Concrete strategies should call this method from their
-     * {@link #validateMandatoryMetadataIti57Request(MetadataDTO)} implementation,
-     * passing their version-specific mandatory field sets.
-     *
-     * @param metadata The metadata to validate
-     * @param mandatoryDocumentEntryFields Set of mandatory DocumentEntry fields for this AD version
-     * @param mandatorySubmissionSetFields Set of mandatory SubmissionSet fields for this AD version
-     * @return ValidationResultDTO with validation results
-     */
-    protected ValidationResultDTO validateMandatoryFieldsTemplate(
-            MetadataDTO metadata,
-            Set<String> mandatoryDocumentEntryFields,
-            Set<String> mandatorySubmissionSetFields) {
-        
-        if (metadata == null) {
-            log.error("Metadato non puo essere null per AD version {}", versionId());
-            return buildErrorResult(
-                    ERROR_CODE_MISSING_MANDATORY,
-                    "Metadata object is null",
-                    Collections.singletonList("metadata")
-            );
-        }
-
-        log.debug("Validating metadata against AD version {}", versionId());
-
-        // Collect missing fields
-        List<String> missingFields = new ArrayList<>();
-        collectMissingFields(metadata.getDocumentEntryFields(), mandatoryDocumentEntryFields, 
-                "DocumentEntry", missingFields);
-        collectMissingFields(metadata.getSubmissionSetFields(), mandatorySubmissionSetFields, 
-                "SubmissionSet", missingFields);
-
-        // Build and return result
-        if (missingFields.isEmpty()) {
-            log.info("Validazione OK per AD {}", versionId());
-            return buildSuccessResult();
-        } else {
-            log.warn("Validazione fallita per AD {}: missing {} field(s)", versionId(), missingFields.size());
-            return buildErrorResult(
-                    ERROR_CODE_MISSING_MANDATORY,
-                    String.format("Missing mandatory fields for AD %s: %s", 
-                            versionId(), String.join(", ", missingFields)),
-                    missingFields
-            );
-        }
     }
 
     /**

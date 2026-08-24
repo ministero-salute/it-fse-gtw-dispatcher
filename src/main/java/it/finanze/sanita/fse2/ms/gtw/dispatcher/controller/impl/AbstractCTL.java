@@ -953,9 +953,6 @@ public abstract class AbstractCTL {
                     log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
                     ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
 
-                    // TODO: consider using this to validate the actual IHE SOAP content sent to INI (ITI-57 Affinity Domain Validation)
-                    // ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
-
                     if (!adValidationResult.isValid()) {
                         log.error("Affinity Domain validation failed for document {}: {}",
                                 idDoc, adValidationResult.getErrorMessage());

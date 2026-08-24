@@ -23,23 +23,6 @@ import java.time.LocalDate;
 public interface IAffinityDomainValidationSRV {
 
     /**
-     * Validates metadata XML against the appropriate Affinity Domain strategy.
-     * 
-     * @param metadataXml The merged metadata XML to validate
-     * @param referenceDate The reference date (typically document creationTime) to determine AD version
-     * @return ValidationResultDTO with validation outcome
-     */
-    ValidationResultDTO validateMergedMetadataUpdate(String metadataXml, LocalDate referenceDate);
-
-    /**
-     * Extracts the creationTime from metadata XML and validates against the appropriate AD strategy.
-     * 
-     * @param metadataXml The merged metadata XML to validate
-     * @return ValidationResultDTO with validation outcome
-     */
-    ValidationResultDTO validateMergedMetadataUpdate(String metadataXml);
-
-    /**
      * Validates the update metadata request based on the specific affinity domain resolver.
      *
      * @param metadataReqDTO The metadata request DTO to validate.
