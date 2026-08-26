@@ -282,7 +282,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
 			kafkaValue.setIdDoc(idDoc);
-			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+            kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+            kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && "TRUE".equals(docMetadata.getEdsPublished()));
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue),
 					validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 
