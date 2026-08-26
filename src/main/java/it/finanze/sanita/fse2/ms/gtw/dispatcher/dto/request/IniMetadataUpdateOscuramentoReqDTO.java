@@ -25,8 +25,6 @@ public class IniMetadataUpdateOscuramentoReqDTO {
     
     private List<String> attiCliniciRegoleAccesso;
     
-    private String lid;
-    
     private String wif;
     
     private String uniqueId;
