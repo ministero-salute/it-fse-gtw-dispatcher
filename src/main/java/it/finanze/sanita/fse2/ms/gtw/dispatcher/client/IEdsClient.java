@@ -20,10 +20,10 @@ public interface IEdsClient {
 
 	EdsResponseDTO delete(String oid, String fiscalCode, String jwtToken);
 	
-	EdsResponseDTO update(final EdsMetadataUpdateReqDTO req);
-	
 	GetDocumentReferenceResDTO getDocumentReferenceClient(String fiscalCode, String masterIdentifier, String jwtToken);
 
 	GetIngestionStatusResponseDTO getEdsStatus(String workflowInstanceId);
+	
+	EdsResponseDTO update(EdsMetadataUpdateReqDTO req, String jwtToken);
 
 }

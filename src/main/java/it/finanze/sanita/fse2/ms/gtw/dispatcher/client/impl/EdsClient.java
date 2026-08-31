@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -41,6 +42,11 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 
 	@Autowired
 	private RestTemplate restTemplate;
+	
+	@Autowired
+	@Qualifier("restTemplateWithErrorHandler")
+	private RestTemplate restTemplateWithErrorHandler;
+	
 
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
@@ -69,15 +75,25 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 	}
 
 	@Override
-	public EdsResponseDTO update(EdsMetadataUpdateReqDTO req) {
-		EdsResponseDTO output = null;
-
+	public EdsResponseDTO update(EdsMetadataUpdateReqDTO req, String jwtToken) {
 		log.debug("EDS Client - Calling EDS to execute update operation");
-		HttpEntity<Object> entity = new HttpEntity<>(req, null);
+		EdsResponseDTO output = null;
+		
+		 // Creazione headers
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+	    
+	    // Aggiunta JWT header se presente
+	    if (jwtToken != null && !jwtToken.isEmpty()) {
+	        headers.set("Agid-JWT-Signature", jwtToken);
+	    }
+	    
+		HttpEntity<Object> entity = new HttpEntity<>(req, headers);
 		// Build endpoint e call.
 		String endpoint = msUrlCFG.getEdsClientHost() + Constants.Client.Eds.UPDATE_PATH.replace(Constants.Client.Eds.ID_DOC_PLACEHOLDER, req.getIdDoc());
 		try {
 			ResponseEntity<EdsResponseDTO> restExchange = restTemplate.exchange(endpoint, HttpMethod.PUT, entity, EdsResponseDTO.class);
+			
 			output = restExchange.getBody();
 			log.debug("EDS Client - Update operation executed successfully");
 		} catch (HttpStatusCodeException e1) {
@@ -105,10 +121,7 @@ public class EdsClient extends AbstractClient implements IEdsClient {
 
 			HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-			ResponseEntity<GetDocumentReferenceResDTO> response = restTemplate.exchange(uri, HttpMethod.GET, entity,
-					GetDocumentReferenceResDTO.class
-					);
-
+			ResponseEntity<GetDocumentReferenceResDTO> response = restTemplateWithErrorHandler.exchange(uri, HttpMethod.GET, entity, GetDocumentReferenceResDTO.class);
 			return response.getBody();
 	}
 
