@@ -15,7 +15,6 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 // Enums are validated in service layer; DTO holds raw String values
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -28,9 +27,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateMetadataOscuramentoReqDTO {
-
-	@Schema(description = "Logical identifier", requiredMode = RequiredMode.REQUIRED)
-	private String lid;
 
 	@Size(min = 0, max = 100)
 	@ArraySchema(schema = @Schema(maxLength = 1000, description = "Regola di accesso"))

@@ -399,10 +399,7 @@ public abstract class AbstractCTL {
 
 	protected String checkUpdateOscuramentoMandatoryElements(final UpdateMetadataOscuramentoReqDTO jsonObj,  final String resourceHl7Type) {
 		String out = null;
-		
-		if (jsonObj.getLid()==null) {
-    		out = "Il campo tipo documento lid deve essere valorizzato.";
-    	} 
+		 
 		
 		if (out==null && jsonObj.getAttiCliniciRegoleAccesso() != null) {
 			for (String attoClinico : jsonObj.getAttiCliniciRegoleAccesso()) {
@@ -1196,7 +1193,7 @@ public abstract class AbstractCTL {
 				}
 			}
 
-			IniTraceResponseDTO res = iniClient.updateOscuramentoCatena(new IniMetadataUpdateOscuramentoReqDTO(jwtPayloadToken, requestBody.getAttiCliniciRegoleAccesso(), requestBody.getLid(), wif, idDoc));
+			IniTraceResponseDTO res = iniClient.updateOscuramentoCatena(new IniMetadataUpdateOscuramentoReqDTO(jwtPayloadToken, requestBody.getAttiCliniciRegoleAccesso(), wif, idDoc));
 			// Check response errors
 			if(Boolean.FALSE.equals(res.getEsito())) {
 				// Send to indexer
