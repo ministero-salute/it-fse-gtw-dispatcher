@@ -26,6 +26,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -944,49 +945,45 @@ public abstract class AbstractCTL {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
 				}
 
-                if (!StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
-                    java.time.LocalDate referenceDate = affinityDomainUtility
-                            .extractCreationTime(metadatiToUpdate.getMarshallResponse());
-                    log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
-                    ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
-
-                    if (!adValidationResult.isValid()) {
-                        log.error("Affinity Domain validation failed for document {}: {}",
-                                idDoc, adValidationResult.getErrorMessage());
-
-                        ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
-                        final ErrorResponseDTO error = ErrorResponseDTO.builder()
-                                .type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
-                                .title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
-                                .instance(errorInstance.getInstance())
-                                .detail(adValidationResult.getErrorMessage())
-                                .build();
-                        throw new MetadataValidationException(error);
-                    }
-
-                    log.info("Affinity Domain validation passed for document {} using AD version {}",
-                            idDoc, adValidationResult.getAdVersion());
+                LocalDate referenceDate = affinityDomainUtility.extractCreationTime(metadatiToUpdate.getMarshallResponse());
+                log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
+                ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate, jwtPayloadToken);
+                if (!adValidationResult.isValid()) {
+                    log.error("Affinity Domain validation failed for document {}: {}",
+                            idDoc, adValidationResult.getErrorMessage());
+                    ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
+                    final ErrorResponseDTO error = ErrorResponseDTO.builder()
+                            .type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
+                            .title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
+                            .instance(errorInstance.getInstance())
+                            .detail(adValidationResult.getErrorMessage())
+                            .build();
+                    throw new MetadataValidationException(error);
                 }
+                log.info("Affinity Domain validation passed for document {} using AD version {}",
+                        idDoc, adValidationResult.getAdVersion());
 
 
-				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
+				if(!configSRV.isRemoveEds() && "TRUE".equals(metadatiToUpdate.getEdsPublished())) {
 					String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
 					String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
-					log.info("Base64 encode:" + base64Encoded);
 					GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc, base64Encoded);
 					UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
 					req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
 					req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody));
 					TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
-					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()),base64Encoded);
+					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()), base64Encoded);
 					if(edsResponse.isEsito()) {
 						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
 					} else {
 						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, "Update EDS fallito", EDS_UPDATE);
 						throw new EdsException(edsResponse.getMessageError());
 					}
+				} else {
+					log.info("Update EDS non eseguito per il documento {}: edsPublished={}, removeEds={}",
+							idDoc, metadatiToUpdate.getEdsPublished(), configSRV.isRemoveEds());
 				}
-				
+
 				if(regimeDiMock) {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime di mock", INI_UPDATE);
 				} else {
@@ -1008,6 +1005,7 @@ public abstract class AbstractCTL {
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
 					idDoc);
+
 		} catch (MockEnabledException me) {
 			throw me;
         } catch (final ValidationException e) {
@@ -1184,7 +1182,7 @@ public abstract class AbstractCTL {
 				req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
 				req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateOscuramentoDto(requestBody)); 
 				TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
-				EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()));
+				EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()), base64Encoded);
 				if(edsResponse.isEsito()) {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
 				} else {
@@ -1204,7 +1202,8 @@ public abstract class AbstractCTL {
 			}
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null, idDoc);
-		} catch (final ValidationException e) {
+
+        } catch (final ValidationException e) {
 			errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);
 		} catch (final MetadataValidationException e) {
 			errorHandlerSRV.updateValidationExceptionHandler(startDateOperation, logTraceDTO, wif, jwtPayloadToken,e,null, idDoc);

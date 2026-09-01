@@ -27,6 +27,8 @@ public class GetMergedMetadatiDTO {
 	private String authorInstitution;
 	
 	private List<String> administrativeRequest;
-	
+
 	private Boolean mockEds;
+
+	private String edsPublished;
 }
