@@ -103,7 +103,7 @@ public final class CdaUtility {
         int lastSeparatorIndex = id.lastIndexOf(MASTER_ID_SEPARATOR);
         if (lastSeparatorIndex == -1) return false;
 
-        String identificativoDocumento = id.substring(lastSeparatorIndex + 1);
+		String identificativoDocumento = id.substring(lastSeparatorIndex + 1).trim();
         return !identificativoDocumento.isEmpty();
     }
 
