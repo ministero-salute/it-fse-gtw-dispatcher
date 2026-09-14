@@ -105,6 +105,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.UpdateFlowTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
@@ -929,7 +930,7 @@ public abstract class AbstractCTL {
 			request.setAttribute("UPDATE_REQ", requestBody);
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-
+			String jwtString = Boolean.TRUE.equals(msCfg.getFromGovway()) ? request.getHeader(Headers.JWT_GOVWAY_HEADER) : request.getHeader(Headers.JWT_HEADER);
 			validateUpdateMetadataReq(requestBody, jwtPayloadToken.getResource_hl7_type());
 			wif = createWorkflowInstanceId(idDoc);
 			
@@ -950,7 +951,7 @@ public abstract class AbstractCTL {
 				boolean updateEds = !configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds()) 
 						&& "TRUE".equals(metadatiToUpdate.getEdsPublished());
 				if(updateEds) {
-					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate);
+					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, jwtString);
 				}
 				
 				if (!regimeDiMock) {
@@ -1137,9 +1138,9 @@ public abstract class AbstractCTL {
 	}
 	
 	private void updateEdsMetadata(LogTraceInfoDTO logTraceDTO, String wif, String idDoc, JWTPayloadDTO jwtPayloadToken, UpdateMetadataReqDTO requestBody,
-			GetMergedMetadatiDTO metadatiToUpdate) {
+			GetMergedMetadatiDTO metadatiToUpdate, String jwtString) {
 
-		GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc);
+		GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc, jwtString);
 
 		UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
 		req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
@@ -1149,7 +1150,7 @@ public abstract class AbstractCTL {
 
 		EdsResponseDTO edsResponse = edsClient.update(
 			new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),
-				jwtPayloadToken.getPerson_id()));
+				jwtPayloadToken.getPerson_id()), jwtString);
 
 		if (edsResponse.isEsito()) {
 			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
