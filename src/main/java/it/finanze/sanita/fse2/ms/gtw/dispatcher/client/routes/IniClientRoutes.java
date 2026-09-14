@@ -18,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.*;
 
+
 @Component
 public final class IniClientRoutes {
 
@@ -44,6 +45,10 @@ public final class IniClientRoutes {
         return base().pathSegment(apiVersion, UPDATE_PATH).build().toUriString();
     }
 
+    public String updateOscuramentoCatena(String apiVersion) {
+        return base().pathSegment(apiVersion, UPDATE_PATH_OSCURAMENTO_CATENA).build().toUriString();
+    }
+
     public String references(String id) {
         return base().pathSegment(API_VERSION, REFERENCE_PATH, id).build().toUriString();
     }
@@ -54,6 +59,10 @@ public final class IniClientRoutes {
     
     public String workflowInstanceId() {
         return base().pathSegment(API_VERSION, METADATA_PATH).build().toUriString();
+    }
+
+    public String documentMetadata(String id) {
+        return base().pathSegment(API_VERSION, GET_DOCUMENT_METADATA_PATH, id).build().toUriString();
     }
 
 }

@@ -239,6 +239,7 @@ public enum EventCodeEnum {
 	P00("P00","De-Oscuramento in alimentazione"),
 	P97("P97","Oscuramento al genitore"),
 	P98("P98","Oscuramento all’assistito"),
+	P81("P81", "Versioni precedenti Profilo Sanitario Sintetico"),
 	LP418019_8("LP418019-8","Tampone antigenico per Covid-19"),
 	LP417541_2("LP417541-2","Tampone molecolare per Covid-19"),
 	_96118_5("96118-5","Test Sierologico qualitativo"),
@@ -247,7 +248,7 @@ public enum EventCodeEnum {
 	PUBLICPOL("PUBLICPOL","Prescrizione farmaceutica SSN"),
 	LP267463_0("LP267463-0","Reddito"),
 	LP199190_2("LP199190-2","Patologia"),
-	_90768_3("90768-3","Analisi sangue");
+	_90768_3("90768-3","Analisi sangue donatore");
 	
 	
 	@Getter

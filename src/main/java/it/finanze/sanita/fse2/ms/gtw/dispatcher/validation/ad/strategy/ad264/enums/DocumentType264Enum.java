@@ -9,7 +9,7 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.enums;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +20,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum DocumentTypeEnum {
+public enum DocumentType264Enum {
 	
 	CODE_57833_6("57833-6", "Prescrizione farmaceutica"),
 	CODE_60591_5("60591-5", "Profilo Sanitario Sintetico"),
@@ -69,8 +69,8 @@ public enum DocumentTypeEnum {
 
     private final String documentType;
 
-    public static DocumentTypeEnum getByCode(String code) {
-        for (DocumentTypeEnum documentTypeEnum : DocumentTypeEnum.values()) {
+    public static DocumentType264Enum getByCode(String code) {
+        for (DocumentType264Enum documentTypeEnum : DocumentType264Enum.values()) {
             if (documentTypeEnum.getCode().equals(code)) {
                 return documentTypeEnum;
             }

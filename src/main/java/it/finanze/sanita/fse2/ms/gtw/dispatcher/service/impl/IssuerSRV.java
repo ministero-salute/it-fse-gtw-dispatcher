@@ -31,6 +31,21 @@ public class IssuerSRV implements IIssuerSRV {
     private IIssuerRepo issuerRepo;
 
     @Override
+    public boolean isEdsEnabledForIssuer(String issuerName) {
+        try {
+            IssuerETY issuer = issuerRepo.getByName(issuerName);
+            if (issuer != null) {
+                // mockUar == false → real EDS → EDS enabled
+                return Boolean.FALSE.equals(issuer.getMockUar());
+            }
+        } catch (Exception e) {
+            log.warn("Error checking EDS configuration for issuer '{}', defaulting to disabled", issuerName, e);
+        }
+        // default conservativo: assume mock → EDS non abilitato
+        return false;
+    }
+
+    @Override
     public boolean isFhirBundleEnabledForIssuer(String issuerName) {
         boolean enabled = false;
         

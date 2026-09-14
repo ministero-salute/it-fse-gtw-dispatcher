@@ -56,6 +56,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FHIRCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.ValidationCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.IPublicationCTL;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AccreditamentoSimulationDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.GetDocumentMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IndexerValueDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
@@ -67,12 +68,12 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateRep
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataOscuramentoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndCreateDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidateAndReplaceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
@@ -88,6 +89,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ProcessorOperationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.UpdateFlowTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
@@ -109,8 +111,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.CorrelationDocumentType263Validator;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.TipoDocAltoLivAd263Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.DocumentType264Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.TipoDocAltoLivAd264Enum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.CorrelationDocumentType264Validator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
@@ -225,6 +228,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
 		kafkaValue.setIdDoc(idDoc);
 		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
+		kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
 
 		kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken,
@@ -258,29 +262,33 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
 			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, jwtPayloadToken);
-			IniReferenceResponseDTO response = iniClient.reference(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
-
-			if(!isNullOrEmpty(response.getErrorMessage())) {
-				log.error("Errore. Nessun riferimento trovato: {}", response.getErrorMessage());
-				throw new IniException(response.getErrorMessage(),validationInfo.getValidationData().getWorkflowInstanceId());
+			GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(iniReq, validationInfo.getValidationData().getWorkflowInstanceId());
+	
+			if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
+				String errMsg = docMetadata != null ? docMetadata.getErrorMessage() : "Risposta null da get-document-metadata";
+				log.error("Errore. Nessun riferimento trovato: {}", errMsg);
+				throw new IniException(errMsg, validationInfo.getValidationData().getWorkflowInstanceId());
 			}
-
-			if (response.getUuid() == null || response.getUuid().isEmpty()) {
+	
+			String uuid = docMetadata.getUuid();
+			if (uuid == null || uuid.isEmpty()) {
 				log.error("Errore. Nessun riferimento UUID trovato per il documento: {}", idDoc);
 				throw new IniException("Errore. Nessun riferimento trovato.",
 						validationInfo.getValidationData().getWorkflowInstanceId());
 			}
-
+	
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
+			iniInvocationSRV.replace(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken, uuid);
 
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
 			kafkaValue.setIdDoc(idDoc);
-			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+            kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+            kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && "TRUE".equals(docMetadata.getEdsPublished()));
+			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue),
+					validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 
-			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
-			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken, callbackUrl);
+            kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken, callbackUrl);
 
 			logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Replace CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.OK, startDateOperation,
 					getDocumentType(validationInfo.getDocument()), jwtPayloadToken,null,idDoc);
@@ -372,9 +380,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 			String typeCodeFromJwt = jwtPayloadToken.getResource_hl7_type();
 
-			CorrelationDocumentType263Validator.isValid(
-					DocumentTypeEnum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)),
-					TipoDocAltoLivAd263Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
+			CorrelationDocumentType264Validator.isValid(
+					DocumentType264Enum.getByCode(StringUtility.extractHl7TypeCode(typeCodeFromJwt)),
+					TipoDocAltoLivAd264Enum.getByCode(jsonObj.getTipoDocumentoLivAlto().getCode()));
 
 			validation.setDocument(docT);
 		} catch (final ValidationException | NoRecordFoundException ve) {
@@ -477,22 +485,26 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			subjApplicationVersion = jwtPayloadToken.getSubject_application_version();
 
 			// ==============================
-			// [1] Retrieve reference from INI
+			// [1] Retrieve from INI (LeafClass ITI-18 → read all metadata)
 			// ==============================
-			IniReferenceResponseDTO iniReference = iniClient.reference(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
-			// Exit if necessary
-			if(!isNullOrEmpty(iniReference.getErrorMessage())) {
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, iniReference.getErrorMessage(), BLOCKING_ERROR, jwtPayloadToken, RIFERIMENTI_INI);
-				throw new IniException(iniReference.getErrorMessage(),workflowInstanceId);	
-			} else {
-				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Riferimenti trovati: " +iniReference.getUuid(), SUCCESS, jwtPayloadToken, RIFERIMENTI_INI);
+			GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
+			if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
+				String errMsg = docMetadata != null ? docMetadata.getErrorMessage() : "Risposta null da get-document-metadata";
+				kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, errMsg, BLOCKING_ERROR, jwtPayloadToken, RIFERIMENTI_INI);
+				throw new IniException(errMsg, workflowInstanceId);
 			}
-
+			String iniUuid = docMetadata.getUuid();
+			String iniDocumentType = docMetadata.getDocumentType();
+			String iniAuthorInstitution = docMetadata.getAuthorInstitution();
+			List<String> iniAdministrativeRequest = docMetadata.getAdministrativeRequest();
+			String iniEdsPublished = docMetadata.getEdsPublished();
+			kafkaSRV.sendDeleteStatus(info.getTraceID(), workflowInstanceId, idDoc, "Riferimenti trovati: " + iniUuid, SUCCESS, jwtPayloadToken, RIFERIMENTI_INI);
+	
 			// ==============================
 			// [2] Send delete request to EDS
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
-			if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(iniReference.getMockEds())) {
+			if(!configSRV.isRemoveEds() && "TRUE".equals(iniEdsPublished)) {
 				String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
 				String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
 				log.info("Base64 encode:"+base64Encoded);
@@ -516,15 +528,15 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// ==============================
 			DeleteRequestDTO deleteRequestDTO = buildRequestForIni(
 					idDoc,
-					iniReference.getUuid(),
+					iniUuid != null ? java.util.Arrays.asList(iniUuid) : java.util.Collections.emptyList(),
 					jwtPayloadToken,
-					iniReference.getDocumentType(),
+					iniDocumentType,
 					subjApplicationId,
 					subjApplicationVendor,
 					subjApplicationVersion,
 					workflowInstanceId,
-					iniReference.getAuthorInstitution(),
-					iniReference.getAdministrativeRequest() );
+					iniAuthorInstitution,
+					iniAdministrativeRequest);
 			IniTraceResponseDTO iniResponse = iniClient.delete(deleteRequestDTO);
 
 			// Check mock errors
@@ -726,26 +738,28 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			log.info("[START] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationResult.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
 			IniReferenceRequestDTO iniReq = new IniReferenceRequestDTO(idDoc, jwtPayloadToken);
-			IniReferenceResponseDTO response = iniClient.reference(iniReq, null);
-
-			if(!isNullOrEmpty(response.getErrorMessage())) {
-				log.error("Errore. Nessun riferimento trovato: {}", response.getErrorMessage());
-				throw new IniException(response.getErrorMessage(),workflowInstanceId);
+			GetDocumentMetadataDTO docMetadata2 = iniClient.documentMetadata(iniReq, null);
+	
+			if (docMetadata2 == null || !isNullOrEmpty(docMetadata2.getErrorMessage())) {
+				String errMsg2 = docMetadata2 != null ? docMetadata2.getErrorMessage() : "Risposta null da get-document-metadata";
+				log.error("Errore. Nessun riferimento trovato: {}", errMsg2);
+				throw new IniException(errMsg2, workflowInstanceId);
 			}
-
-			// Controllo difensivo: verifica che la lista UUID non sia null o vuota
-			if (response.getUuid() == null || response.getUuid().isEmpty()) {
+	
+			String uuid2 = docMetadata2.getUuid();
+			if (uuid2 == null || uuid2.isEmpty()) {
 				log.error("Errore. Nessun riferimento UUID trovato per il documento: {}", idDoc);
 				throw new IniException("Errore. Nessun riferimento trovato.", workflowInstanceId);
 			}
-
+	
 			log.debug("Executing replace of document: {}", idDoc);
-			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(), validationResult.getFhirResource(), jwtPayloadToken, response.getUuid().get(0));
-
+			iniInvocationSRV.replace(validationResult.getValidationData().getWorkflowInstanceId(), validationResult.getFhirResource(), jwtPayloadToken, uuid2);
+	
 			final IndexerValueDTO kafkaValue = new IndexerValueDTO();
 			kafkaValue.setWorkflowInstanceId(validationResult.getValidationData().getWorkflowInstanceId());
 			kafkaValue.setIdDoc(idDoc);
 			kafkaValue.setEdsDPOperation(ProcessorOperationEnum.REPLACE);
+			kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && "TRUE".equals(docMetadata2.getEdsPublished()));
 
 			kafkaSRV.notifyChannel(idDoc, new Gson().toJson(kafkaValue), validationResult.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.INDEXER);
 			kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationResult.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationResult.getJsonObj(), jwtPayloadToken,callbackUrl);
@@ -775,12 +789,20 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 	@Override
 	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(String idDoc, UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, true, request);
+		return updateAbstract(idDoc, requestBody, true, UpdateFlowTypeEnum.UPDATE_ITI57, request);
 	}
 
 	@Override
 	public ResponseEntity<ResponseWifDTO> updateMetadata(String idDoc, UpdateMetadataReqDTO requestBody,
 			HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, false,request);
+		return updateAbstract(idDoc, requestBody, false, UpdateFlowTypeEnum.UPDATE_ITI42,request);
+	}
+
+	@Override
+	public ResponseEntity<ResponseWifDTO> updateMetadataOscuramento(@Size(min = 1, max = 256) String idDoc,
+			UpdateMetadataOscuramentoReqDTO requestBody, HttpServletRequest request) {
+		UpdateMetadataReqDTO req = new UpdateMetadataReqDTO();
+		req.setAttiCliniciRegoleAccesso(requestBody.getAttiCliniciRegoleAccesso());
+		return updateAbstract(idDoc, req, true, UpdateFlowTypeEnum.UPDATE_ITI57,request);
 	}
 }

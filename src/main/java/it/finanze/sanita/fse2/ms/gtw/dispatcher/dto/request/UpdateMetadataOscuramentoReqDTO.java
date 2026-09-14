@@ -9,26 +9,26 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
 import java.util.List;
 
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
+// Enums are validated in service layer; DTO holds raw String values
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-public class GetMergedMetadatiDTO {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateMetadataOscuramentoReqDTO {
 
-	private String errorMessage;
-	
-	private String marshallResponse;
-	
-	private String documentType;
-	
-	private String authorInstitution;
-	
-	private List<String> administrativeRequest;
-
-	private Boolean mockEds;
-	
-	private String edsPublished;
+	@Size(min = 0, max = 100)
+	@ArraySchema(schema = @Schema(maxLength = 1000, description = "Regola di accesso"))
+	private List<String> attiCliniciRegoleAccesso;
 }

@@ -11,8 +11,10 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.GetDocumentMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateOscuramentoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
@@ -26,10 +28,20 @@ public interface IIniClient {
 	
 	IniTraceResponseDTO update(IniMetadataUpdateReqDTO request,boolean callUpdateV2);
 
+	IniTraceResponseDTO updateOscuramentoCatena(IniMetadataUpdateOscuramentoReqDTO request);
+
 	IniReferenceResponseDTO reference(IniReferenceRequestDTO iniReferenceRequestDTO, String workflowInstanceId);
 
 	GetMergedMetadatiDTO metadata(MergedMetadatiRequestDTO request);
 	
 	IniAuditsDto callSearchEventByWorkflowInstanceId(String workflowInstanceId);
+
+	/**
+	 * Chiama POST /v1/get-document-metadata/{idDoc} su ini-client.
+	 * Restituisce il RegistryObjectList XML (marshallResponse) del documento esistente,
+	 * eseguendo una ITI-18 LeafClass. Usato da Replace e Delete per leggere UUID,
+	 * documentType, authorInstitution, administrativeRequest e slot EDSpublished.
+	 */
+	GetDocumentMetadataDTO documentMetadata(IniReferenceRequestDTO request, String workflowInstanceId);
 
 }

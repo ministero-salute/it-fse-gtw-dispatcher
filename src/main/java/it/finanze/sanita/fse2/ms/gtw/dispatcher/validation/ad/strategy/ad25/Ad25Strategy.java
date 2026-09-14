@@ -39,33 +39,6 @@ public class Ad25Strategy extends AbstractAffinityDomainStrategy {
     private static final String VERSION_ID = "2.5";
     private static final LocalDate EFFECTIVE_FROM = LocalDate.of(2023, 12, 12);
 
-    // Mandatory field definitions - immutable sets
-    private static final Set<String> MANDATORY_DOCUMENT_ENTRY_FIELDS = Set.of(
-            // Slots
-            "slot:repositoryUniqueId", // XDSDocumentEntry.repositoryUniqueId
-            "slot:sourcePatientId", // XDSDocumentEntry.sourcePatientId
-            "slot:urn:ita:2022:documentSigned", // XDSDocumentEntry.documentSigned
-            "slot:urn:ita:2022:administrativeRequest", // XDSDocumentEntry.administrativeRequest
-            // Classifications (by scheme URN)
-            "classification:urn:uuid:93606bcf-9494-43ec-9b4e-a7748d1a838d", // XDSDocumentEntry.author
-            "classification:urn:uuid:93606bcf-9494-43ec-9b4e-a7748d1a838d:slot:authorInstitution", // XDSDocumentEntry.author.authorInstitution
-            "classification:urn:uuid:93606bcf-9494-43ec-9b4e-a7748d1a838d:slot:authorPerson", // XDSDocumentEntry.author.authorPerson
-            "classification:urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a", // XDSDocumentEntry.classCode
-            "classification:urn:uuid:f4f85eac-e6cb-4883-b524-f2705394840f", // XDSDocumentEntry.confidentialityCode
-            "classification:urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d", // XDSDocumentEntry.formatCode
-            "classification:urn:uuid:f0306f51-975f-434e-a61c-c59651d33983", // XDSDocumentEntry.typeCode
-            // ExternalIdentifiers (by scheme URN)
-            "externalId:urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427", // XDSDocumentEntry.patientId
-            "externalId:urn:uuid:2e82c1f6-a085-4c72-9da3-8640a32e42ab" // XDSDocumentEntry.uniqueId
-    );
-
-    private static final Set<String> MANDATORY_SUBMISSION_SET_FIELDS = Set.of(
-            // Classifications (by scheme URN)
-            "classification:urn:uuid:a7058bb9-b4e4-4307-ba5b-e3f0ab85e12d", // XDSSubmissionSet.author
-            // ExternalIdentifiers (by scheme URN)
-            "externalId:urn:uuid:554ac39e-e3fe-47fe-b233-965d2a147832", // XDSSubmissionSet.sourceId
-            "externalId:urn:uuid:96fdda7c-d067-4183-912e-bf5ee74998a8" // XDSSubmissionSet.uniqueId
-    );
 
     @Override
     public String versionId() {
@@ -75,15 +48,6 @@ public class Ad25Strategy extends AbstractAffinityDomainStrategy {
     @Override
     public LocalDate effectiveFrom() {
         return EFFECTIVE_FROM;
-    }
-
-    @Override
-    public ValidationResultDTO validateMandatoryMetadataIti57Request(MetadataDTO metadata) {
-        return validateMandatoryFieldsTemplate(
-                metadata,
-                MANDATORY_DOCUMENT_ENTRY_FIELDS,
-                MANDATORY_SUBMISSION_SET_FIELDS
-        );
     }
 
     @Override

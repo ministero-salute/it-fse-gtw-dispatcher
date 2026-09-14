@@ -29,6 +29,7 @@ public class IssuerETY {
 
     public static final String ISSUER_FIELD = "issuer";
     public static final String FHIR_BUNDLE_IN_RESPONSE = "fhirBundleInResponse";
+    public static final String MOCK_UAR = "mockUar";
 
     @Id
     private String id;
@@ -38,4 +39,7 @@ public class IssuerETY {
 
     @Field(name = FHIR_BUNDLE_IN_RESPONSE)
     private Boolean fhirBundleInResponse;
+
+    @Field(name = MOCK_UAR)
+    private Boolean mockUar;
 }

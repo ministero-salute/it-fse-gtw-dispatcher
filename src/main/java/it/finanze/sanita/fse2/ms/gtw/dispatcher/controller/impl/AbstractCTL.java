@@ -26,6 +26,7 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -36,9 +37,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -72,6 +70,19 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTTokenDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationDataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationFhirResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.EdsMetadataUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateOscuramentoReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceWiiDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataOscuramentoReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationFHIRReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.GetDocumentReferenceResDTO;
@@ -80,18 +91,40 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.IssueSeverityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.UpdateFlowTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.IniException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FhirUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.PDFUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -240,6 +273,19 @@ public abstract class AbstractCTL {
 		}
 	}
 
+	protected void validateUpdateOscuramenteMetadataReq(final UpdateMetadataOscuramentoReqDTO out, final String resourceHl7Type) {
+		final String errorMsg = checkUpdateOscuramentoMandatoryElements(out,resourceHl7Type);
+
+		if (errorMsg != null) {
+			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getType())
+					.title(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle())
+					.instance(ErrorInstanceEnum.MISSING_MANDATORY_ELEMENT.getInstance())
+					.detail(errorMsg).build();
+			throw new ValidationException(error);
+		}
+	}
+
     protected String checkValidationMandatoryElements(final ValidationCDAReqDTO jsonObj) {
 		String out = null;
 
@@ -353,6 +399,21 @@ public abstract class AbstractCTL {
 		return out;
 	}
 
+	protected String checkUpdateOscuramentoMandatoryElements(final UpdateMetadataOscuramentoReqDTO jsonObj,  final String resourceHl7Type) {
+		String out = null;
+		 
+		
+		if (out==null && jsonObj.getAttiCliniciRegoleAccesso() != null) {
+			for (String attoClinico : jsonObj.getAttiCliniciRegoleAccesso()) {
+				if (EventCodeEnum.fromValue(attoClinico)==null) {
+					out = "Il campo atti clinici " + attoClinico + " non è consentito";
+				}
+			}
+		} 
+
+		return out;
+	}
+
 	protected JWTPayloadDTO extractAndValidateJWT(final HttpServletRequest request ,final EventTypeEnum eventType) {
 		String extractedToken = Boolean.TRUE.equals(msCfg.getFromGovway()) ? request.getHeader(Headers.JWT_GOVWAY_HEADER) : request.getHeader(Headers.JWT_HEADER);
 		return extractAndValidateJWT(extractedToken,eventType);
@@ -368,6 +429,9 @@ public abstract class AbstractCTL {
 				break;
 			case UPDATE:
 				jwtSRV.validatePayloadForUpdate(token.getPayload());
+				break;
+			case UPDATE_OSCURAMENTO:
+				jwtSRV.validatePayloadForUpdateOscuramento(token.getPayload());
 				break;
 			case DELETE:
 				jwtSRV.validatePayloadForDelete(token.getPayload());
@@ -848,107 +912,58 @@ public abstract class AbstractCTL {
     }
     
 	protected ResponseEntity<ResponseWifDTO> updateAbstract(final String idDoc, final UpdateMetadataReqDTO requestBody,
-			boolean callUpdateV2,
-			final HttpServletRequest request) {
-		// Estrazione token
+			boolean callUpdateV2, UpdateFlowTypeEnum flowType, HttpServletRequest request) {
+		
 		JWTPayloadDTO jwtPayloadToken = null;
 		final Date startDateOperation = new Date();
 		LogTraceInfoDTO logTraceDTO = getLogTraceInfo();
 		String wif = "";
-
-		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","update","traceId", logTraceDTO.getTraceID(),"wif", wif,"idDoc", idDoc);
-
 		String warning = null;
 
-		if(!isValidMasterId(idDoc)) throw new ValidationException(createMasterIdError());
+		log.info("[START] updateAbstract() with arguments traceId={}, wif={}, idDoc={}, flowType={}", logTraceDTO.getTraceID(), wif, idDoc, flowType);
+
+		if (!isValidMasterId(idDoc)) {
+			throw new ValidationException(createMasterIdError());
+		}
 
 		try {
 			request.setAttribute("UPDATE_REQ", requestBody);
 			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
-
-			validateUpdateMetadataReq(requestBody,jwtPayloadToken.getResource_hl7_type());
+			String jwtString = Boolean.TRUE.equals(msCfg.getFromGovway()) ? request.getHeader(Headers.JWT_GOVWAY_HEADER) : request.getHeader(Headers.JWT_HEADER);
+			validateUpdateMetadataReq(requestBody, jwtPayloadToken.getResource_hl7_type());
 			wif = createWorkflowInstanceId(idDoc);
+			
 			final GetMergedMetadatiDTO metadatiToUpdate = iniClient.metadata(new MergedMetadatiRequestDTO(idDoc,jwtPayloadToken, requestBody,wif));
 			if(!StringUtility.isNullOrEmpty(metadatiToUpdate.getErrorMessage()) && !metadatiToUpdate.getErrorMessage().contains("Invalid region ip")) {
 				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, metadatiToUpdate.getErrorMessage(), RIFERIMENTI_INI);
 				throw new IniException(metadatiToUpdate.getErrorMessage(),wif);
 			} else {
 				boolean regimeDiMock = metadatiToUpdate.getMarshallResponse()==null; 
-
-				if(regimeDiMock) {
-					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime mock", RIFERIMENTI_INI);
-				} else {
-					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
-				}
-
-                if (!StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
-                    java.time.LocalDate referenceDate = affinityDomainUtility
-                            .extractCreationTime(metadatiToUpdate.getMarshallResponse());
-                    log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
-                    ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate,jwtPayloadToken);
-
-                    // TODO: consider using this to validate the actual IHE SOAP content sent to INI (ITI-57 Affinity Domain Validation)
-                    // ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
-
-                    if (!adValidationResult.isValid()) {
-                        log.error("Affinity Domain validation failed for document {}: {}",
-                                idDoc, adValidationResult.getErrorMessage());
-
-                        ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
-                        final ErrorResponseDTO error = ErrorResponseDTO.builder()
-                                .type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
-                                .title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
-                                .instance(errorInstance.getInstance())
-                                .detail(adValidationResult.getErrorMessage())
-                                .build();
-                        throw new MetadataValidationException(error);
-                    }
-
-                    log.info("Affinity Domain validation passed for document {} using AD version {}",
-                            idDoc, adValidationResult.getAdVersion());
-                }
-
-
-				if(!configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds())) {
-					String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
-					String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
-					log.info("Base64 encode:" + base64Encoded);
-					GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc, base64Encoded);
-					UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
-					req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
-					req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody));
-					TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
-					EdsResponseDTO edsResponse = edsClient.update(new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),jwtPayloadToken.getPerson_id()),base64Encoded);
-					if(edsResponse.isEsito()) {
-						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
-					} else {
-						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, "Update EDS fallito", EDS_UPDATE);
-						throw new EdsException(edsResponse.getMessageError());
-					}
+				
+				sendIniStatusLog(logTraceDTO, wif, idDoc, jwtPayloadToken, regimeDiMock);
+				
+				
+				if (flowType.shouldValidateAffinityDomain()) {
+					validateAffinityDomainIfNeeded(metadatiToUpdate, idDoc, jwtPayloadToken, requestBody);
 				}
 				
-				if(regimeDiMock) {
-					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime di mock", INI_UPDATE);
+				boolean updateEds = !configSRV.isRemoveEds() && Boolean.FALSE.equals(metadatiToUpdate.getMockEds()) 
+						&& "TRUE".equals(metadatiToUpdate.getEdsPublished());
+				if(updateEds) {
+					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, jwtString);
+				}
+				
+				if (!regimeDiMock) {
+					warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, metadatiToUpdate, callUpdateV2, flowType);
 				} else {
-					IniTraceResponseDTO res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken,metadatiToUpdate.getDocumentType(),wif,
-							metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()),callUpdateV2);
-					// Check response errors
-					if(Boolean.FALSE.equals(res.getEsito())) {
-						// Send to indexer
-						kafkaSRV.sendUpdateRequest(wif, new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), wif,
-								metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()));
-						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, EventStatusEnum.ASYNC_RETRY, jwtPayloadToken, "Transazione presa in carico", INI_UPDATE);
-						warning = Misc.WARN_ASYNC_TRANSACTION;
-					} else {
-						kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update ini effettuato correttamente", INI_UPDATE);
-					}
-				}  
-
+					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime di mock", INI_UPDATE);
+				}
+				
+				logger.info(Constants.App.LOG_TYPE_CONTROL, wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc),
+						OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken, null, idDoc);
 			}
 
-			logger.info(Constants.App.LOG_TYPE_CONTROL,wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc), OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken,null,
-					idDoc);
 		} catch (MockEnabledException me) {
 			throw me;
         } catch (final ValidationException e) {
@@ -1066,10 +1081,116 @@ public abstract class AbstractCTL {
 	
 	private DocumentReferenceDTO getDocumentReferenceDtoFromUpdateDto(UpdateMetadataReqDTO requestBody) {
 		DocumentReferenceDTO output = new DocumentReferenceDTO();
-		output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());
-		output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());
-		output.setFacilityTypeCode(requestBody.getTipologiaStruttura());
-		output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo());
+		if(requestBody.getAdministrativeRequest()!=null && requestBody.getAdministrativeRequest().size()>0) {
+			output.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());	
+		}
+		
+		if(requestBody.getAttiCliniciRegoleAccesso()!=null && requestBody.getAttiCliniciRegoleAccesso().size()>0) {
+			output.setEventCode(requestBody.getAttiCliniciRegoleAccesso());	
+		}
+		
+		if(!StringUtility.isNullOrEmpty(requestBody.getTipologiaStruttura())) {
+			output.setFacilityTypeCode(requestBody.getTipologiaStruttura());	
+		}
+		
+		if(!StringUtility.isNullOrEmpty(requestBody.getAssettoOrganizzativo())) {
+			output.setPracticeSettingCode(requestBody.getAssettoOrganizzativo());
+		}
+		
 		return output;
+	}
+	
+	private void sendIniStatusLog(LogTraceInfoDTO logTraceDTO, String wif, String idDoc,
+			JWTPayloadDTO jwtPayloadToken, boolean regimeDiMock) {
+		if (regimeDiMock) {
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime mock", RIFERIMENTI_INI);
+		} else {
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
+		}
+	}
+	
+	private void validateAffinityDomainIfNeeded(GetMergedMetadatiDTO metadatiToUpdate, String idDoc, JWTPayloadDTO jwtPayloadToken, UpdateMetadataReqDTO requestBody) {
+
+		if (StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse())) {
+			return;
+		}
+
+		java.time.LocalDate referenceDate = affinityDomainUtility.extractCreationTime(metadatiToUpdate.getMarshallResponse());
+
+		log.info("Performing DTO value-set validation against Affinity Domain strategy for document: {}", idDoc);
+
+		ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateUpdateMetadataRequest(requestBody, referenceDate, jwtPayloadToken);
+		 // ValidationResultDTO adValidationResult = affinityDomainValidationSRV.validateMergedMetadataUpdate(metadatiToUpdate.getMarshallResponse());
+		if (!adValidationResult.isValid()) {
+			log.error("Affinity Domain validation failed for document {}: {}", idDoc, adValidationResult.getErrorMessage());
+
+			ErrorInstanceEnum errorInstance = ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD;
+			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+				.type(RestExecutionResultEnum.SYNTAX_ERROR.getType())
+				.title(RestExecutionResultEnum.SYNTAX_ERROR.getTitle())
+				.instance(errorInstance.getInstance())
+				.detail(adValidationResult.getErrorMessage())
+				.build();
+			throw new MetadataValidationException(error);
+		}
+
+		log.info("Affinity Domain validation passed for document {} using AD version {}", idDoc, adValidationResult.getAdVersion());
+	}
+	
+	private void updateEdsMetadata(LogTraceInfoDTO logTraceDTO, String wif, String idDoc, JWTPayloadDTO jwtPayloadToken, UpdateMetadataReqDTO requestBody,
+			GetMergedMetadatiDTO metadatiToUpdate, String jwtString) {
+
+		GetDocumentReferenceResDTO documentReferenceRes = edsClient.getDocumentReferenceClient(jwtPayloadToken.getPerson_id(), idDoc, jwtString);
+
+		UpdateDocumentReferenceRequestDTO req = new UpdateDocumentReferenceRequestDTO();
+		req.setOldDocumentReference(documentReferenceRes.getDocumentReference());
+		req.setDocumentReferenceDTO(getDocumentReferenceDtoFromUpdateDto(requestBody));
+
+		TransformResDTO updatedDocRef = fhirClient.updateDocumentReferenceClient(req);
+
+		EdsResponseDTO edsResponse = edsClient.update(
+			new EdsMetadataUpdateReqDTO(idDoc, wif, StringUtility.toJSON(updatedDocRef.getJson()),
+				jwtPayloadToken.getPerson_id()), jwtString);
+
+		if (edsResponse.isEsito()) {
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update EDS effettuato correttamente", EDS_UPDATE);
+		} else {
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, "Update EDS fallito", EDS_UPDATE);
+			throw new EdsException(edsResponse.getMessageError());
+		}
+	}
+	
+	private String updateIniAndHandleResponse(LogTraceInfoDTO logTraceDTO, String wif, String idDoc,
+			JWTPayloadDTO jwtPayloadToken, GetMergedMetadatiDTO metadatiToUpdate,
+			boolean callUpdateV2, UpdateFlowTypeEnum flowType) {
+
+		IniTraceResponseDTO res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), 
+				wif, metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()), callUpdateV2);
+
+		if (Boolean.FALSE.equals(res.getEsito())) {
+			return handleIniUpdateError(logTraceDTO, wif, idDoc, jwtPayloadToken, metadatiToUpdate, flowType);
+		} else {
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Update ini effettuato correttamente", INI_UPDATE);
+			return res.getMessage();
+		}
+	}
+	
+	private String handleIniUpdateError(LogTraceInfoDTO logTraceDTO, String wif, String idDoc, JWTPayloadDTO jwtPayloadToken, GetMergedMetadatiDTO metadatiToUpdate,
+			UpdateFlowTypeEnum flowType) {
+
+		if (flowType.shouldUseAsyncRetry()) {
+			// Flussi 1 e 3: Retry asincrono tramite Kafka
+			log.info("INI update failed for document {}. Sending to async retry queue (wif={})", idDoc, wif);
+			kafkaSRV.sendUpdateRequest(wif,
+				new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), wif, 
+						metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()));
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, EventStatusEnum.ASYNC_RETRY, jwtPayloadToken, "Transazione presa in carico", INI_UPDATE);
+			return Misc.WARN_ASYNC_TRANSACTION;
+		} else {
+			// Flusso 2: Errore bloccante immediato
+			log.error("INI update failed for document {}. Blocking error (wif={})", idDoc, wif);
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, "Errore", INI_UPDATE);
+			throw new IniException("INI update failed", wif);
+		}
 	}
 }

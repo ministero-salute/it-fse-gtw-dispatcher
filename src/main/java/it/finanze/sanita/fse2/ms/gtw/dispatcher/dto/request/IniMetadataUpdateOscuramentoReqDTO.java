@@ -9,26 +9,23 @@
  * 
  * You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response;
+package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request;
 
 import java.util.List;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-public class GetMergedMetadatiDTO {
-
-	private String errorMessage;
-	
-	private String marshallResponse;
-	
-	private String documentType;
-	
-	private String authorInstitution;
-	
-	private List<String> administrativeRequest;
-
-	private Boolean mockEds;
-	
-	private String edsPublished;
+@AllArgsConstructor
+public class IniMetadataUpdateOscuramentoReqDTO {
+    
+    private JWTPayloadDTO token;
+    
+    private List<String> attiCliniciRegoleAccesso;
+    
+    private String wif;
+    
+    private String uniqueId;
 }

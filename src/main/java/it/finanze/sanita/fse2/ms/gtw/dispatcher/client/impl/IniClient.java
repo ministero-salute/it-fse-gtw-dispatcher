@@ -12,6 +12,7 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.DELETE_PATH;
+import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.GET_DOCUMENT_METADATA_PATH;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.REFERENCE_PATH;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.base.ClientRoutes.Ini.UPDATE_PATH;
 import static org.springframework.http.HttpMethod.DELETE;
@@ -34,8 +35,10 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.base.AbstractClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.IniClientRoutes;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.GetDocumentMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.IniAuditsDto;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateOscuramentoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniMetadataUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.MergedMetadatiRequestDTO;
@@ -129,6 +132,28 @@ public class IniClient extends AbstractClient implements IIniClient {
 		return output;
 	}
 
+	@Override
+	public IniTraceResponseDTO updateOscuramentoCatena(IniMetadataUpdateOscuramentoReqDTO request) {
+
+		String endpoint = "";;
+		IniTraceResponseDTO output = null;
+
+		log.debug("{} - Executing request: {}", routes.identifier(), endpoint);
+
+		try {
+			ResponseEntity<IniTraceResponseDTO> response = null;
+			endpoint = routes.updateOscuramentoCatena("v1");
+			response = restTemplateIni.exchange(endpoint,PUT,new HttpEntity<>(request),IniTraceResponseDTO.class);
+			
+			// Retrieve body
+			output = response.getBody();
+		} catch (RestClientResponseException ex) {
+			toServerResponseEx(routes.identifier(), routes.microservice(), ex, UPDATE_PATH);
+		}
+
+		return output;
+	}
+
 	
 	@Override
 	public GetMergedMetadatiDTO metadata(final MergedMetadatiRequestDTO request) {
@@ -160,6 +185,28 @@ public class IniClient extends AbstractClient implements IIniClient {
 		}
 		return out;
 	}
+
+	@Override
+	public GetDocumentMetadataDTO documentMetadata(IniReferenceRequestDTO request, String workflowInstanceId) {
+		String endpoint = routes.documentMetadata(request.getIdDoc());
+		GetDocumentMetadataDTO output = null;
+
+		log.debug("{} - Executing request: {}", routes.identifier(), endpoint);
+
+		try {
+			Map<String, Object> requestBody = new HashMap<>();
+			requestBody.put("token", request.getToken());
+			requestBody.put("workflowInstanceId", workflowInstanceId);
+			// Execute request
+			ResponseEntity<GetDocumentMetadataDTO> response = restTemplateIni.exchange(endpoint, POST, new HttpEntity<>(requestBody), GetDocumentMetadataDTO.class);
+			// Retrieve body
+			output = response.getBody();
+		} catch (RestClientResponseException ex) {
+			toServerResponseEx(routes.identifier(), routes.microservice(), ex, GET_DOCUMENT_METADATA_PATH);
+		}
+
+		return output;
+	}
+
 	
- 
 }

@@ -33,15 +33,7 @@ public interface AffinityDomainStrategy {
      * Returns the effective date from which this strategy applies
      */
     LocalDate effectiveFrom();
-    
-    /**
-     * Validates mandatory metadata fields for ITI-57 request.
-     *
-     * @param metadata The extracted metadata containing present fields
-     * @return ValidationResultDTO with validation results
-     */
-    ValidationResultDTO validateMandatoryMetadataIti57Request(MetadataDTO metadata);
-    
+
     /**
      * Validates the UpdateMetadataReqDTO against AD version-specific value sets.
      * This validation ensures that the input request contains valid codes for input metadata such as:
