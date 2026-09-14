@@ -89,6 +89,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ProcessorOperationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.UpdateFlowTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.EdsException;
@@ -788,7 +789,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 	@Override
 	public ResponseEntity<ResponseWifDTO> updateMetadataIti_57(String idDoc, UpdateMetadataReqDTO requestBody, HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, true, request);
+		return updateAbstract(idDoc, requestBody, true, UpdateFlowTypeEnum.UPDATE_ITI57, request);
 	}
 
 	@Override
@@ -799,6 +800,14 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	@Override
 	public ResponseEntity<ResponseWifDTO> updateMetadata(String idDoc, UpdateMetadataReqDTO requestBody,
 			HttpServletRequest request) {
-		return updateAbstract(idDoc, requestBody, false,request);
+		return updateAbstract(idDoc, requestBody, false, UpdateFlowTypeEnum.UPDATE_ITI42,request);
+	}
+
+	@Override
+	public ResponseEntity<ResponseWifDTO> updateMetadataOscuramento(@Size(min = 1, max = 256) String idDoc,
+			UpdateMetadataOscuramentoReqDTO requestBody, HttpServletRequest request) {
+		UpdateMetadataReqDTO req = new UpdateMetadataReqDTO();
+		req.setAttiCliniciRegoleAccesso(requestBody.getAttiCliniciRegoleAccesso());
+		return updateAbstract(idDoc, req, true, UpdateFlowTypeEnum.UPDATE_ITI57,request);
 	}
 }

@@ -31,6 +31,4 @@ public class UpdateMetadataOscuramentoReqDTO {
 	@Size(min = 0, max = 100)
 	@ArraySchema(schema = @Schema(maxLength = 1000, description = "Regola di accesso"))
 	private List<String> attiCliniciRegoleAccesso;
- 
-
 }

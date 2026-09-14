@@ -207,16 +207,16 @@ public interface IPublicationCTL {
 	ResponseEntity<ResponseWifDTO> updateMetadataIti_57(@Size(min = 1, max = 256)@PathVariable(value = "idDoc" , required = true) String idDoc, 
 			@org.springframework.web.bind.annotation.RequestBody(required = true) UpdateMetadataReqDTO requestBody,
 			HttpServletRequest request);
-
-
+	
 	@PutMapping(value = "/documents/{idDoc}/metadata-oscuramento-catena", produces = { MediaType.APPLICATION_JSON_VALUE })
 	@ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PublicationResDTO.class)))
-	@Operation(summary = "Pubblicazione aggiornamento metadati con oscuramento a catena", description = "Pubblicazione aggiornamento metadati con oscuramento a catena dato l'identificativo documento.")
+	@Operation(summary = "Pubblicazione aggiornamento metadati", description = "Pubblicazione aggiornamento metadati dato l'identificativo documento.")
 	@SecurityRequirements({
 		@SecurityRequirement(name = "bearerAuth"),
 		@SecurityRequirement(name = "FSE-JWT-Signature")})
 	@ApiResponses(value = { 
 			@ApiResponse(responseCode = "200", description = "Aggiornamento eseguito con successo", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ResponseWifDTO.class))),
+			@ApiResponse(responseCode = "202", description = "Presa in carico eseguita con successo", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ResponseWifDTO.class))),
 			@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
 			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
 			@ApiResponse(responseCode = "403", description = "Token jwt mancante o non valido", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
@@ -228,7 +228,7 @@ public interface IPublicationCTL {
 			@ApiResponse(responseCode = "502", description = "Invalid response received from the API Implementation", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
 			@ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class))),
 			@ApiResponse(responseCode = "504", description = "Endpoint request timed-out", content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE, schema = @Schema(implementation = ErrorResponseDTO.class)))})
-	ResponseEntity<ResponseWifDTO> updateMetadataOscuramentoACatena(@Size(min = 1, max = 256)@PathVariable(value = "idDoc" , required = true) String idDoc, 
+	ResponseEntity<ResponseWifDTO> updateMetadataOscuramento(@Size(min = 1, max = 256)@PathVariable(value = "idDoc" , required = true) String idDoc, 
 			@org.springframework.web.bind.annotation.RequestBody(required = true) UpdateMetadataOscuramentoReqDTO requestBody,
 			HttpServletRequest request);
 }
