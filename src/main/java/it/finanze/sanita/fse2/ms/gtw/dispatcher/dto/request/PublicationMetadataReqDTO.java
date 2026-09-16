@@ -21,6 +21,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -69,8 +71,9 @@ public class PublicationMetadataReqDTO {
     @ArraySchema(schema = @Schema(maxLength = 1000, description = "Descriptions"))
 	private List<String> descriptions;
 
-	@Schema(description = "Administrative request")
+	@Schema(description = "Administrative request", requiredMode = RequiredMode.REQUIRED)
 	@Size(min = 0, max = 1000)
+	@NotEmpty(message = "Il campo administrativeRequest deve essere valorizzato.")
 	@ArraySchema(minItems = 0, maxItems = 1000, schema = @Schema(implementation = AdministrativeReqEnum.class))
 	private List<AdministrativeReqEnum> administrativeRequest;
  
