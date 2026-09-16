@@ -390,7 +390,7 @@ public abstract class AbstractCTL {
 			}
 		} 
 
-		if(jsonObj.getAdministrativeRequest()==null || jsonObj.getAdministrativeRequest().isEmpty()) { 
+		if(out==null && (jsonObj.getAdministrativeRequest()==null || jsonObj.getAdministrativeRequest().isEmpty())) { 
 			out = "Il campo administrativeRequest deve essere valorizzato.";
 		}
 		
@@ -934,10 +934,19 @@ public abstract class AbstractCTL {
 
 		try {
 			request.setAttribute("UPDATE_REQ", requestBody);
-			jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.UPDATE);
+			final EventTypeEnum updateEventType = UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.equals(flowType)
+					? EventTypeEnum.UPDATE_OSCURAMENTO
+					: EventTypeEnum.UPDATE;
+			jwtPayloadToken = extractAndValidateJWT(request, updateEventType);
 			request.setAttribute("JWT_ISSUER", jwtPayloadToken.getIss());
 			String jwtString = Boolean.TRUE.equals(msCfg.getFromGovway()) ? request.getHeader(Headers.JWT_GOVWAY_HEADER) : request.getHeader(Headers.JWT_HEADER);
-			validateUpdateMetadataReq(requestBody, jwtPayloadToken.getResource_hl7_type());
+			if (UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.equals(flowType)) {
+				final UpdateMetadataOscuramentoReqDTO oscuramentoReq = new UpdateMetadataOscuramentoReqDTO();
+				oscuramentoReq.setAttiCliniciRegoleAccesso(requestBody.getAttiCliniciRegoleAccesso());
+				validateUpdateOscuramenteMetadataReq(oscuramentoReq, jwtPayloadToken.getResource_hl7_type());
+			} else {
+				validateUpdateMetadataReq(requestBody, jwtPayloadToken.getResource_hl7_type());
+			}
 			wif = createWorkflowInstanceId(idDoc);
 			
 			final GetMergedMetadatiDTO metadatiToUpdate = iniClient.metadata(new MergedMetadatiRequestDTO(idDoc,jwtPayloadToken, requestBody,wif));

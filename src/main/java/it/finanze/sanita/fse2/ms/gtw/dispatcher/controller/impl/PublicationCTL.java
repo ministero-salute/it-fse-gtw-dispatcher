@@ -803,6 +803,6 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			UpdateMetadataOscuramentoReqDTO requestBody, HttpServletRequest request) {
 		UpdateMetadataReqDTO req = new UpdateMetadataReqDTO();
 		req.setAttiCliniciRegoleAccesso(requestBody.getAttiCliniciRegoleAccesso());
-		return updateAbstract(idDoc, req, true, UpdateFlowTypeEnum.UPDATE_ITI57,request);
+		return updateAbstract(idDoc, req, true, UpdateFlowTypeEnum.UPDATE_OSCURAMENTO,request);
 	}
 }
