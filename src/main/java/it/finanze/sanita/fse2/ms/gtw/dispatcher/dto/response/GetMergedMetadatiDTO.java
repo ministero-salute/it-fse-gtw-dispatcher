@@ -31,4 +31,8 @@ public class GetMergedMetadatiDTO {
 	private Boolean mockEds;
 	
 	private String edsPublished;
+
+	private String lid;
+
+	private String resourceHl7Type;
 }

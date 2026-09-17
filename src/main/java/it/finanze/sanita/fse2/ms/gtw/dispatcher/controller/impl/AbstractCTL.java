@@ -970,7 +970,7 @@ public abstract class AbstractCTL {
 				}
 				
 				if (!regimeDiMock) {
-					warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, metadatiToUpdate, callUpdateV2, flowType);
+					warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, callUpdateV2, flowType);
 				} else {
 					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime di mock", INI_UPDATE);
 				}
@@ -1176,11 +1176,18 @@ public abstract class AbstractCTL {
 	}
 	
 	private String updateIniAndHandleResponse(LogTraceInfoDTO logTraceDTO, String wif, String idDoc,
-			JWTPayloadDTO jwtPayloadToken, GetMergedMetadatiDTO metadatiToUpdate,
+			JWTPayloadDTO jwtPayloadToken, UpdateMetadataReqDTO requestBody, GetMergedMetadatiDTO metadatiToUpdate,
 			boolean callUpdateV2, UpdateFlowTypeEnum flowType) {
 
-		IniTraceResponseDTO res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), 
-				wif, metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()), callUpdateV2);
+		IniTraceResponseDTO res;
+		if (UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.equals(flowType)) {
+			// Oscuramento a catena: endpoint dedicato di ini-client (/ini-update-oscuramento-catena)
+			res = iniClient.updateOscuramentoCatena(new IniMetadataUpdateOscuramentoReqDTO(jwtPayloadToken, requestBody.getAttiCliniciRegoleAccesso(),
+					metadatiToUpdate.getLid(), wif, idDoc, metadatiToUpdate.getResourceHl7Type()));
+		} else {
+			res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), 
+					wif, metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()), callUpdateV2);
+		}
 
 		if (Boolean.FALSE.equals(res.getEsito())) {
 			return handleIniUpdateError(logTraceDTO, wif, idDoc, jwtPayloadToken, metadatiToUpdate, flowType);
