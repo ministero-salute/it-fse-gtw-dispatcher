@@ -969,11 +969,7 @@ public abstract class AbstractCTL {
 					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, jwtString);
 				}
 				
-				if (!regimeDiMock) {
-					warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, callUpdateV2, flowType);
-				} else {
-					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime di mock", INI_UPDATE);
-				}
+				warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, callUpdateV2, flowType);
 				
 				logger.info(Constants.App.LOG_TYPE_CONTROL, wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc),
 						OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken, null, idDoc);
@@ -998,7 +994,8 @@ public abstract class AbstractCTL {
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","update","traceId", logTraceDTO.getTraceID(),"wif", wif,"idDoc", idDoc);
 
 		ResponseWifDTO output = new ResponseWifDTO(wif, logTraceDTO, warning);
-		if(!StringUtility.isNullOrEmpty(warning)) {
+		// 202 solo per i flussi con retry asincrono (consistency loop in corso)
+		if(!StringUtility.isNullOrEmpty(warning) && flowType.shouldUseAsyncRetry()) {
 			return new ResponseEntity<>(output, HttpStatus.ACCEPTED);
 		} else {
 			return new ResponseEntity<>(output, HttpStatus.OK);
