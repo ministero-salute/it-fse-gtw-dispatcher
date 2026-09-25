@@ -1180,7 +1180,7 @@ public abstract class AbstractCTL {
 		if (UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.equals(flowType)) {
 			// Oscuramento a catena: endpoint dedicato di ini-client (/ini-update-oscuramento-catena)
 			res = iniClient.updateOscuramentoCatena(new IniMetadataUpdateOscuramentoReqDTO(jwtPayloadToken, requestBody.getAttiCliniciRegoleAccesso(),
-					metadatiToUpdate.getLid(), wif, idDoc, metadatiToUpdate.getResourceHl7Type()));
+					metadatiToUpdate.getLid(), wif, idDoc, metadatiToUpdate.getResourceHl7Type(), metadatiToUpdate.getDocumentType()));
 		} else {
 			res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), 
 					wif, metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()), callUpdateV2);
