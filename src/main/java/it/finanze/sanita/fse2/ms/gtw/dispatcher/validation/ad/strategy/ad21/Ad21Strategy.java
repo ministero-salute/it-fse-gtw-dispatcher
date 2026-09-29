@@ -74,8 +74,6 @@ public class Ad21Strategy extends AbstractAffinityDomainStrategy {
         @Override
         protected void validateValueSetsInternal(UpdateMetadataReqDTO request, List<String> validationErrors) {
 
-                validateUnsupportedField(request.getAdministrativeRequest(), "AdministrativeRequest", validationErrors);
-
                 validateField(request.getTipologiaStruttura(),
                                 HealthcareFacilityAd21Enum::isValidCode,
                                 "tipologiaStruttura", "HealthcareFacility", validationErrors);
