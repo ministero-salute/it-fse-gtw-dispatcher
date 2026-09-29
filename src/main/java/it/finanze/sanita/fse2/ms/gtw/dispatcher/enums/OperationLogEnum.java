@@ -23,6 +23,9 @@ public enum OperationLogEnum implements ILogEnum {
 	TRAS_CDA2("TRAS-CDA2", "Trasmissione CDA2"),
 	VAL_FHIR("VAL-FHIR", "Validazione FHIR"),
 	PUB_FHIR("PUB-FHIR", "Pubblicazione FHIR"),
+	SEND_TO_UAR("SEND-TO-UAR", "Invio documento a UAR"),
+	UAR_FINAL_STATUS("UAR-FINAL-STATUS", "Stato finale UAR"),
+	EDS_CALLBACK("EDS-CALLBACK", "Callback EDS"),
 	KAFKA_SENDING_MESSAGE("KAFKA-SENDING-MESSAGE", "Invio Messaggio su Kafka"),
 	MONGO("MONGO", "Salvataggio/Query su Mongo");
 

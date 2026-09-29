@@ -6,7 +6,7 @@
 	<groupId>it.finanze.sanita.fse2</groupId>
 	<artifactId>gtw-dispatcher-ms</artifactId>
 	<name>gtw-dispatcher-ms</name>
-	<version>0.3.0-RELEASE</version>
+	<version>1.1.0</version>
 	<description>Gateway Dispatcher FSE</description>
 
 	<parent>

@@ -13,12 +13,14 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class JWTPayloadDTO {

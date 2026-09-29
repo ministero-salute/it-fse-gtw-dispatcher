@@ -13,6 +13,8 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.impl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +27,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IStatusManagerClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.controller.ITransactionInspectCTL;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.CallbackTransactionDataRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.CallbackTransactionDataResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.TransactionInspectResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorLogEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.UnauthorizedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ITransactionInspectSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ProfileUtility;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,6 +58,9 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	
 	@Autowired
 	private ProfileUtility profileUtility;
+
+	@Autowired
+	private LoggerHelper loggerHelper;
 
 	@Override
 	public TransactionInspectResDTO getEvents(String workflowInstanceId, HttpServletRequest request) {
@@ -193,7 +203,87 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 		CallbackTransactionDataResponseDTO response = statusManagerClient
 				.saveTransactionStatus(callbackTransactionDataRequestDTO);
 
+		try {
+			emitStructuredLog(callbackTransactionDataRequestDTO);
+		} catch (RuntimeException ex) {
+			log.warn("Unable to emit EDS callback structured log for workflow instance id {}",
+					callbackTransactionDataRequestDTO.getWorkflowInstanceId(), ex);
+		}
+
 		log.info("[EXIT] {}() with success={}", "postTransactionDataEds", response.getSuccess());
 		return response;
+	}
+
+	private void emitStructuredLog(final CallbackTransactionDataRequestDTO callback) {
+		final String eventType = normalize(callback.getEventType());
+		final OperationLogEnum operation = resolveOperation(eventType);
+		if (operation == null) {
+			log.debug("Structured log skipped for unsupported EDS callback event type {}", callback.getEventType());
+			return;
+		}
+
+		final ResultLogEnum result = "SUCCESS".equals(normalize(callback.getStatus()))
+				? ResultLogEnum.OK : ResultLogEnum.KO;
+		final Date startDate = callback.getInsertionDate() != null ? callback.getInsertionDate() : new Date();
+		final JWTPayloadDTO jwtPayload = JWTPayloadDTO.builder()
+				.iss(callback.getIssuer())
+				.sub(callback.getSubject())
+				.subject_role(callback.getSubjectRole())
+				.build();
+		final String message = buildStructuredLogMessage(callback);
+
+		if (ResultLogEnum.OK == result) {
+			loggerHelper.info(Constants.App.LOG_TYPE_CONTROL, callback.getWorkflowInstanceId(), message,
+					operation, result, startDate, callback.getDocumentType(), jwtPayload, null,
+					callback.getIdDocumento());
+			return;
+		}
+
+		loggerHelper.error(Constants.App.LOG_TYPE_CONTROL, callback.getWorkflowInstanceId(), message,
+				operation, result, startDate, resolveError(eventType), callback.getDocumentType(), jwtPayload,
+				callback.getIdDocumento());
+	}
+
+	private OperationLogEnum resolveOperation(final String eventType) {
+		if ("SEND_TO_UAR".equals(eventType)) {
+			return OperationLogEnum.SEND_TO_UAR;
+		}
+		if ("UAR_FINAL_STATUS".equals(eventType)) {
+			return OperationLogEnum.UAR_FINAL_STATUS;
+		}
+		if ("INI_ERROR".equals(eventType) || "ANA_ERROR".equals(eventType)) {
+			return OperationLogEnum.EDS_CALLBACK;
+		}
+		return null;
+	}
+
+	private ErrorLogEnum resolveError(final String eventType) {
+		if ("INI_ERROR".equals(eventType)) {
+			return ErrorLogEnum.KO_INI_CALLBACK;
+		}
+		if ("ANA_ERROR".equals(eventType)) {
+			return ErrorLogEnum.KO_ANA_CALLBACK;
+		}
+		return ErrorLogEnum.KO_EDS_CALLBACK;
+	}
+
+	private String buildStructuredLogMessage(final CallbackTransactionDataRequestDTO callback) {
+		final StringBuilder message = new StringBuilder("EDS callback ")
+				.append(callback.getEventType())
+				.append(" received");
+		if (callback.getMessage() != null && !callback.getMessage().isBlank()) {
+			message.append(": ").append(callback.getMessage());
+		}
+		if (callback.getErrorCode() != null && !callback.getErrorCode().isBlank()) {
+			message.append(" [errorCode=").append(callback.getErrorCode()).append(']');
+		}
+		if (callback.getErrorDescription() != null && !callback.getErrorDescription().isBlank()) {
+			message.append(" [errorDescription=").append(callback.getErrorDescription()).append(']');
+		}
+		return message.toString();
+	}
+
+	private String normalize(final String value) {
+		return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
 	}
 }

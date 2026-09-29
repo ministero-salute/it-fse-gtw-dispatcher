@@ -24,6 +24,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AccreditamentoPrefixEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -148,6 +149,18 @@ class EnumsTest {
         String description = "Pubblicazione CDA2";
         assertEquals(description, OperationLogEnum.PUB_CDA2.getDescription());
         assertEquals(code, OperationLogEnum.PUB_CDA2.getCode());
+    }
+
+    @Test
+    @DisplayName("EDS callback structured log enums test")
+    void testEdsCallbackStructuredLogEnums() {
+        assertEquals("SEND_TO_UAR", EventTypeEnum.SEND_TO_UAR.getName());
+        assertEquals("SEND-TO-UAR", OperationLogEnum.SEND_TO_UAR.getCode());
+        assertEquals("UAR-FINAL-STATUS", OperationLogEnum.UAR_FINAL_STATUS.getCode());
+        assertEquals("EDS-CALLBACK", OperationLogEnum.EDS_CALLBACK.getCode());
+        assertEquals("KO-INI-CB", ErrorLogEnum.KO_INI_CALLBACK.getCode());
+        assertEquals("KO-ANA-CB", ErrorLogEnum.KO_ANA_CALLBACK.getCode());
+        assertEquals("KO-EDS-CB", ErrorLogEnum.KO_EDS_CALLBACK.getCode());
     }
 
     @Test

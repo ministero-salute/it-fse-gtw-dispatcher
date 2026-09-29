@@ -18,4 +18,14 @@ public class CallbackTransactionDataRequestDTO {
     @NotNull
 	private String status;
     private String message;
+
+    /* Optional fields used to enrich control structured logs. */
+    private String eventType;
+    private String issuer;
+    private String subject;
+    private String subjectRole;
+    private String idDocumento;
+    private String documentType;
+    private String errorCode;
+    private String errorDescription;
 }

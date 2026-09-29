@@ -26,7 +26,10 @@ public enum ErrorLogEnum implements ILogEnum {
 	KO_MONGO_DB("KO-MONGO-DB", "Errore nella chiamata a MongoDB"),
 	KO_MONGO_DB_NOT_FOUND("KO-MONGO-DB-NOT-FOUND", "Elemento non trovato sul MongoDB"),
 	KO_MONGO("KO-MONGO", "Errore nella chiamata a Mongo"),
-	KO_MONGO_NOT_FOUND("KO-MONGO-NOT-FOUND", "Elemento non trovato su Mongo"); 
+	KO_MONGO_NOT_FOUND("KO-MONGO-NOT-FOUND", "Elemento non trovato su Mongo"),
+	KO_INI_CALLBACK("KO-INI-CB", "Errore INI ricevuto via callback"),
+	KO_ANA_CALLBACK("KO-ANA-CB", "Errore ANA ricevuto via callback"),
+	KO_EDS_CALLBACK("KO-EDS-CB", "Errore generico EDS ricevuto via callback");
 
 	@Getter
 	private String code;
