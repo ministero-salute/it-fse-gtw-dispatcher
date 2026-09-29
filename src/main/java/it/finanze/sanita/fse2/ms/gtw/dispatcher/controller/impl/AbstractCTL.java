@@ -322,9 +322,11 @@ public abstract class AbstractCTL {
     		out = "Il campo tipo attivita clinica deve essere valorizzato.";
     	} else if (StringUtility.isNullOrEmpty(jsonObj.getIdentificativoSottomissione())) {
     		out = "Il campo identificativo sottomissione deve essere valorizzato.";
-    	} else if(jsonObj.getTipologiaStruttura()==null) {
-    		out = "Il campo tipologia struttura deve essere valorizzato.";
-    	} 
+		} else if(jsonObj.getTipologiaStruttura()==null) {
+			out = "Il campo tipologia struttura deve essere valorizzato.";
+		} else if (jsonObj.getAdministrativeRequest() == null || jsonObj.getAdministrativeRequest().isEmpty()) {
+			out = "Il campo administrativeRequest deve essere valorizzato.";
+		}
 
     	if(out==null && jsonObj.getDescriptions()!=null) {
     		out = validateDescriptions(jsonObj.getDescriptions());
@@ -390,10 +392,6 @@ public abstract class AbstractCTL {
 			}
 		} 
 
-		if(out==null && (jsonObj.getAdministrativeRequest()==null || jsonObj.getAdministrativeRequest().isEmpty())) { 
-			out = "Il campo administrativeRequest deve essere valorizzato.";
-		}
-		
 		if(out==null) {
 			out = checkFormatDate(jsonObj.getDataInizioPrestazione(), jsonObj.getDataFinePrestazione());
 			

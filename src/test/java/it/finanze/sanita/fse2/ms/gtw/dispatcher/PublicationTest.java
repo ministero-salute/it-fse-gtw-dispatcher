@@ -134,6 +134,23 @@ class PublicationTest extends AbstractTest {
         RestExecutionResultEnum resPublication = callPublication(wrongPdf,null, "aaaaa", false, true);
 		assertNotNull(resPublication); 
 	}
+
+	@Test
+	void createWithoutAdministrativeRequestShouldFail() {
+		byte[] file = FileUtility.getFileFromInternalResources("Files/attachment/LAB_OK.pdf");
+		PublicationCreationReqDTO requestBody = buildCreationDTO(UUID.randomUUID().toString());
+		requestBody.setAdministrativeRequest(null);
+
+		HttpClientErrorException.BadRequest exception = assertThrows(
+				HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(
+						generateJwt(file, true, EventTypeEnum.PUBLICATION),
+						file,
+						requestBody));
+
+		assertTrue(exception.getResponseBodyAsString()
+				.contains("Il campo administrativeRequest deve essere valorizzato."));
+	}
 	
 	@Test
 	void testHashPublication() {
