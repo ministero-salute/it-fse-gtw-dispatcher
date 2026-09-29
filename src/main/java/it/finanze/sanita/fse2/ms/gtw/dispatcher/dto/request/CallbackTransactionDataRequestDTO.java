@@ -24,6 +24,7 @@ public class CallbackTransactionDataRequestDTO {
     private String issuer;
     private String subject;
     private String subjectRole;
+    private String fiscalCode;
     private String idDocumento;
     private String documentType;
     private String errorCode;

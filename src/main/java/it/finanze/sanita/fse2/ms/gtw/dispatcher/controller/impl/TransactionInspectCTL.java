@@ -37,7 +37,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.UnauthorizedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
@@ -215,15 +214,14 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 	}
 
 	private void emitStructuredLog(final CallbackTransactionDataRequestDTO callback) {
+		final String type = normalize(callback.getType());
 		final String eventType = normalize(callback.getEventType());
-		final OperationLogEnum operation = resolveOperation(eventType);
+		final OperationLogEnum operation = resolveOperation(type);
 		if (operation == null) {
-			log.debug("Structured log skipped for unsupported EDS callback event type {}", callback.getEventType());
+			log.debug("Structured log skipped for unsupported EDS callback type {}", callback.getType());
 			return;
 		}
 
-		final ResultLogEnum result = "SUCCESS".equals(normalize(callback.getStatus()))
-				? ResultLogEnum.OK : ResultLogEnum.KO;
 		final Date startDate = callback.getInsertionDate() != null ? callback.getInsertionDate() : new Date();
 		final JWTPayloadDTO jwtPayload = JWTPayloadDTO.builder()
 				.iss(callback.getIssuer())
@@ -232,26 +230,44 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 				.build();
 		final String message = buildStructuredLogMessage(callback);
 
-		if (ResultLogEnum.OK == result) {
-			loggerHelper.info(Constants.App.LOG_TYPE_CONTROL, callback.getWorkflowInstanceId(), message,
-					operation, result, startDate, callback.getDocumentType(), jwtPayload, null,
-					callback.getIdDocumento());
-			return;
-		}
-
-		loggerHelper.error(Constants.App.LOG_TYPE_CONTROL, callback.getWorkflowInstanceId(), message,
-				operation, result, startDate, resolveError(eventType), callback.getDocumentType(), jwtPayload,
-				callback.getIdDocumento());
+		final boolean success = "SUCCESS".equals(normalize(callback.getStatus()));
+		loggerHelper.callback(Constants.App.LOG_TYPE_CONTROL, callback.getWorkflowInstanceId(), message,
+				operation, callback.getStatus(), startDate, success ? null : resolveError(eventType),
+				callback.getDocumentType(), jwtPayload, callback.getFiscalCode(), callback.getIdDocumento());
 	}
 
-	private OperationLogEnum resolveOperation(final String eventType) {
-		if ("SEND_TO_UAR".equals(eventType)) {
+	private OperationLogEnum resolveOperation(final String type) {
+		if ("VALIDATION".equals(type) || "VALIDATION_FOR_PUBLICATION".equals(type)
+				|| "VALIDATION_FOR_REPLACE".equals(type)) {
+			return OperationLogEnum.VAL_CDA2;
+		}
+		if ("PUBLICATION".equals(type) || "FEEDING".equals(type)) {
+			return OperationLogEnum.PUB_CDA2;
+		}
+		if ("REPLACE".equals(type) || "FHIR_REPLACE".equals(type)) {
+			return OperationLogEnum.REPLACE_CDA2;
+		}
+		if ("DELETE".equals(type) || "EDS_DELETE".equals(type) || "INI_DELETE".equals(type)
+				|| "RIFERIMENTI_INI".equals(type)) {
+			return OperationLogEnum.DELETE_CDA2;
+		}
+		if ("UPDATE".equals(type) || "EDS_UPDATE".equals(type) || "INI_UPDATE".equals(type)
+				|| "UPDATE_OSCURAMENTO".equals(type)) {
+			return OperationLogEnum.UPDATE_METADATA_CDA2;
+		}
+		if ("FHIR_VALIDATION".equals(type)) {
+			return OperationLogEnum.VAL_FHIR;
+		}
+		if ("FHIR_CREATE".equals(type)) {
+			return OperationLogEnum.PUB_FHIR;
+		}
+		if ("SEND_TO_UAR".equals(type)) {
 			return OperationLogEnum.SEND_TO_UAR;
 		}
-		if ("UAR_FINAL_STATUS".equals(eventType)) {
+		if ("UAR_FINAL_STATUS".equals(type)) {
 			return OperationLogEnum.UAR_FINAL_STATUS;
 		}
-		if ("INI_ERROR".equals(eventType) || "ANA_ERROR".equals(eventType)) {
+		if ("BROKER_COMMUNICATION_ERROR".equals(type)) {
 			return OperationLogEnum.EDS_CALLBACK;
 		}
 		return null;
@@ -277,7 +293,8 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 		if (callback.getErrorCode() != null && !callback.getErrorCode().isBlank()) {
 			message.append(" [errorCode=").append(callback.getErrorCode()).append(']');
 		}
-		if (callback.getErrorDescription() != null && !callback.getErrorDescription().isBlank()) {
+		if (callback.getErrorDescription() != null && !callback.getErrorDescription().isBlank()
+				&& !callback.getErrorDescription().equals(callback.getMessage())) {
 			message.append(" [errorDescription=").append(callback.getErrorDescription()).append(']');
 		}
 		return message.toString();

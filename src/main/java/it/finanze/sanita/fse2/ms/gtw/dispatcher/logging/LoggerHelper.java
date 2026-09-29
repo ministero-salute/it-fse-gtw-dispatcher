@@ -14,6 +14,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.logging;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -278,6 +279,67 @@ public class LoggerHelper {
 		}
 		
 		
+	}
+
+	/** Writes a callback log while preserving the broker status in op_result. */
+	public void callback(String logType, String workflowInstanceId, String message, ILogEnum operation,
+			String status, Date startDateOperation, ILogEnum error, String documentType,
+			JWTPayloadDTO jwtPayloadToken, String fiscalCode, String idDocumento) {
+		if (!configSRV.isControlLogPersistenceEnable()) {
+			return;
+		}
+		if (jwtPayloadToken == null) {
+			jwtPayloadToken = new JWTPayloadDTO();
+		}
+
+		LogDTO logDTO = LogDTO.builder()
+				.op_locality(jwtPayloadToken.getLocality())
+				.message(message)
+				.operation(operation.getCode())
+				.op_result(status)
+				.op_timestamp_start(dateFormat.format(startDateOperation))
+				.op_timestamp_end(dateFormat.format(new Date()))
+				.op_error(error != null ? error.getCode() : null)
+				.op_error_description(error != null ? error.getDescription() : null)
+				.op_document_type(documentType)
+				.op_role(jwtPayloadToken.getSubject_role())
+				.gateway_name(getGatewayName())
+				.microservice_name(msName)
+				.op_application_id(jwtPayloadToken.getSubject_application_id())
+				.op_application_vendor(jwtPayloadToken.getSubject_application_vendor())
+				.op_application_version(jwtPayloadToken.getSubject_application_version())
+				.log_type(logType)
+				.workflow_instance_id(workflowInstanceId)
+				.idDocumento(idDocumento)
+				.build();
+
+		if (!configSRV.isSubjectNotAllowed()) {
+			logDTO.setOp_fiscal_code(fiscalCode != null
+					? fiscalCode
+					: CfUtility.extractFiscalCodeFromJwtSub(jwtPayloadToken.getSub()));
+		}
+		if (!configSRV.isCfOnIssuerNotAllowed()) {
+			logDTO.setOp_issuer(jwtPayloadToken.getIss());
+		}
+
+		String logMessage = StringUtility.toJSON(logDTO);
+		String normalizedStatus = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+		if ("SUCCESS".equals(normalizedStatus)) {
+			log.info(logMessage);
+			if (Boolean.TRUE.equals(kafkaLogEnable)) {
+				kafkaLog.info(truncateLogDtoMessageIfNecessary(logDTO));
+			}
+		} else if ("ASYNC_RETRY".equals(normalizedStatus)) {
+			log.warn(logMessage);
+			if (Boolean.TRUE.equals(kafkaLogEnable)) {
+				kafkaLog.warn(truncateLogDtoMessageIfNecessary(logDTO));
+			}
+		} else {
+			log.error(logMessage);
+			if (Boolean.TRUE.equals(kafkaLogEnable)) {
+				kafkaLog.error(truncateLogDtoMessageIfNecessary(logDTO));
+			}
+		}
 	}
 
 	/**
