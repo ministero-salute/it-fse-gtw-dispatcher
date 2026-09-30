@@ -952,9 +952,15 @@ public abstract class AbstractCTL {
 				kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, BLOCKING_ERROR, jwtPayloadToken, metadatiToUpdate.getErrorMessage(), RIFERIMENTI_INI);
 				throw new IniException(metadatiToUpdate.getErrorMessage(),wif);
 			} else {
-				boolean regimeDiMock = metadatiToUpdate.getMarshallResponse()==null; 
-				
-				sendIniStatusLog(logTraceDTO, wif, idDoc, jwtPayloadToken, regimeDiMock);
+				// A mocked INI may return no marshalled metadata. Ordinary update flows must not
+				// forward that null value to INI as marshallData, while oscuramento does not use it.
+				boolean mockMode = StringUtility.isNullOrEmpty(metadatiToUpdate.getMarshallResponse());
+				if (mockMode) {
+					log.warn("INI returned no marshallData; assuming mock mode (idDoc={}, wif={}, flowType={})",
+							idDoc, wif, flowType);
+				}
+
+				sendIniStatusLog(logTraceDTO, wif, idDoc, jwtPayloadToken, mockMode);
 				
 				
 				if (flowType.shouldValidateAffinityDomain()) {
@@ -967,7 +973,13 @@ public abstract class AbstractCTL {
 					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, jwtString);
 				}
 				
-				warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, callUpdateV2, flowType);
+				if (mockMode && !UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.equals(flowType)) {
+					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS,
+							jwtPayloadToken, "Mock mode", INI_UPDATE);
+				} else {
+					warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken,
+							requestBody, metadatiToUpdate, callUpdateV2, flowType);
+				}
 				
 				logger.info(Constants.App.LOG_TYPE_CONTROL, wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc),
 						OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken, null, idDoc);
@@ -1111,9 +1123,9 @@ public abstract class AbstractCTL {
 	}
 	
 	private void sendIniStatusLog(LogTraceInfoDTO logTraceDTO, String wif, String idDoc,
-			JWTPayloadDTO jwtPayloadToken, boolean regimeDiMock) {
-		if (regimeDiMock) {
-			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime mock", RIFERIMENTI_INI);
+			JWTPayloadDTO jwtPayloadToken, boolean mockMode) {
+		if (mockMode) {
+			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Mock mode", RIFERIMENTI_INI);
 		} else {
 			kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Merge metadati effettuato correttamente", RIFERIMENTI_INI);
 		}
