@@ -967,7 +967,11 @@ public abstract class AbstractCTL {
 					updateEdsMetadata(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, jwtString);
 				}
 				
-				warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, callUpdateV2, flowType);
+				if (!regimeDiMock) {
+					warning = updateIniAndHandleResponse(logTraceDTO, wif, idDoc, jwtPayloadToken, requestBody, metadatiToUpdate, callUpdateV2, flowType);
+				} else {
+					kafkaSRV.sendUpdateStatus(logTraceDTO.getTraceID(), wif, idDoc, SUCCESS, jwtPayloadToken, "Regime di mock", INI_UPDATE);
+				}
 				
 				logger.info(Constants.App.LOG_TYPE_CONTROL, wif,String.format("Update of CDA metadata completed for document with identifier %s", idDoc),
 						OperationLogEnum.UPDATE_METADATA_CDA2, ResultLogEnum.OK, startDateOperation, MISSING_DOC_TYPE_PLACEHOLDER, jwtPayloadToken, null, idDoc);
