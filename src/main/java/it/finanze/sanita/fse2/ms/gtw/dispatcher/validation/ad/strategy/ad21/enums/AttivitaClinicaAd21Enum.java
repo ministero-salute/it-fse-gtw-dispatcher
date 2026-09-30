@@ -20,7 +20,7 @@ public enum AttivitaClinicaAd21Enum {
 	CON("CON", "Consulto"),
 	DIS("DIS", "Discharge"),
 	ERP("ERP", "Erogazione Prestazione Prenotata"),
-	Sistema_TS("Sistema TS", "Documenti sistema TS");
+	Sistema_TS("SistemaTS", "Documenti sistema TS");
 
 	private String code;
 	private String description;

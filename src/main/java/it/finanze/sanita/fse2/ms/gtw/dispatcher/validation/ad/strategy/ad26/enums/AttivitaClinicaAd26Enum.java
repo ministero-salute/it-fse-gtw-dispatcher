@@ -20,7 +20,7 @@ public enum AttivitaClinicaAd26Enum {
 	CON("CON", "Consulto"),
 	DIS("DIS", "Discharge"),
 	ERP("ERP", "Erogazione Prestazione Prenotata"),
-	Sistema_TS("Sistema TS", "Documenti sistema TS"),
+	Sistema_TS("SistemaTS", "Documenti sistema TS"),
 	INI("INI","Documenti INI"),
 	PN_DGC("PN-DGC","Documenti PN-DGC"),
 	OBS("OBS","Documento stato di salute");
