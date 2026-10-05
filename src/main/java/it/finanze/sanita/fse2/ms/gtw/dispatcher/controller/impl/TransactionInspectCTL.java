@@ -227,6 +227,10 @@ public class TransactionInspectCTL extends AbstractCTL implements ITransactionIn
 				.iss(callback.getIssuer())
 				.sub(callback.getSubject())
 				.subject_role(callback.getSubjectRole())
+				.locality(callback.getLocality())
+				.subject_application_id(callback.getSubjectApplicationId())
+				.subject_application_vendor(callback.getSubjectApplicationVendor())
+				.subject_application_version(callback.getSubjectApplicationVersion())
 				.build();
 		final String message = buildStructuredLogMessage(callback);
 
