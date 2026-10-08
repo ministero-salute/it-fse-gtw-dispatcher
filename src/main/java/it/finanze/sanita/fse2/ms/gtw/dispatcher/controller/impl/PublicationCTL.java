@@ -30,8 +30,6 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.encodeSHA256;
 import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility.isNullOrEmpty;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -505,10 +503,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// ==============================
 			EdsResponseDTO edsResponse = new EdsResponseDTO(true,"EDS_MOCK", "EDS_MOCK");
 			if(!configSRV.isRemoveEds() && "TRUE".equals(iniEdsPublished)) {
-				String jsonPayloadToken = StringUtility.toJSON(jwtPayloadToken);
-				String base64Encoded = Base64.getEncoder().encodeToString(jsonPayloadToken.getBytes(StandardCharsets.UTF_8));
-				log.info("Base64 encode:"+base64Encoded);
-				edsResponse = edsClient.delete(idDoc,jwtPayloadToken.getPerson_id(), base64Encoded);
+				String jwtRaw = request.getHeader(Headers.JWT_GOVWAY_HEADER) != null
+						? request.getHeader(Headers.JWT_GOVWAY_HEADER)
+						: request.getHeader(Headers.JWT_HEADER);
+				edsResponse = edsClient.delete(idDoc, jwtPayloadToken.getPerson_id(), jwtRaw);
 				// Exit if necessary
 				Objects.requireNonNull(edsResponse, "PublicationCTL returned an error - edsResponse is null!");
 
