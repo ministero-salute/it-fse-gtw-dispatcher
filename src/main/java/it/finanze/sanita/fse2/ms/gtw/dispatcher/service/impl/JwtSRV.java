@@ -102,7 +102,6 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	@Override
 	public void validatePayloadForUpdateOscuramento(JWTPayloadDTO payload) {
-		validateFiscalCodes(payload);
 		validateActionCoherence(payload, Set.of(ActionEnum.UPDATE));
 		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.SYSADMIN));
 		validateRoleCoherence(payload, Set.of(RoleEnum.NOR));
