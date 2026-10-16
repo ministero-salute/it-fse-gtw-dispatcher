@@ -170,6 +170,39 @@ class UpdateTest extends AbstractTest {
 	 }
 
 	 @Test
+	 @DisplayName("Update of a document iti-42/iti-57 async transanction")
+	 void whenIniFails_UpdateAsyncTransaction() throws Exception {
+
+	 	String idDocument = "2.16.840.4^UAT_GTW_ID162";
+	 	mockEdsClient(HttpStatus.OK);
+	 	mockIniClient(HttpStatus.INTERNAL_SERVER_ERROR, false);
+		mockDomainValidation(true);
+		mockFhirClient();
+
+	 	final ResponseEntity<ResponseDTO> response = callUpdate(idDocument, false, UpdateFlowTypeEnum.UPDATE_ITI42);
+	 	final ResponseDTO body = response.getBody();
+
+		assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+	 	assertNotNull(body, "A response body should have been returned");
+	 	assertNotNull(body.getSpanID(), "A span ID should have been returned");
+	 	assertNotNull(body.getTraceID(), "A trace ID should have been returned");
+	 }
+
+	 @Test
+	 @DisplayName("Update of a document oscuramento fails")
+	 void whenIniFails_UpdateOscuramentoNotExecuted() throws Exception {
+
+	 	String idDocument = "2.16.840.4^UAT_GTW_ID162";
+	 	mockEdsClient(HttpStatus.OK);
+	 	mockIniClient(HttpStatus.INTERNAL_SERVER_ERROR, false);
+		mockDomainValidation(true);
+		mockFhirClient();
+
+		ResponseEntity<ResponseDTO> response = callUpdate(idDocument, false, UpdateFlowTypeEnum.UPDATE_OSCURAMENTO);
+	 	assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+	 }
+
+	 @Test
 	 @DisplayName("Not found INI Error returned")
 	 void whenIniFailsForNotFound_anErrorShouldBeReturned() throws Exception {
 	 	String idDocument = "2.16.840.4^UAT_GTW_ID162";
@@ -231,6 +264,14 @@ class UpdateTest extends AbstractTest {
 			// INI answers 200 with an error message in the body: it is the body, not the status, that drives the flow.
 			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplateIni)
 					.exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(GetMergedMetadatiDTO.class));
+		} else if (status.equals(HttpStatus.INTERNAL_SERVER_ERROR) && !esito){
+			response.setMarshallResponse("response");
+			response.setErrorMessage(null);
+			res.setEsito(false);
+			Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(GetMergedMetadatiDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(res, status)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.PUT), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
 		}
 	}
 	
