@@ -52,6 +52,8 @@ public class FhirSRV implements IFhirSRV {
 
     private static final String SOURCE_ID_PREFIX = "2.16.840.1.113883.2.9.2.";
     private static final String PATH_PATIENT_ID = "ClinicalDocument > recordTarget > patientRole> id";
+    // L'id dell'autore può essere espresso con o senza prefisso di namespace (es. <hl7:id>)
+    private static final String PATH_AUTHOR_ID = "ClinicalDocument > author > assignedAuthor > id, ClinicalDocument > author > assignedAuthor > hl7|id";
     private static final String EXTENSION_ATTRIBUTE = "extension";
     private static final String REFERENCE_ID_LIST_SUFFIX = "&ISO^urn:ihe:iti:xds:2013:order";
 
@@ -243,7 +245,7 @@ public class FhirSRV implements IFhirSRV {
         author.setAuthorRole(authorRole);
         author.setAuthorInstitution(authorInstitution);
 
-        final Element authorElement = docCDA.select("ClinicalDocument > author > assignedAuthor > id").first();
+        final Element authorElement = docCDA.select(PATH_AUTHOR_ID).first();
         if (authorElement != null) {
             String cfAuthor = authorElement.attr(EXTENSION_ATTRIBUTE);
             String rootAuthor = authorElement.attr("root");
