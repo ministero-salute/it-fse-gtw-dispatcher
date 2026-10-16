@@ -12,7 +12,12 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,18 +26,35 @@ import org.springframework.test.context.ActiveProfiles;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AccreditamentoPrefixEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActionEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AdministrativeReqEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.CloudProviderEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfidentialityCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfigItemTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DirectFhirSourceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentMetadataKeyEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EdsStrategyEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthDataFormatEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.IniActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.IssueSeverityEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.LowLevelDocEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.OperationLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PriorityTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ProcessorOperationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PurposeOfUseEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
@@ -40,6 +62,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RoleEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SignVerificationModeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.UpdateFlowTypeEnum;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Constants.Profile.TEST)
@@ -152,18 +176,6 @@ class EnumsTest {
     }
 
     @Test
-    @DisplayName("EDS callback structured log enums test")
-    void testEdsCallbackStructuredLogEnums() {
-        assertEquals("SEND_TO_UAR", EventTypeEnum.SEND_TO_UAR.getName());
-        assertEquals("SEND-TO-UAR", OperationLogEnum.SEND_TO_UAR.getCode());
-        assertEquals("UAR-FINAL-STATUS", OperationLogEnum.UAR_FINAL_STATUS.getCode());
-        assertEquals("EDS-CALLBACK", OperationLogEnum.EDS_CALLBACK.getCode());
-        assertEquals("KO-INI-CB", ErrorLogEnum.KO_INI_CALLBACK.getCode());
-        assertEquals("KO-ANA-CB", ErrorLogEnum.KO_ANA_CALLBACK.getCode());
-        assertEquals("KO-EDS-CB", ErrorLogEnum.KO_EDS_CALLBACK.getCode());
-    }
-
-    @Test
     @DisplayName("EventCodeEnum test")
     void testEventCodeEnum() {
         String code = "P99";
@@ -219,6 +231,175 @@ class EnumsTest {
         String name = "TS";
         assertEquals(name, SystemTypeEnum.TS.value());
     }
-    
-    
+
+    @Test
+    @DisplayName("ActionEnum test")
+    void testActionEnum() {
+        assertEquals(ActionEnum.CREATE, ActionEnum.get("CREATE"));
+        assertEquals(ActionEnum.DELETE, ActionEnum.get("DELETE"));
+        assertNull(ActionEnum.get("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("AdministrativeReqEnum test")
+    void testAdministrativeReqEnum() {
+        assertEquals("SSN", AdministrativeReqEnum.SSN.getCode());
+        assertEquals("Regime SSN", AdministrativeReqEnum.SSN.getDescription());
+        assertEquals("NOSSN", AdministrativeReqEnum.NOSSN.getCode());
+        assertEquals("Regime privato", AdministrativeReqEnum.NOSSN.getDescription());
+    }
+
+    @Test
+    @DisplayName("AttivitaClinicaEnum test")
+    void testAttivitaClinicaEnum() {
+        assertEquals("PHR", AttivitaClinicaEnum.PHR.getCode());
+        assertEquals("Personal Health Record Update", AttivitaClinicaEnum.PHR.getDescription());
+        assertEquals("CON", AttivitaClinicaEnum.CON.getCode());
+        assertEquals("Consulto", AttivitaClinicaEnum.CON.getDescription());
+    }
+
+    @Test
+    @DisplayName("CloudProviderEnum test")
+    void testCloudProviderEnum() {
+        assertEquals(CloudProviderEnum.AWS, CloudProviderEnum.valueOf("AWS"));
+        assertEquals(CloudProviderEnum.AZURE, CloudProviderEnum.valueOf("AZURE"));
+    }
+
+    @Test
+    @DisplayName("ConfidentialityCodeEnum test")
+    void testConfidentialityCodeEnum() {
+        assertEquals("N", ConfidentialityCodeEnum.NORMAL.getCode());
+        assertEquals("Normal", ConfidentialityCodeEnum.NORMAL.getDisplay());
+        assertEquals("Normal", ConfidentialityCodeEnum.getDisplayByCode("N"));
+        assertEquals("", ConfidentialityCodeEnum.getDisplayByCode("UNKNOWN"));
+        assertEquals(ConfidentialityCodeEnum.RESTRICTED, ConfidentialityCodeEnum.fromCode("R"));
+        assertNull(ConfidentialityCodeEnum.fromCode(null));
+        assertNull(ConfidentialityCodeEnum.fromCode("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("ConfigItemTypeEnum test")
+    void testConfigItemTypeEnum() {
+        List<ConfigItemTypeEnum> priority = ConfigItemTypeEnum.priority();
+        assertNotNull(priority);
+        assertEquals(ConfigItemTypeEnum.GENERIC, priority.get(0));
+        assertEquals(2, priority.size());
+    }
+
+    @Test
+    @DisplayName("DestinationTypeEnum test")
+    void testDestinationTypeEnum() {
+        assertEquals(DestinationTypeEnum.INDEXER, DestinationTypeEnum.valueOf("INDEXER"));
+        assertEquals(DestinationTypeEnum.PUBLISHER, DestinationTypeEnum.valueOf("PUBLISHER"));
+    }
+
+    @Test
+    @DisplayName("DirectFhirSourceEnum test")
+    void testDirectFhirSourceEnum() {
+        assertEquals("JSON", DirectFhirSourceEnum.JSON.getSource());
+        assertEquals("PDF", DirectFhirSourceEnum.PDF.getSource());
+    }
+
+    @Test
+    @DisplayName("DocumentMetadataKeyEnum test")
+    void testDocumentMetadataKeyEnum() {
+        assertEquals(DocumentMetadataKeyEnum.RAW_CDA, DocumentMetadataKeyEnum.valueOf("RAW_CDA"));
+        assertEquals(DocumentMetadataKeyEnum.PATIENT_ID, DocumentMetadataKeyEnum.valueOf("PATIENT_ID"));
+        assertEquals(DocumentMetadataKeyEnum.HASH, DocumentMetadataKeyEnum.valueOf("HASH"));
+    }
+
+    @Test
+    @DisplayName("DocumentTypeEnum test")
+    void testDocumentTypeEnum() {
+        assertEquals("57833-6", DocumentTypeEnum.CODE_57833_6.getCode());
+        assertEquals("Prescrizione farmaceutica", DocumentTypeEnum.CODE_57833_6.getDocumentType());
+        assertEquals(DocumentTypeEnum.CODE_11502_2, DocumentTypeEnum.getByCode("11502-2"));
+        assertNull(DocumentTypeEnum.getByCode("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("EdsStrategyEnum test")
+    void testEdsStrategyEnum() {
+        assertEquals(EdsStrategyEnum.NO_EDS, EdsStrategyEnum.valueOf("NO_EDS"));
+        assertEquals(EdsStrategyEnum.NO_EDS_WITH_LOG, EdsStrategyEnum.valueOf("NO_EDS_WITH_LOG"));
+    }
+
+    @Test
+    @DisplayName("ErrorLogEnum test")
+    void testErrorLogEnum() {
+        assertEquals("KO-GENERIC", ErrorLogEnum.KO_GENERIC.getCode());
+        assertEquals("Errore generico", ErrorLogEnum.KO_GENERIC.getDescription());
+        assertEquals("KO-VAL", ErrorLogEnum.KO_VAL.getCode());
+        assertEquals("Errore nella validazione del CDA", ErrorLogEnum.KO_VAL.getDescription());
+    }
+
+    @Test
+    @DisplayName("HealthcareFacilityEnum test")
+    void testHealthcareFacilityEnum() {
+        assertEquals("Ospedale", HealthcareFacilityEnum.Ospedale.getCode());
+        assertEquals("Cittadino", HealthcareFacilityEnum.Cittadino.getCode());
+    }
+
+    @Test
+    @DisplayName("IssueSeverityEnum test")
+    void testIssueSeverityEnum() {
+        assertEquals(IssueSeverityEnum.FATAL, IssueSeverityEnum.valueOf("FATAL"));
+        assertEquals(IssueSeverityEnum.ERROR, IssueSeverityEnum.valueOf("ERROR"));
+        assertEquals(IssueSeverityEnum.SUCCESS, IssueSeverityEnum.valueOf("SUCCESS"));
+    }
+
+    @Test
+    @DisplayName("LowLevelDocEnum test")
+    void testLowLevelDocEnum() {
+        assertEquals("PDF", LowLevelDocEnum.PDF.getCode());
+        assertEquals("PDF", LowLevelDocEnum.PDF.getDescription());
+        assertEquals(LowLevelDocEnum.TXT, LowLevelDocEnum.fromCode("TXT"));
+        assertNull(LowLevelDocEnum.fromCode(null));
+        assertNull(LowLevelDocEnum.fromCode("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("PriorityTypeEnum test")
+    void testPriorityTypeEnum() {
+        assertEquals(PriorityTypeEnum.LOW, PriorityTypeEnum.valueOf("LOW"));
+        assertEquals(PriorityTypeEnum.HIGH, PriorityTypeEnum.valueOf("HIGH"));
+        assertEquals(PriorityTypeEnum.NULL, PriorityTypeEnum.valueOf("NULL"));
+    }
+
+    @Test
+    @DisplayName("ProcessorOperationEnum test")
+    void testProcessorOperationEnum() {
+        assertEquals("PUBLISH", ProcessorOperationEnum.PUBLISH.getName());
+        assertEquals("DELETE", ProcessorOperationEnum.DELETE.getName());
+        assertEquals("REPLACE", ProcessorOperationEnum.REPLACE.getName());
+    }
+
+    @Test
+    @DisplayName("PurposeOfUseEnum test")
+    void testPurposeOfUseEnum() {
+        assertEquals("TREATMENT", PurposeOfUseEnum.TREATMENT.getDisplay());
+        assertEquals("Trattamento di cura ordinario", PurposeOfUseEnum.TREATMENT.getDescription());
+        assertEquals(PurposeOfUseEnum.TREATMENT, PurposeOfUseEnum.get("TREATMENT"));
+        assertEquals(PurposeOfUseEnum.EMERGENCY, PurposeOfUseEnum.get("emergency"));
+        assertNull(PurposeOfUseEnum.get("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("TipoDocAltoLivEnum test")
+    void testTipoDocAltoLivEnum() {
+        assertEquals("WOR", TipoDocAltoLivEnum.WOR.getCode());
+        assertEquals("Documento di workflow", TipoDocAltoLivEnum.WOR.getDescription());
+        assertEquals("PRE", TipoDocAltoLivEnum.PRE.getCode());
+        assertEquals("Prestazioni", TipoDocAltoLivEnum.PRE.getDescription());
+    }
+
+    @Test
+    @DisplayName("UpdateFlowTypeEnum test")
+    void testUpdateFlowTypeEnum() {
+        assertTrue(UpdateFlowTypeEnum.UPDATE_ITI57.shouldValidateAffinityDomain());
+        assertTrue(UpdateFlowTypeEnum.UPDATE_ITI57.shouldUseAsyncRetry());
+        assertFalse(UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.shouldValidateAffinityDomain());
+        assertFalse(UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.shouldUseAsyncRetry());
+    }
+
 }

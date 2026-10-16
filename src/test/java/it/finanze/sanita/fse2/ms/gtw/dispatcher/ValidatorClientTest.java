@@ -24,7 +24,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.LogTraceInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.ValidationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -65,7 +64,7 @@ public class ValidatorClientTest {
             eq(ValidationResDTO.class)
         );
         // Assertion
-        assertThrows(ConnectionRefusedException.class, () -> client.validate("cda_test", "wif_test", SystemTypeEnum.TS));
+        assertThrows(ResourceAccessException.class, () -> client.validate("cda_test", "wif_test", SystemTypeEnum.TS));
     }
 
     @Test
