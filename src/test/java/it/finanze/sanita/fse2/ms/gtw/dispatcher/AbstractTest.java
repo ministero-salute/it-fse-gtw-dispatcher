@@ -202,6 +202,8 @@ public abstract class AbstractTest {
 	protected String generateJwtPayload(final String documentHash, final String personId, final String subject, final String docType, EventTypeEnum eventType) {
 		String action = ActionEnum.CREATE.name();
 		String purposeOfUse = PurposeOfUseEnum.TREATMENT.name();
+		String subjectRole = "APR";
+		String locality = "GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE";
 		if (UPDATE.equals(eventType)) {
 			action = ActionEnum.UPDATE.name();
 			purposeOfUse = PurposeOfUseEnum.UPDATE.name();
@@ -215,14 +217,19 @@ public abstract class AbstractTest {
 		}
 		else if(VALIDATION.equals(eventType)){
 
+		} else if (UPDATE_OSCURAMENTO.equals(eventType)){
+			action = ActionEnum.UPDATE.name();
+			purposeOfUse = PurposeOfUseEnum.SYSADMIN.name();
+			subjectRole = RoleEnum.NOR.name();
+			locality = "------";
 		}
 
 		String applicationId = "ApplicationId";
 		String applicationVendor = "ApplicationVendor";
 		String applicationVersion = "ApplicationVersion";
 		final JWTPayloadDTO jwtPayload = new JWTPayloadDTO("080", 1540890704, 1540918800, "1540918800", 
-		"fse-gateway", subject, "080", "Regione Emilia-Romagna", "GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE",
-		"APR", personId, true, purposeOfUse, docType, action, documentHash,
+		"fse-gateway", subject, "080", "Regione Emilia-Romagna", locality,
+		subjectRole, personId, true, purposeOfUse, docType, action, documentHash,
 		applicationId,applicationVendor,applicationVersion,false);
 		return Base64.getEncoder().encodeToString(new Gson().toJson(jwtPayload).getBytes());
 	}
