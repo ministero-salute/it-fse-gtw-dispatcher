@@ -1179,8 +1179,12 @@ public abstract class AbstractCTL {
 		IniTraceResponseDTO res;
 		if (UpdateFlowTypeEnum.UPDATE_OSCURAMENTO.equals(flowType)) {
 			// Oscuramento a catena: endpoint dedicato di ini-client (/ini-update-oscuramento-catena)
+			// NB: va riproposto il codice mnemonico ClassCode (metadatiToUpdate.getClassCode(), es. "LDO" -
+			// value set XDSDocumentEntry.classCode, NON un codice LOINC). Usare la descrizione testuale
+			// esposta da getDocumentType() al posto del codice fa rigettare la richiesta da INI
+			// (nodeRepresentation non conforme alle specifiche).
 			res = iniClient.updateOscuramentoCatena(new IniMetadataUpdateOscuramentoReqDTO(jwtPayloadToken, requestBody.getAttiCliniciRegoleAccesso(),
-					metadatiToUpdate.getLid(), wif, idDoc, metadatiToUpdate.getResourceHl7Type(), metadatiToUpdate.getDocumentType()));
+					metadatiToUpdate.getLid(), wif, idDoc, metadatiToUpdate.getResourceHl7Type(), metadatiToUpdate.getClassCode()));
 		} else {
 			res = iniClient.update(new IniMetadataUpdateReqDTO(metadatiToUpdate.getMarshallResponse(), jwtPayloadToken, metadatiToUpdate.getDocumentType(), 
 					wif, metadatiToUpdate.getAdministrativeRequest(), metadatiToUpdate.getAuthorInstitution()), callUpdateV2);

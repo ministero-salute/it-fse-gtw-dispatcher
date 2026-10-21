@@ -35,4 +35,6 @@ public class GetMergedMetadatiDTO {
 	private String lid;
 
 	private String resourceHl7Type;
+
+	private String classCode;
 }
