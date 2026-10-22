@@ -31,6 +31,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfidentialityCodeEnum;
@@ -122,7 +123,12 @@ public class FhirSRV implements IFhirSRV {
                 if (!StringUtility.isNullOrEmpty(resDTO.getErrorMessage())) {
                     output.setErrorMessage(resDTO.getErrorMessage());
                 } else {
-                    output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                    final String validationError = extractValidationErrors(resDTO.getValidationResponse());
+                    if (!StringUtility.isNullOrEmpty(validationError)) {
+                        output.setErrorMessage(validationError);
+                    } else {
+                        output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                    }
                 }
             } else if (!isCdaInput) {
                 TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(inputData, docRef));
@@ -137,6 +143,32 @@ public class FhirSRV implements IFhirSRV {
         }
 
         return output;
+    }
+
+    /**
+     * Estrae gli errori dagli esiti delle validazioni eseguite dal fhir-mapping-engine.
+     *
+     * @param validationResponse	esiti delle validazioni (null se non richieste)
+     * @return						messaggio di errore con le issues delle validazioni non valide, null se tutte valide
+     */
+    private String extractValidationErrors(final FhirValidationResponseDTO validationResponse) {
+        if (validationResponse == null || CollectionUtils.isEmpty(validationResponse.getResults())) {
+            return null;
+        }
+
+        List<String> errors = new ArrayList<>();
+        for (FhirValidationResponseDTO.ValidationResultDTO result : validationResponse.getResults()) {
+            if (!result.isValid()) {
+                if (CollectionUtils.isEmpty(result.getIssues())) {
+                    errors.add(result.getType());
+                } else {
+                    for (FhirValidationResponseDTO.ValidationIssueDTO issue : result.getIssues()) {
+                        errors.add(result.getType() + " - " + issue.getSeverity() + ": " + issue.getMessage());
+                    }
+                }
+            }
+        }
+        return errors.isEmpty() ? null : String.join(", ", errors);
     }
 
     private DocumentReferenceDTO buildDocumentReferenceDTO(final String encodedInput,

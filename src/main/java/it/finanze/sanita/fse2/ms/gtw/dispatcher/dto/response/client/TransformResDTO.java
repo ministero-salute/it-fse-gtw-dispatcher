@@ -28,5 +28,15 @@ public class TransformResDTO {
 	private String errorMessage;
 	
 	private Document json;
+
+	/**
+	 * Esiti delle validazioni richieste al fhir-mapping-engine (null se non richieste).
+	 */
+	private FhirValidationResponseDTO validationResponse;
+
+	public TransformResDTO(String errorMessage, Document json) {
+		this.errorMessage = errorMessage;
+		this.json = json;
+	}
 	
 }

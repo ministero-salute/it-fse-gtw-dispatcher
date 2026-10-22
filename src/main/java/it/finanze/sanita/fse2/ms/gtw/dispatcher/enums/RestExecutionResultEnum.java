@@ -24,6 +24,9 @@ public enum RestExecutionResultEnum {
 	SYNTAX_ERROR("/msg/syntax", "Errore di sintassi.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
 	SEMANTIC_ERROR("/msg/semantic", "Errore semantico.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
 	VOCABULARY_ERROR("/msg/vocabulary", "Errore vocabolario.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
+	NORMATIVE_R4_ERROR("/msg/normative-r4", "Errore di validazione normativa R4.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
+	TRAVERSABILITY_ERROR("/msg/traversability", "Errore di validazione traversabilità.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
+	RESOURCE_PRUNING_ERROR("/msg/resource-pruning", "Errore di validazione resource pruning.", ErrorLogEnum.KO_VAL, EventStatusEnum.BLOCKING_ERROR),
 	CDA_MATCH_ERROR("/msg/cda-match", "Errore in fase di recupero dell'esito della verifica.", ErrorLogEnum.KO_PUB, EventStatusEnum.BLOCKING_ERROR), 
 	EMPTY_FILE_ERROR("/msg/empty-file", "File vuoto.", ErrorLogEnum.KO_INVALID_DATA, EventStatusEnum.BLOCKING_ERROR),
 	DOCUMENT_TYPE_ERROR("/msg/document-type", "Il documento non è pdf.", ErrorLogEnum.KO_INVALID_DATA, EventStatusEnum.BLOCKING_ERROR),
@@ -89,6 +92,15 @@ public enum RestExecutionResultEnum {
 			break;
 		case SYNTAX_ERROR:
 			result = RestExecutionResultEnum.SYNTAX_ERROR;
+			break;
+		case NORMATIVE_R4_ERROR:
+			result = RestExecutionResultEnum.NORMATIVE_R4_ERROR;
+			break;
+		case TRAVERSABILITY_ERROR:
+			result = RestExecutionResultEnum.TRAVERSABILITY_ERROR;
+			break;
+		case RESOURCE_PRUNING_ERROR:
+			result = RestExecutionResultEnum.RESOURCE_PRUNING_ERROR;
 			break;
 		case OK:
 			result = RestExecutionResultEnum.OK;

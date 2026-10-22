@@ -11,12 +11,15 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +28,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IValidatorClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.base.AbstractClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.response.ValidatorErrorDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FlowsCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ValidationInfoDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.client.ValidationRequestDTO;
@@ -49,7 +53,10 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
- 
+
+	@Autowired
+	private FlowsCFG flowsCFG;
+	
 	@Override
 	@CircuitBreaker(name = "validationCDA", fallbackMethod = "validateFallback")
 	public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system) {
@@ -68,12 +75,25 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	    HttpEntity<?> entity = new HttpEntity<>(req, headers);
 
 	    try {
-	        ValidationResDTO response = restTemplate.postForObject(msUrlCFG.getValidatorHost() + "/v1/validate", entity, ValidationResDTO.class);
+	        ValidationResDTO response = restTemplate.postForObject(buildValidateUrl(), entity, ValidationResDTO.class);
 	        return response != null ? response.getResult() : null;
 
 	    } catch (HttpClientErrorException ex) {
 	        throw new ValidationException(asValidationException(ex.getResponseBodyAsString()));
 	    }
+	}
+
+	/**
+	 * Costruisce l'uri dell'API di validazione. La lista delle validazioni aggiuntive
+	 * viene passata come query param solo se valorizzata.
+	 */
+	private String buildValidateUrl() {
+		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(msUrlCFG.getValidatorHost() + "/v1/validate");
+		List<String> validations = flowsCFG.getValidationFlowValidations();
+		if (validations != null && !validations.isEmpty()) {
+			builder.queryParam("validations", validations);
+		}
+		return builder.build().toUriString();
 	}
 
 	// Chiamato quando il CB è OPEN

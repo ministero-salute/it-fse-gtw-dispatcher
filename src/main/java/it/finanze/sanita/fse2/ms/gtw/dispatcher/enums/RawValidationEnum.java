@@ -20,7 +20,10 @@ public enum RawValidationEnum {
 	VOCABULARY_ERROR("02", "Errore dovuto alle terminologie utilizzate"),
 	SEMANTIC_ERROR("03", "Errore semantico"),
 	SCHEMATRON_NOT_FOUND("04", "Schematron not found"),
-	SEMANTIC_WARNING("05", "Warning semantico");
+	SEMANTIC_WARNING("05", "Warning semantico"),
+	NORMATIVE_R4_ERROR("06", "Errore di validazione normativa R4"),
+	TRAVERSABILITY_ERROR("07", "Errore di validazione traversabilità"),
+	RESOURCE_PRUNING_ERROR("08", "Errore di validazione resource pruning");
 	
 	private String code;
 	private String description;
