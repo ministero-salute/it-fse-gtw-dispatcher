@@ -28,4 +28,11 @@ public class FlowsCFG {
 	@Value("${flows.publication.validations:}")
 	private List<String> publicationFlowValidations;
 
+	/**
+	 * Attiva la logica di pruning
+	 * Unico per entrambi i flussi: propagato a gtw-validator e a fhir-mapping-engine.
+	 */
+	@Value("${flows.include-removal-report:false}")
+	private boolean includeRemovalReport;
+
 }

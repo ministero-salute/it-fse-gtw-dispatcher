@@ -93,6 +93,10 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 		if (validations != null && !validations.isEmpty()) {
 			builder.queryParam("validations", validations);
 		}
+		if (flowsCFG.isIncludeRemovalReport()) {
+			builder.queryParam("includeRemovalReport", true);
+		}
+
 		return builder.build().toUriString();
 	}
 

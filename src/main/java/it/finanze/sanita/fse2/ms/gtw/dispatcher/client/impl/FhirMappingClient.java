@@ -59,6 +59,10 @@ public class FhirMappingClient implements IFhirMappingClient {
 		if (validations != null && !validations.isEmpty()) {
 			urlBuilder.queryParam("validations", validations);
 		}
+		if (flowsCFG.isIncludeRemovalReport()) {
+			urlBuilder.queryParam("includeRemovalReport", true);
+		}
+
 		String url = urlBuilder.build().toUriString();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
