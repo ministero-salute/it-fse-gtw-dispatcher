@@ -29,8 +29,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceWithoutEngineDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +45,8 @@ public class FhirMappingClient implements IFhirMappingClient {
 
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
+
+    private String SYSTEM_TYPE_HEADER = "X-System-Type";
 
 	@Override
 	public TransformResDTO callConvertCdaInBundle(final FhirResourceDTO resourceToConvert) {
@@ -113,5 +117,28 @@ public class FhirMappingClient implements IFhirMappingClient {
       throw new BusinessException("Error while convert cda in bundle :", ex);
         }
         return out;
+    }
+
+    @Override
+    public TransformResDTO callConvertCdaInBundleWithoutEngine(FhirResourceWithoutEngineDTO resourceToConvert,
+            SystemTypeEnum system) {
+
+        TransformResDTO out = null;
+		log.debug("Fhir Mapping Client - Calling Fhir Mapping to execute conversion");
+		String url = msUrlCFG.getFhirMappingEngineHost() + "/v1/documents/transform-no-engine";
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Content-Type", "application/json");
+         if (system != null && system != SystemTypeEnum.NONE) {
+	        headers.set(SYSTEM_TYPE_HEADER, system.value());
+	    }
+		HttpEntity<?> entity = new HttpEntity<>(resourceToConvert, headers);
+		try {
+			out = restTemplate.postForObject(url, entity, TransformResDTO.class);
+		} catch(ResourceAccessException cex) {
+			log.error("Connect error while call document transform :",cex);
+			throw new ConnectionRefusedException(msUrlCFG.getFhirMappingEngineHost(),"Connection refused");
+		}
+		return out;
+        
     }
 }

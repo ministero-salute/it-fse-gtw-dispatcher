@@ -13,6 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 
 import java.io.IOException;
 
@@ -25,5 +26,8 @@ public interface IFhirSRV {
             Integer size, String hash, String organizationId, String authorInstitution, String sha1);
 
     ResourceDTO convertDocumentToTransaction(String bundleJson) throws IOException;
+
+    ResourceDTO createFhirResources(String cda, String authorRole, PublicationCreateReplaceMetadataDTO requestBody, Integer size, String hash,
+             String organizationId, String authorInstitution, String sha1, SystemTypeEnum system);
 
 }

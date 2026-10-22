@@ -28,6 +28,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentReferenceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceWithoutEngineDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
@@ -36,6 +37,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfidentialityCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentMetadataKeyEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.LowLevelDocEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
@@ -489,4 +491,66 @@ public class FhirSRV implements IFhirSRV {
         sse.setContentTypeCodeName(requestBody.getTipoAttivitaClinica().getDescription());
         return sse;
     }
+
+    @Override
+    public ResourceDTO createFhirResources(String cda, String authorRole,
+            PublicationCreateReplaceMetadataDTO requestBody, Integer size, String hash, String organizationId,
+            String authorInstitution, String sha1, SystemTypeEnum system) {
+
+       return createBaseResource(cda, authorRole, requestBody, size, hash, organizationId, authorInstitution, sha1, system, true);
+    }
+    
+    private ResourceDTO createBaseResource(final String inputData, String authorRole, final PublicationCreateReplaceMetadataDTO requestBody,
+            final Integer size, final String hash, String organizationId, final String authorInstitution, String sha1,SystemTypeEnum system, boolean isCdaInput) {
+
+        final ResourceDTO output = new ResourceDTO();
+
+        try {
+            final String encodedInput = Base64.getEncoder().encodeToString(inputData.getBytes());
+            final DocumentReferenceDTO docRef = buildDocumentReferenceDTO(encodedInput, requestBody, size, hash);
+            final FhirResourceWithoutEngineDTO fhirReq = buildFhirResourceWithoutEngineDTO(docRef, inputData);
+
+            // idea, copia estrazione metadata, che suppongo contenga tutto, poi ua i build entries
+            AuthorSlotDTO authorSlot = buildAuthorSlot(authorInstitution, authorRole, inputData, isCdaInput);
+            Map<DocumentMetadataKeyEnum, Object> metadata = extractMetadata(inputData, isCdaInput);
+
+            if (isCdaInput) {
+                metadata.put(DocumentMetadataKeyEnum.RAW_CDA, inputData);
+            }
+
+            DocumentEntryDTO docEntry = setDocumentEntryFields(requestBody, size, sha1, authorSlot, metadata);
+            output.setDocumentEntryJson(StringUtility.toJSON(docEntry));
+
+            SubmissionSetEntryDTO sse = buildSubmissionSetEntry(requestBody, authorSlot, metadata, organizationId, isCdaInput);
+            output.setSubmissionSetEntryJson(StringUtility.toJSON(sse));
+
+            if (isCdaInput && !configSrv.isRemoveEds()) {
+                TransformResDTO resDTO = client.callConvertCdaInBundleWithoutEngine(fhirReq, system);
+                if (!StringUtility.isNullOrEmpty(resDTO.getErrorMessage())) {
+                    output.setErrorMessage(resDTO.getErrorMessage());
+                } else {
+                    output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                }
+            } else if (!isCdaInput) {
+                TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(inputData, docRef));
+                output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+            }
+
+        } catch (ValidationException e) {
+        	throw e;
+		} catch (Exception ex) {
+            log.error("Errore durante la creazione risorse FHIR: {}", ex.getMessage(), ex);
+            throw new BusinessException("Errore durante la creazione risorse FHIR", ex);
+        }
+
+        return output;
+    }
+
+    private FhirResourceWithoutEngineDTO buildFhirResourceWithoutEngineDTO(final DocumentReferenceDTO documentReferenceDTO, final String inputData) {
+        FhirResourceWithoutEngineDTO req = new FhirResourceWithoutEngineDTO();
+        req.setCda(inputData);
+        req.setDocumentReferenceDTO(documentReferenceDTO);
+        return req;
+    }
+    
 }

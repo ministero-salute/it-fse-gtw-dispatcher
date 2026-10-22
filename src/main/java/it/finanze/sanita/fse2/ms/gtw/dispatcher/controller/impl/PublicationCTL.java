@@ -460,6 +460,40 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		return fhirResourcesDTO;
 	}
 
+	private ResourceDTO callFhirMappingEngineWithoutEngine(
+			final JWTPayloadDTO jwtPayloadToken, PublicationCreateReplaceMetadataDTO jsonObj, final byte[] bytePDF,
+			final String cda, final String documentSha256, SystemTypeEnum system) {
+		String sha1 = StringUtility.encodeSHA1(bytePDF);
+		
+		ResourceDTO fhirResourcesDTO = null;
+		try {
+			fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,
+					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1, system);
+
+			if(!StringUtility.isNullOrEmpty(fhirResourcesDTO.getErrorMessage())){
+					final ErrorResponseDTO error = ErrorResponseDTO.builder()
+							.type(FHIR_MAPPING_ERROR.getType())
+							.title(FHIR_MAPPING_ERROR.getTitle())
+							.instance(ErrorInstanceEnum.FHIR_RESOURCE_ERROR.getInstance())
+							.detail(fhirResourcesDTO.getErrorMessage()).build();
+
+					throw new ValidationException(error);
+				
+			}			
+ 		} catch(Exception ex) {
+ 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
+					.type(GENERIC_ERROR.getType())
+					.title(GENERIC_ERROR.getTitle())
+					.instance(ErrorInstanceEnum.INVALID_DATE_FORMAT.getInstance())
+					.detail(ex.getMessage()).build();
+
+			throw new ValidationException(error);
+
+ 		}
+
+		return fhirResourcesDTO;
+	}
+
 	@Override
 	public ResponseEntity<ResponseWifDTO> delete(String idDoc, HttpServletRequest request) {
 		final Date startOperation = new Date();
@@ -856,13 +890,13 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 				// Build validation object
 				ValidationCreationInputDTO validationInfo = createValidationObject(file, jsonObj, wii);
 
-				ResourceDTO fhirMappingResult = callFhirMappingEngine(validationInfo.getValidationData().getTransformID(), validationInfo.getValidationData().getEngineID(), jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha());
+				ResourceDTO fhirMappingResult = callFhirMappingEngineWithoutEngine(jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha(), jwtSRV.getSystemByIssuer(jwtPayloadToken.getIss()));
 				validationInfo.setFhirResource(fhirMappingResult);
 
 				if(!iniPublished){
 					// Document not published on INI -> Publish on INI and EDS
 					postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, jwtPayloadToken, callbackUrl);
-				} else {
+				} else if(!edsPublished){
 					// Save on a mongo collection an Entity that is retrieved in eds-client
 					iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
 					// Notify publisher kafka consumer 
@@ -898,7 +932,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	private ValidationCreationInputDTO createValidationObject(MultipartFile file, PublicationCreateReplaceWiiDTO jsonObj, String wii){
 		
 		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
-		ValidationDataDTO validationData = new ValidationDataDTO(null, true, wii, "6a9ae0ba9a1bef3023ce6a9f", "6ab3df7118a518d766c7fc04", new Date());
+		ValidationDataDTO validationData = new ValidationDataDTO(null, true, wii, null, null, new Date());
 
 		final byte[] bytePDF = getAndValidateFile(file);
 		final String cda = extractCDA(bytePDF, jsonObj.getMode());
