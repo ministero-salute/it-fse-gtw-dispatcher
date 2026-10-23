@@ -433,42 +433,16 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		
 		ResourceDTO fhirResourcesDTO = null;
 		try {
-			fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
-					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1);
-
-			if(!StringUtility.isNullOrEmpty(fhirResourcesDTO.getErrorMessage())){
-					final ErrorResponseDTO error = ErrorResponseDTO.builder()
-							.type(FHIR_MAPPING_ERROR.getType())
-							.title(FHIR_MAPPING_ERROR.getTitle())
-							.instance(ErrorInstanceEnum.FHIR_RESOURCE_ERROR.getInstance())
-							.detail(fhirResourcesDTO.getErrorMessage()).build();
-
-					throw new ValidationException(error);
-				
-			}			
- 		} catch(Exception ex) {
- 			final ErrorResponseDTO error = ErrorResponseDTO.builder()
-					.type(GENERIC_ERROR.getType())
-					.title(GENERIC_ERROR.getTitle())
-					.instance(ErrorInstanceEnum.INVALID_DATE_FORMAT.getInstance())
-					.detail(ex.getMessage()).build();
-
-			throw new ValidationException(error);
-
- 		}
-
-		return fhirResourcesDTO;
-	}
-
-	private ResourceDTO callFhirMappingEngineWithoutEngine(
-			final JWTPayloadDTO jwtPayloadToken, PublicationCreateReplaceMetadataDTO jsonObj, final byte[] bytePDF,
-			final String cda, final String documentSha256, SystemTypeEnum system) {
-		String sha1 = StringUtility.encodeSHA1(bytePDF);
-		
-		ResourceDTO fhirResourcesDTO = null;
-		try {
-			fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,
+			if(isNullOrEmpty(transformId) && isNullOrEmpty(engineId)){
+				// Call without engine and transform ids
+				SystemTypeEnum system = jwtSRV.getSystemByIssuer(jwtPayloadToken.getIss());
+				fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,
 					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1, system);
+
+			} else {
+				fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
+					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1);
+			}
 
 			if(!StringUtility.isNullOrEmpty(fhirResourcesDTO.getErrorMessage())){
 					final ErrorResponseDTO error = ErrorResponseDTO.builder()
@@ -846,10 +820,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 	@Override 
 	public ResponseEntity<PublicationResDTO> pregresso(PublicationCreationReqDTO requestBody, MultipartFile file, HttpServletRequest request){
 
-		final Date startDateOperation = new Date();
+		
 		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
-		final String callbackUrl = request.getHeader("X-Callback-Url");
-
+		
 		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","pregresso","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 		
 		// Check JWT payload
@@ -878,44 +851,42 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			// Once retrieved wii -> query for logs with corresponding wii
 			// Instead of perform checks on DB, maybe is better to perform local checking throug data iteration
 			List<LogCollectorControlETY> logsWii = logCollectorSRV.findStructuredLogsByWii(wii);
-			boolean iniPublished = false;
-			boolean edsPublished = false;
-
 			// Check if the document has been published on INI
+			boolean iniPublished = false;
 			iniPublished = checkIniPublication(logsWii);
+
+			if(iniPublished == false){
+				throw new BusinessException("The input doc was never sent to ini");
+			}
+			// Check if the document has been published on EDS
+			boolean edsPublished = false;
 			edsPublished = checkEDSPublication(logsWii);
-			if(!iniPublished || !edsPublished){
-				// If not published on INI or EDS -> same initial steps for both flows
-
+			if(!edsPublished){
+				// Doc never published on EDS -> publish on EDS
 				// Build validation object
-				ValidationCreationInputDTO validationInfo = createValidationObject(file, jsonObj, wii);
 
-				ResourceDTO fhirMappingResult = callFhirMappingEngineWithoutEngine(jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha(), jwtSRV.getSystemByIssuer(jwtPayloadToken.getIss()));
+				ValidationCreationInputDTO validationInfo = createValidationObject(file, jsonObj, wii);
+				ResourceDTO fhirMappingResult = callFhirMappingEngine(validationInfo.getValidationData().getTransformID(), validationInfo.getValidationData().getEngineID(), jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha());
 				validationInfo.setFhirResource(fhirMappingResult);
 
-				if(!iniPublished){
-					// Document not published on INI -> Publish on INI and EDS
-					postExecutionCreate(startDateOperation, traceInfoDTO, validationInfo, jwtPayloadToken, callbackUrl);
-				} else if(!edsPublished){
-					// Save on a mongo collection an Entity that is retrieved in eds-client
-					iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
-					// Notify publisher kafka consumer 
-				    final IndexerValueDTO kafkaValue = new IndexerValueDTO();
-					kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
-					kafkaValue.setIdDoc(idDoc);
-					kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
-					kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
-					kafkaSRV.notifyPublisher(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.PUBLISHER);
+				// Save on a mongo collection an Entity that is retrieved in eds-client
+				iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
+				// Notify publisher kafka consumer 
+				final IndexerValueDTO kafkaValue = new IndexerValueDTO();
+				kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
+				kafkaValue.setIdDoc(idDoc);
+				kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
+				kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
+				kafkaSRV.notifyPublisher(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.PUBLISHER);
 				}
 				
-			}
-		}else {
-			// No logs found for the given docID -> ITI-18 on INI
-			String workflowInstanceId = createWorkflowInstanceId(idDoc);
-			GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
-			if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
-				// Document not found on INI
-			}
+			}else {
+				// No logs found for the given docID -> ITI-18 on INI
+				String workflowInstanceId = createWorkflowInstanceId(idDoc);
+				GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
+				if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
+					// Document not found on INI
+				}
 
 			// If found on INI -> Perform document validation 
 
