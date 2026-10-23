@@ -79,7 +79,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -110,6 +109,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.WarningUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.DocumentType264Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.TipoDocAltoLivAd264Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.CorrelationDocumentType264Validator;
@@ -204,6 +204,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
+		warning = WarningUtility.merge(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
@@ -302,6 +303,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
+		warning = WarningUtility.merge(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -442,7 +444,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 					throw new ValidationException(error);
 				
 			}			
- 		} catch(Exception ex) {
+		} catch (ValidationException ex) {
+			throw ex;
+		} catch(Exception ex) {
  			final ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.type(GENERIC_ERROR.getType())
 					.title(GENERIC_ERROR.getTitle())
@@ -673,10 +677,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
-		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
-			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
-		}
+		warning = WarningUtility.merge(warning, validationResult.getFhirResource().getWarning(),
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {
@@ -771,10 +773,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
-		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
-			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
-		}
+		warning = WarningUtility.merge(warning, validationResult.getFhirResource().getWarning(),
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {

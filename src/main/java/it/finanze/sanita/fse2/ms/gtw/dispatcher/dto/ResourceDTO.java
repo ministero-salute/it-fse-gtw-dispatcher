@@ -19,6 +19,8 @@ import lombok.NoArgsConstructor;
 public class ResourceDTO {
 
 	private String errorMessage;
+
+	private String warning;
 	
 	private String bundleJson;
 	
