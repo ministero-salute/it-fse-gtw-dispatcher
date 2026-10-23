@@ -132,6 +132,23 @@ public class KafkaSRV implements IKafkaSRV {
 	}
 
 	@Override
+	public void notifyPublisher(final String key, final String kafkaValue, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType) {
+		log.debug("Destination: {}", destinationType.name());
+		try {
+			if (StringUtility.isNullOrEmpty(kafkaProducerCFG.getTransactionalId())) {
+				log.info("PRODUCER NON TRANSAZIONALE");
+				sendMessage(kafkaTopicCFG.getDispatcherPublisherTopic(), key, kafkaValue, false);
+			} else {
+				log.info("PRODUCER TRANSAZIONALE");
+				sendMessage(kafkaTopicCFG.getDispatcherPublisherTopic(), key, kafkaValue, true);
+			}
+		} catch (Exception e) {
+			log.error("Error sending kafka message", e);
+			throw new BusinessException(e);
+		}
+	}
+
+	@Override
 	public void sendValidationStatus(final String traceId, final String workflowInstanceId,
 			final EventStatusEnum eventStatus, final String message,
 			final JWTPayloadDTO jwtClaimDTO) {

@@ -56,6 +56,11 @@ public final class Constants {
 		 */
 		public static final String ISSUERS = "issuers";
 
+		/**
+		 * Collection where structured logs are saved
+		 */
+		public static final String LOG_CONTROL_COLLECTION_NAME = "log_collector";
+
 		private Collections() {
 
 		}
@@ -100,6 +105,11 @@ public final class Constants {
 	}
 
 	public static final class App {
+
+		@NoArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class Custom {
+            public static final String DATE_PATTERN = "dd-MM-yyyy HH:mm:ss.SSS";
+        }
 		
 		public static final String JWT_TOKEN_TYPE = "JWT";
 
@@ -184,6 +194,57 @@ public final class Constants {
 	public static final class Properties {
 		public static final String MS_NAME = "gtw-dispatcher";
 		 
+	}
+	
+
+	public static class Mongo {
+        public static class Query {
+
+            public static final String UNKNOWN_WORKFLOW_ID = "UNKNOWN_WORKFLOW_ID";
+            public static final String REGION = "op_issuer.region";
+        }
+
+        public static class Fields {
+            public static final String ID = "_id";
+
+            private Fields() {}
+            public static final String LOG_TYPE = "log_type";
+            public static final String MESSAGE = "message";
+            public static final String OPERATION = "operation";
+            public static final String OP_RESULT = "op_result";
+            public static final String OP_TIMESTAMP_START = "op_timestamp_start";
+            public static final String OP_TIMESTAMP_END = "op_timestamp_end";
+            public static final String OP_ERROR = "op_error";
+            public static final String OP_ERROR_DESCRIPTION = "op_error_description";
+            public static final String OP_ISSUER = "op_issuer";
+            public static final String OP_LOCALITY = "op_locality";
+            public static final String OP_DOCUMENT_TYPE = "op_document_type";
+            public static final String MICROSERVICE_NAME = "microservice_name";
+            public static final String OP_ROLE = "op_role";
+            public static final String OP_FISCAL_CODE = "op_fiscal_code";
+            public static final String GATEWAY_NAME = "gateway_name";
+            public static final String OP_WARNING = "op_warning";
+            public static final String OP_WARNING_DESCRIPTION = "op_warning_description";
+            public static final String OP_SUBJ_APPLICATION = "op_subj_application";
+            public static final String OP_SUBJ_APPLICATION_ID = "op_application_id";
+            public static final String OP_SUBJ_APPLICATION_VENDOR = "op_application_vendor";
+            public static final String OP_SUBJ_APPLICATION_VERSION = "op_application_version";
+            public static final String WORKFLOW_INSTANCE_ID = "workflow_instance_id";
+            public static final String TYPE_ID_EXTENSION = "typeIdExtension";
+            public static final String ID_DOCUMENTO = "idDocumento";
+            public static final String PROCESSED = "processed";
+            public static final String ADMINISTRATIVE_REQUEST = "administrative_request";
+            public static final String AUTHOR_INSTITUTION = "author_institution";
+            public static final String IS_SSN = "is_ssn";
+            public static final String REGISTRY = "registry";
+            public static final String REGION = "region";
+            public static final String COMPANY = "company";
+            public static final String STRUCTURE = "structure";
+
+            public static final String LOG_TYPE_KPI = "kpi-structured-log";
+            public static final String LOG_TYPE_CONTROL = "control-structured-log";
+
+        }
 	}
    
 }

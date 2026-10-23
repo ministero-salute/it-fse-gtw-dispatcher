@@ -79,7 +79,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -97,6 +96,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MockEnabledException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.NoRecordFoundException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.logging.LoggerHelper;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.LogCollectorControlETY;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IAccreditamentoSimulationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IErrorHandlerSRV;
@@ -104,6 +104,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IFhirSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IIssuerSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IJwtSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ILogCollectorSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ISignSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV;
@@ -174,6 +175,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 	@Autowired
 	private IIssuerSRV issuerSRV;
+
+	@Autowired 
+	private ILogCollectorSRV logCollectorSRV;
 
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
@@ -429,8 +433,16 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		
 		ResourceDTO fhirResourcesDTO = null;
 		try {
-			fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
+			if(isNullOrEmpty(transformId) && isNullOrEmpty(engineId)){
+				// Call without engine and transform ids
+				SystemTypeEnum system = jwtSRV.getSystemByIssuer(jwtPayloadToken.getIss());
+				fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,
+					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1, system);
+
+			} else {
+				fhirResourcesDTO = documentReferenceSRV.createFhirResources(cda,jwtPayloadToken.getSubject_role(), jsonObj, bytePDF.length, documentSha256,transformId, engineId,
 					jwtPayloadToken.getSubject_organization_id(),jwtPayloadToken.getLocality(),sha1);
+			}
 
 			if(!StringUtility.isNullOrEmpty(fhirResourcesDTO.getErrorMessage())){
 					final ErrorResponseDTO error = ErrorResponseDTO.builder()
@@ -803,5 +815,138 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		UpdateMetadataReqDTO req = new UpdateMetadataReqDTO();
 		req.setAttiCliniciRegoleAccesso(requestBody.getAttiCliniciRegoleAccesso());
 		return updateAbstract(idDoc, req, true, UpdateFlowTypeEnum.UPDATE_OSCURAMENTO,request);
+	}
+
+	@Override 
+	public ResponseEntity<PublicationResDTO> pregresso(PublicationCreationReqDTO requestBody, MultipartFile file, HttpServletRequest request){
+
+		
+		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
+		
+		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","pregresso","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
+		
+		// Check JWT payload
+	    final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
+		try{
+		// Check Request Body fields
+		PublicationCreateReplaceWiiDTO jsonObj = getAndValidatePublicationReq(request.getParameter("requestBody"), false);
+		// Validate document Id
+		if(!isValidMasterId(jsonObj.getIdentificativoDoc())) throw new ValidationException(createReqMasterIdError());
+		
+		String idDoc = jsonObj.getIdentificativoDoc();
+
+		// Found all logs with op_result = OK associated to the idDoc with descending date.
+		List<LogCollectorControlETY> logsIdDoc = logCollectorSRV.findStructuredLogsByIdDoc(idDoc);
+
+		if(!logsIdDoc.isEmpty()){
+			// Found some logs for the given docID
+			// Check validation and extract wii.
+			String wii = checkValidationAndReturnWii(logsIdDoc);
+
+			if(isNullOrEmpty(wii)){
+				// Doc has not been validated
+				throw new BusinessException("The input doc has never been validated");
+			}
+
+			// Once retrieved wii -> query for logs with corresponding wii
+			// Instead of perform checks on DB, maybe is better to perform local checking throug data iteration
+			List<LogCollectorControlETY> logsWii = logCollectorSRV.findStructuredLogsByWii(wii);
+			// Check if the document has been published on INI
+			boolean iniPublished = false;
+			iniPublished = checkIniPublication(logsWii);
+
+			if(iniPublished == false){
+				throw new BusinessException("The input doc was never sent to ini");
+			}
+			// Check if the document has been published on EDS
+			boolean edsPublished = false;
+			edsPublished = checkEDSPublication(logsWii);
+			if(!edsPublished){
+				// Doc never published on EDS -> publish on EDS
+				// Build validation object
+
+				ValidationCreationInputDTO validationInfo = createValidationObject(file, jsonObj, wii);
+				ResourceDTO fhirMappingResult = callFhirMappingEngine(validationInfo.getValidationData().getTransformID(), validationInfo.getValidationData().getEngineID(), jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha());
+				validationInfo.setFhirResource(fhirMappingResult);
+
+				// Save on a mongo collection an Entity that is retrieved in eds-client
+				iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
+				// Notify publisher kafka consumer 
+				final IndexerValueDTO kafkaValue = new IndexerValueDTO();
+				kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
+				kafkaValue.setIdDoc(idDoc);
+				kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
+				kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
+				kafkaSRV.notifyPublisher(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.PUBLISHER);
+				}
+				
+			}else {
+				// No logs found for the given docID -> ITI-18 on INI
+				String workflowInstanceId = createWorkflowInstanceId(idDoc);
+				GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
+				if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
+					// Document not found on INI
+				}
+
+			// If found on INI -> Perform document validation 
+
+		}	
+
+		}catch (final Exception exc) {
+			throw exc;
+		}
+
+		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, null, null, null), HttpStatus.ACCEPTED);
+
+	}
+
+	private ValidationCreationInputDTO createValidationObject(MultipartFile file, PublicationCreateReplaceWiiDTO jsonObj, String wii){
+		
+		ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
+		ValidationDataDTO validationData = new ValidationDataDTO(null, true, wii, null, null, new Date());
+
+		final byte[] bytePDF = getAndValidateFile(file);
+		final String cda = extractCDA(bytePDF, jsonObj.getMode());
+		final String documentSha256 = encodeSHA256(bytePDF);
+
+		validationInfo.setJsonObj(jsonObj);
+		validationInfo.setCda(cda);
+		validationInfo.setDocumentSha(documentSha256);
+		validationInfo.setFile(bytePDF);
+		validationInfo.setValidationData(validationData);
+
+		validationData.setWorkflowInstanceId(wii);
+
+		return validationInfo;
+	}
+
+	private String checkValidationAndReturnWii(List<LogCollectorControlETY> logs){
+
+		String wii = "";
+		for(LogCollectorControlETY log : logs){
+			if(log.getResult().equals(ResultLogEnum.OK.getCode()) && log.getOperation().equals(OperationLogEnum.VAL_CDA2.getCode())){
+				wii = log.getWorkflowInstanceId();
+				return wii;
+			}
+		}
+		return wii;
+	}
+
+	private boolean checkIniPublication(List<LogCollectorControlETY> logs){
+		for(LogCollectorControlETY log : logs){
+			if(log.getResult().equals(ResultLogEnum.OK.getCode()) && log.getOperation().equals(OperationLogEnum.PUB_CDA2.getCode()) && log.getMicroserviceName().equals("gtw-ini-client") ){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean checkEDSPublication(List<LogCollectorControlETY> logs){
+		for(LogCollectorControlETY log : logs){
+			if(log.getResult().equals("SUCCESS") && log.getOperation().equals(OperationLogEnum.UAR_FINAL_STATUS.getCode())){
+				return true;
+			}
+		}
+		return false;
 	}
 }
