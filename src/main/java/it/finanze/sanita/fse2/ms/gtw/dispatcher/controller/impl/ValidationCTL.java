@@ -43,6 +43,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IKafkaSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.SignerUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.WarningUtility;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,7 +92,7 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 
 			String issuer = jwtPayloadToken.getIss();
 
-			warning += validate(cda, jsonObj.getActivity(), workflowInstanceId, issuer);
+			warning = WarningUtility.merge(warning, validate(cda, jsonObj.getActivity(), workflowInstanceId, issuer));
 			String message = null;
 			if (jsonObj.getActivity().equals(ActivityEnum.VERIFICA)) {
 				message = "Attenzione - è stato chiamato l'endpoint di validazione con VERIFICA";

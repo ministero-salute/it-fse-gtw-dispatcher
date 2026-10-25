@@ -775,7 +775,7 @@ public abstract class AbstractCTL {
 			// The validator may return OK with non-blocking FHIR validation issues.
 			if (RawValidationEnum.OK.equals(rawValRes.getResult()) && !CollectionUtils.isEmpty(rawValRes.getMessage())) {
 				errorDetail = rawValRes.getMessage().stream()
-						.filter(message -> message != null && message.regionMatches(true, 0, "WARNING:", 0, 8))
+						.filter(message -> message != null && message.matches("(?is)(?:[^\\r\\n]+ - )?WARNING:.*"))
 						.collect(java.util.stream.Collectors.joining(","));
 			}
 			if (!RawValidationEnum.OK.equals(rawValRes.getResult())) {
