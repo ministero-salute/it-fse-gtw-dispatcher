@@ -13,9 +13,10 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceWithoutEngineDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
-import jakarta.servlet.http.HttpServletRequest;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 
 public interface IFhirMappingClient {
 
@@ -23,4 +24,5 @@ public interface IFhirMappingClient {
 	TransformResDTO updateDocumentReferenceClient(UpdateDocumentReferenceRequestDTO updateDto);
     TransformResDTO addDocumentReferenceToBundle(FhirDocumentDTO fhirDocumentDTO);
     TransformResDTO callConvertDocumentInTransaction(FhirDocumentDTO documentDTO);
+    TransformResDTO callConvertCdaInBundleWithoutEngine(FhirResourceWithoutEngineDTO resourceDTO, SystemTypeEnum system);
 }

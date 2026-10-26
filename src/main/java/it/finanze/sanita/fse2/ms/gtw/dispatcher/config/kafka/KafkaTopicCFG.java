@@ -60,8 +60,14 @@ public class KafkaTopicCFG {
 	 */
 	@Value("${kafka.dispatcher-indexer.update-retry-topic}")
 	private String dispatcherIndexerRetryUpdateTopic;
-	
 
+	/**
+	 * Dispatcher publisher Topic.
+	 */
+	@Value("${kafka.dispatcher-publisher.topic}")
+	private String dispatcherPublisherTopic;
+
+	
 	@PostConstruct
 	public void afterInit() {
 		if (profileUtility.isTestProfile()) {
@@ -70,6 +76,7 @@ public class KafkaTopicCFG {
 			dispatcherIndexerRetryDeleteTopic = Constants.Profile.TEST_PREFIX + dispatcherIndexerRetryDeleteTopic;
 			logTopic = Constants.Profile.TEST_PREFIX + logTopic;
 			dispatcherIndexerRetryUpdateTopic = Constants.Profile.TEST_PREFIX + dispatcherIndexerRetryUpdateTopic;
+			dispatcherPublisherTopic = Constants.Profile.TEST_PREFIX + dispatcherPublisherTopic;
 		}
 	}
 }
