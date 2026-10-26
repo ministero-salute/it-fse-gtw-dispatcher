@@ -109,7 +109,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.ValidationUtility;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.WarningUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.DocumentType264Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.enums.TipoDocAltoLivAd264Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.CorrelationDocumentType264Validator;
@@ -204,7 +203,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
-		warning = WarningUtility.merge(warning, validationInfo.getFhirResource().getWarning());
+		warning = StringUtility.mergeWarnings(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
@@ -303,7 +302,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
-		warning = WarningUtility.merge(warning, validationInfo.getFhirResource().getWarning());
+		warning = StringUtility.mergeWarnings(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -677,7 +676,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = WarningUtility.merge(warning, validationResult.getFhirResource().getWarning(),
+        // Avoid merging with fhir-mapping warnings to avoid duplications on the response.
+        // This will drop warnings in publication even if validation does not perform additional checks
+        // as per flows.validation.validations property.
+		warning = StringUtility.mergeWarnings(warning,
 				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
 
 		String fhirBundle = null;
@@ -773,7 +775,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = WarningUtility.merge(warning, validationResult.getFhirResource().getWarning(),
+        // Avoid merging with fhir-mapping warnings to avoid duplications on the response.
+        // This will drop warnings in publication even if validation does not perform additional checks
+        // as per flows.validation.validations property.
+		warning = StringUtility.mergeWarnings(warning,
 				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
 
 		String fhirBundle = null;

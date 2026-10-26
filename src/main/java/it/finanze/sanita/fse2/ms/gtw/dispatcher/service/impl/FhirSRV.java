@@ -32,8 +32,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO.ValidationIssueDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationIssueDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfidentialityCodeEnum;
@@ -169,9 +169,9 @@ public class FhirSRV implements IFhirSRV {
         collectIssues("NORMALIZATION", response.getNormalizationIssues(), errors, warnings);
 
         // Classify each validation issue independently, including mixed-severity results.
-        FhirValidationResponseDTO validationResponse = response.getValidationResponse();
+        FhirValidationDTO validationResponse = response.getValidationResponse();
         if (validationResponse != null && validationResponse.getResults() != null) {
-            for (FhirValidationResponseDTO.ValidationResultDTO result : validationResponse.getResults()) {
+            for (FhirValidationDTO.ValidationResultDTO result : validationResponse.getResults()) {
                 collectIssues(result.getType(), result.getIssues(), errors, warnings);
             }
         }

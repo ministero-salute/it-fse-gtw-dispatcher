@@ -29,9 +29,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.FhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FlowsCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO.ValidationIssueDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO.ValidationResultDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationIssueDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationResultDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
@@ -129,7 +129,7 @@ class FhirMappingPublicationTest {
     void missingRequestedValidationResultsFailExplicitly(boolean hasValidationResponse) {
         TransformResDTO response = new TransformResDTO("", new Document("resourceType", "Bundle"));
         if (hasValidationResponse) {
-            response.setValidationResponse(new FhirValidationResponseDTO());
+            response.setValidationResponse(new FhirValidationDTO());
         }
         when(flowsCFG.getPublicationFlowValidations()).thenReturn(List.of("FHIR"));
         when(client.callConvertCdaInBundle(any())).thenReturn(response);
@@ -208,7 +208,7 @@ class FhirMappingPublicationTest {
         ValidationResultDTO validation = new ValidationResultDTO();
         validation.setType("FHIR");
         validation.setIssues(List.of(issue(severity)));
-        FhirValidationResponseDTO validations = new FhirValidationResponseDTO();
+        FhirValidationDTO validations = new FhirValidationDTO();
         validations.setResults(List.of(validation));
         return new TransformResDTO("", new Document("resourceType", "Bundle"), validations);
     }

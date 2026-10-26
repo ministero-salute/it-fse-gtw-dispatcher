@@ -17,7 +17,7 @@ import org.bson.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationResponseDTO.ValidationIssueDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationIssueDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,9 +41,9 @@ public class TransformResDTO {
 	/**
 	 * Esiti delle validazioni richieste al fhir-mapping-engine (null se non richieste).
 	 */
-	private FhirValidationResponseDTO validationResponse;
+	private FhirValidationDTO validationResponse;
 
-	public TransformResDTO(String errorMessage, Document json, FhirValidationResponseDTO validationResponse) {
+	public TransformResDTO(String errorMessage, Document json, FhirValidationDTO validationResponse) {
 		this.errorMessage = errorMessage;
 		this.json = json;
 		this.validationResponse = validationResponse;
