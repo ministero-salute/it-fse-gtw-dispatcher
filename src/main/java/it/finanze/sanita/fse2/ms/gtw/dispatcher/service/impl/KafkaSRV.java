@@ -333,4 +333,24 @@ public class KafkaSRV implements IKafkaSRV {
 		return json;
 	}
 
+	@Override
+	public void sendPregressoStatus(String traceId, String workflowInstanceId, EventTypeEnum eventType,  EventStatusEnum eventStatus,
+			String message, PublicationCreateReplaceMetadataDTO req, JWTPayloadDTO jwtClaimDTO, String callbackUrl) {
+
+				String idDoc= null;
+				AttivitaClinicaEnum tipoAttivita = null;
+
+				if (req != null) {
+					if (req.getIdentificativoDoc() != null) {
+						idDoc = req.getIdentificativoDoc();
+					}
+					if (req.getTipoAttivitaClinica() != null) {
+						tipoAttivita = req.getTipoAttivitaClinica();
+					}
+				sendStatusMessage(traceId, workflowInstanceId, null, eventStatus, message, idDoc, jwtClaimDTO, tipoAttivita, callbackUrl);
+		
+	}
+
+}
+
 }

@@ -37,6 +37,7 @@ import java.util.Objects;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -178,6 +179,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 	@Autowired 
 	private ILogCollectorSRV logCollectorSRV;
+
+	@Value("${issuer.sonde:}")
+	private String issuerSonde;
 
 	@Override
 	public ResponseEntity<PublicationResDTO> create(final PublicationCreationReqDTO requestBody, final MultipartFile file, final HttpServletRequest request) {
@@ -822,82 +826,101 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 
 		
 		final LogTraceInfoDTO traceInfoDTO = getLogTraceInfo();
+		final Date startDateOperation = new Date();
+		// Warning initiliazed in case of validation warning
+		String warning = "";
+		String wii = "";
+		String idDoc = "";
+		String issuer = "";
 		
 		log.info("[START] {}() with arguments {}={}, {}={}, {}={}","pregresso","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 		
-		// Check JWT payload
-	    final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
 		try{
-		// Check Request Body fields
-		PublicationCreateReplaceWiiDTO jsonObj = getAndValidatePublicationReq(request.getParameter("requestBody"), false);
-		// Validate document Id
-		if(!isValidMasterId(jsonObj.getIdentificativoDoc())) throw new ValidationException(createReqMasterIdError());
-		
-		String idDoc = jsonObj.getIdentificativoDoc();
+			// Check JWT payload
+			final JWTPayloadDTO jwtPayloadToken = extractAndValidateJWT(request, EventTypeEnum.PUBLICATION);
+			// Check Request Body fields
+			PublicationCreateReplaceWiiDTO jsonObj = getAndValidatePublicationReq(request.getParameter("requestBody"), false);
+			// Validate document Id
+			if(!isValidMasterId(jsonObj.getIdentificativoDoc())) throw new ValidationException(createReqMasterIdError());
+			
+			idDoc = jsonObj.getIdentificativoDoc();
+			issuer = jwtPayloadToken.getIss();
 
-		// Found all logs with op_result = OK associated to the idDoc with descending date.
-		List<LogCollectorControlETY> logsIdDoc = logCollectorSRV.findStructuredLogsByIdDoc(idDoc);
+			// Found all logs with op_result = OK associated to the idDoc with descending date.
+			List<LogCollectorControlETY> logsIdDoc = logCollectorSRV.findStructuredLogsByIdDoc(idDoc);
 
-		if(!logsIdDoc.isEmpty()){
-			// Found some logs for the given docID
-			// Check validation and extract wii.
-			String wii = checkValidationAndReturnWii(logsIdDoc);
+			if(!logsIdDoc.isEmpty()){
+				// Found some logs for the given docID
+				// Check validation and extract wii.
+				wii = checkValidationAndReturnWii(logsIdDoc);
 
-			if(isNullOrEmpty(wii)){
-				// Doc has not been validated
-				throw new BusinessException("The input doc has never been validated");
-			}
-
-			// Once retrieved wii -> query for logs with corresponding wii
-			// Instead of perform checks on DB, maybe is better to perform local checking throug data iteration
-			List<LogCollectorControlETY> logsWii = logCollectorSRV.findStructuredLogsByWii(wii);
-			// Check if the document has been published on INI
-			boolean iniPublished = false;
-			iniPublished = checkIniPublication(logsWii);
-
-			if(iniPublished == false){
-				throw new BusinessException("The input doc was never sent to ini");
-			}
-			// Check if the document has been published on EDS
-			boolean edsPublished = false;
-			edsPublished = checkEDSPublication(logsWii);
-			if(!edsPublished){
-				// Doc never published on EDS -> publish on EDS
-				// Build validation object
-
-				ValidationCreationInputDTO validationInfo = createValidationObject(file, jsonObj, wii);
-				ResourceDTO fhirMappingResult = callFhirMappingEngine(validationInfo.getValidationData().getTransformID(), validationInfo.getValidationData().getEngineID(), jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha());
-				validationInfo.setFhirResource(fhirMappingResult);
-
-				// Save on a mongo collection an Entity that is retrieved in eds-client
-				iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
-				// Notify publisher kafka consumer 
-				final IndexerValueDTO kafkaValue = new IndexerValueDTO();
-				kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
-				kafkaValue.setIdDoc(idDoc);
-				kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
-				kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
-				kafkaSRV.notifyPublisher(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.PUBLISHER);
+				if(isNullOrEmpty(wii)){
+					// Doc has not been validated
+					throw new BusinessException("The input doc has never been validated");
 				}
-				
-			}else {
-				// No logs found for the given docID -> ITI-18 on INI
-				String workflowInstanceId = createWorkflowInstanceId(idDoc);
-				GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), workflowInstanceId);
-				if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
-					// Document not found on INI
+				// Once retrieved wii -> query for logs with corresponding wii
+				// Instead of perform checks on DB, maybe is better to perform local checking throug data iteration
+				List<LogCollectorControlETY> logsWii = logCollectorSRV.findStructuredLogsByWii(wii);
+				// Check if the document has been published on INI
+				boolean iniPublished = false;
+				iniPublished = checkIniPublication(logsWii);
+
+				if(iniPublished == false){
+					throw new BusinessException("The input doc was never sent to ini");
 				}
-
-			// If found on INI -> Perform document validation 
-
-		}	
+				// Check if the document has been published on EDS
+				boolean edsPublished = false;
+				edsPublished = checkEDSPublication(logsWii);
+				if(!edsPublished){
+					// Doc never published on EDS -> publish on EDS
+					// Build validation object
+					ValidationCreationInputDTO validationInfo = createValidationObject(file, jsonObj, wii);
+					// Call fhir mapping engine with null transformID and engineID
+					ResourceDTO fhirMappingResult = callFhirMappingEngine(validationInfo.getValidationData().getTransformID(), validationInfo.getValidationData().getEngineID(), jwtPayloadToken, jsonObj, validationInfo.getFile(), validationInfo.getCda(), validationInfo.getDocumentSha());
+					validationInfo.setFhirResource(fhirMappingResult);
+					// Send data to EDS
+					sendDataToEDS(validationInfo, jwtPayloadToken, idDoc, startDateOperation, traceInfoDTO);
+					}
+				} else {
+					// No logs found for the given docID -> ITI-18 on INI
+					// Generate a new workflowInstanceId
+					wii = createWorkflowInstanceId(idDoc);
+					jsonObj.setWorkflowInstanceId(wii);
+					GetDocumentMetadataDTO docMetadata = iniClient.documentMetadata(new IniReferenceRequestDTO(idDoc, jwtPayloadToken), wii);
+					if (docMetadata == null || !isNullOrEmpty(docMetadata.getErrorMessage())) {
+						// Document not found on INI -> Comunica esito push/pull
+						String errMsg = docMetadata != null ? docMetadata.getErrorMessage() : "Documento non presente su ini";
+						kafkaSRV.sendPregressoStatus(traceInfoDTO.getTraceID(), wii, RIFERIMENTI_INI, BLOCKING_ERROR, errMsg, jsonObj, jwtPayloadToken, null);
+						throw new IniException(errMsg, wii);
+					}
+					// If found on INI -> Perform document validation 
+					// Extracting cda from input file
+					final byte[] bytePDF = getAndValidateFile(file);
+					final String cda = extractCDA(bytePDF, jsonObj.getMode());
+					Document docT = Jsoup.parse(cda);
+					// Perform validation on the cda
+					warning = validate(cda, ActivityEnum.VALIDATION, wii, jwtPayloadToken.getIss());
+					// Status notification and build structured log
+					if (!issuer.equals(issuerSonde)) {
+						kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), wii, EventStatusEnum.SUCCESS, null, jwtPayloadToken);
+						String typeIdExtension = docT.select("typeId").get(0).attr("extension");
+						
+						logger.info(Constants.App.LOG_TYPE_CONTROL, wii, "Validation CDA completed for workflow instance Id " + wii, OperationLogEnum.VAL_CDA2, ResultLogEnum.OK, startDateOperation, CdaUtility.getDocumentType(docT),
+								jwtPayloadToken, typeIdExtension,idDoc);
+					}
+					// Retrieve validation result and call the fhirMappingEngine
+					ValidationCreationInputDTO validationInfo = new ValidationCreationInputDTO();
+					validationInfo.setValidationData(executePublicationReplace(validationInfo, jwtPayloadToken, jsonObj, bytePDF, cda));
+					// Send data to EDS
+					validationInfo.setJsonObj(jsonObj);
+					sendDataToEDS(validationInfo, jwtPayloadToken, idDoc, startDateOperation, traceInfoDTO);
+			}	
 
 		}catch (final Exception exc) {
 			throw exc;
 		}
-
-		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, null, null, null), HttpStatus.ACCEPTED);
-
+		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","pregresso","traceId", traceInfoDTO.getTraceID(),"wif", wii, "idDoc", idDoc);
+		return new ResponseEntity<>(new PublicationResDTO(traceInfoDTO, warning, wii), HttpStatus.ACCEPTED);
 	}
 
 	private ValidationCreationInputDTO createValidationObject(MultipartFile file, PublicationCreateReplaceWiiDTO jsonObj, String wii){
@@ -948,5 +971,25 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			}
 		}
 		return false;
+	}
+
+	private void sendDataToEDS(ValidationCreationInputDTO validationInfo, JWTPayloadDTO jwtPayloadToken, String idDoc, Date startDateOperation, LogTraceInfoDTO traceInfoDTO){
+
+		// Save on a mongo collection an Entity that is retrieved in eds-client
+		iniInvocationSRV.insert(validationInfo.getValidationData().getWorkflowInstanceId(), validationInfo.getFhirResource(), jwtPayloadToken);
+		// Notify publisher kafka consumer 
+		final IndexerValueDTO kafkaValue = new IndexerValueDTO();
+		kafkaValue.setWorkflowInstanceId(validationInfo.getValidationData().getWorkflowInstanceId());
+		kafkaValue.setIdDoc(idDoc);
+		kafkaValue.setEdsDPOperation(ProcessorOperationEnum.PUBLISH);
+		kafkaValue.setEdsPublished(!configSRV.isRemoveEds() && issuerSRV.isEdsEnabledForIssuer(jwtPayloadToken.getIss()));
+		kafkaSRV.notifyPublisher(idDoc, new Gson().toJson(kafkaValue), validationInfo.getJsonObj().getTipoDocumentoLivAlto(), DestinationTypeEnum.PUBLISHER);
+
+		// Save status 
+		kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getValidationData().getWorkflowInstanceId(), SUCCESS, null, validationInfo.getJsonObj(), jwtPayloadToken, null);
+		// Structured to log generated after ending synchronous publication phase for the pregresso 
+		logger.info(Constants.App.LOG_TYPE_CONTROL,validationInfo.getValidationData().getWorkflowInstanceId(),String.format("Pregresso - Publication CDA completed for workflow instance id %s", validationInfo.getValidationData().getWorkflowInstanceId()), OperationLogEnum.PUB_CDA2, ResultLogEnum.OK, 
+				startDateOperation, getDocumentType(validationInfo.getDocument()), jwtPayloadToken,null,idDoc);
+
 	}
 }

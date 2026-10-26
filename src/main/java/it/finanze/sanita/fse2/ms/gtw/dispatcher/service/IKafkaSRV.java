@@ -54,5 +54,7 @@ public interface IKafkaSRV {
     void sendEdsUarStatus(String workflowInstanceId, EventStatusEnum eventStatus, String message);
     void sendUpdateRequest(String workflowInstanceId, Object request);
 	void notifyPublisher(final String key, final String kafkaValue, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType);
+	void sendPregressoStatus(String traceId, String workflowInstanceId, EventTypeEnum eventType, EventStatusEnum eventStatus, String message, PublicationCreateReplaceMetadataDTO req, JWTPayloadDTO jwtClaimDTO, String callbackUrl);
+
 
 }
