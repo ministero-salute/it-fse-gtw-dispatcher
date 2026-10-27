@@ -11,8 +11,13 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client;
 
+import java.util.List;
+
 import org.bson.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationIssueDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,10 +28,30 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TransformResDTO {
 
 	private String errorMessage;
 	
 	private Document json;
+
+	/** Diagnostics reported during normalization, independently of requested validations. */
+	private List<ValidationIssueDTO> normalizationIssues;
+
+	/**
+	 * Esiti delle validazioni richieste al fhir-mapping-engine (null se non richieste).
+	 */
+	private FhirValidationDTO validationResponse;
+
+	public TransformResDTO(String errorMessage, Document json, FhirValidationDTO validationResponse) {
+		this.errorMessage = errorMessage;
+		this.json = json;
+		this.validationResponse = validationResponse;
+	}
+
+	public TransformResDTO(String errorMessage, Document json) {
+		this.errorMessage = errorMessage;
+		this.json = json;
+	}
 	
 }

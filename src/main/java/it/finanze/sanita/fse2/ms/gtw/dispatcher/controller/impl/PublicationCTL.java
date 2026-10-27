@@ -79,7 +79,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -204,6 +203,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
+		warning = StringUtility.mergeWarnings(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
@@ -302,6 +302,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
+		warning = StringUtility.mergeWarnings(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -442,7 +443,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 					throw new ValidationException(error);
 				
 			}			
- 		} catch(Exception ex) {
+		} catch (ValidationException ex) {
+			throw ex;
+		} catch(Exception ex) {
  			final ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.type(GENERIC_ERROR.getType())
 					.title(GENERIC_ERROR.getTitle())
@@ -673,10 +676,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
-		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
-			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
-		}
+        // Avoid merging with fhir-mapping warnings to avoid duplications on the response.
+        // This will drop warnings in publication even if validation does not perform additional checks
+        // as per flows.validation.validations property.
+		warning = StringUtility.mergeWarnings(warning,
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {
@@ -771,10 +775,11 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
-		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
-			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
-		}
+        // Avoid merging with fhir-mapping warnings to avoid duplications on the response.
+        // This will drop warnings in publication even if validation does not perform additional checks
+        // as per flows.validation.validations property.
+		warning = StringUtility.mergeWarnings(warning,
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {

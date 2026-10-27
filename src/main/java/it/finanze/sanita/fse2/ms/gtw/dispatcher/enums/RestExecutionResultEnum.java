@@ -90,6 +90,9 @@ public enum RestExecutionResultEnum {
 		case SYNTAX_ERROR:
 			result = RestExecutionResultEnum.SYNTAX_ERROR;
 			break;
+		case FHIR_VALIDATION_ERROR:
+			result = RestExecutionResultEnum.FHIR_VALIDATOR_ERROR;
+			break;
 		case OK:
 			result = RestExecutionResultEnum.OK;
 			break;

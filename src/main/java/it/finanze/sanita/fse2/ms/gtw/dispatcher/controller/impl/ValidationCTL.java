@@ -91,7 +91,7 @@ public class ValidationCTL extends AbstractCTL implements IValidationCTL {
 
 			String issuer = jwtPayloadToken.getIss();
 
-			warning += validate(cda, jsonObj.getActivity(), workflowInstanceId, issuer);
+			warning = StringUtility.mergeWarnings(warning, validate(cda, jsonObj.getActivity(), workflowInstanceId, issuer));
 			String message = null;
 			if (jsonObj.getActivity().equals(ActivityEnum.VERIFICA)) {
 				message = "Attenzione - è stato chiamato l'endpoint di validazione con VERIFICA";
