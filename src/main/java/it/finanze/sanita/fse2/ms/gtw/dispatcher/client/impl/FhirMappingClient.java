@@ -13,6 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import java.net.URI;
+import java.util.List;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IFhirMappingClient;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FlowsCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.MicroservicesURLCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateDocumentReferenceRequestDTO;
@@ -44,11 +46,24 @@ public class FhirMappingClient implements IFhirMappingClient {
 	@Autowired
 	private MicroservicesURLCFG msUrlCFG;
 
+	@Autowired
+	private FlowsCFG flowsCFG;
+
 	@Override
 	public TransformResDTO callConvertCdaInBundle(final FhirResourceDTO resourceToConvert) {
 		TransformResDTO out = null;
 		log.debug("Fhir Mapping Client - Calling Fhir Mapping to execute conversion");
-		String url = msUrlCFG.getFhirMappingEngineHost() + "/v1/documents/transform";
+		UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromUriString(msUrlCFG.getFhirMappingEngineHost() + "/v1/documents/transform");
+		// Le validazioni vengono passate solo se configurate
+		List<String> validations = flowsCFG.getPublicationFlowValidations();
+		if (validations != null && !validations.isEmpty()) {
+			urlBuilder.queryParam("validations", validations);
+		}
+		if (flowsCFG.isIncludeRemovalReport()) {
+			urlBuilder.queryParam("includeRemovalReport", true);
+		}
+
+		String url = urlBuilder.build().toUriString();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
 		HttpEntity<?> entity = new HttpEntity<>(resourceToConvert, headers);

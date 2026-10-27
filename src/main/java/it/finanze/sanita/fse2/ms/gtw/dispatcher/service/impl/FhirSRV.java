@@ -23,6 +23,7 @@ import com.google.gson.JsonParser;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.FhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FlowsCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.AuthorSlotDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentReferenceDTO;
@@ -31,6 +32,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationIssueDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ConfidentialityCodeEnum;
@@ -59,6 +62,7 @@ public class FhirSRV implements IFhirSRV {
 
     @Autowired private FhirMappingClient client;
     @Autowired private IConfigSRV configSrv;
+    @Autowired private FlowsCFG flowsCFG;
 
     @Override
     public ResourceDTO createFhirResources(final String cda, String authorRole, final PublicationCreateReplaceMetadataDTO requestBody,
@@ -121,10 +125,28 @@ public class FhirSRV implements IFhirSRV {
 
             if (isCdaInput && !configSrv.isRemoveEds()) {
                 TransformResDTO resDTO = client.callConvertCdaInBundle(fhirReq);
+
+                // Transformation failures take precedence over validation diagnostics.
+                if (resDTO == null) {
+                    throw new BusinessException("FHIR mapping engine returned an empty response");
+                }
+
                 if (!StringUtility.isNullOrEmpty(resDTO.getErrorMessage())) {
                     output.setErrorMessage(resDTO.getErrorMessage());
                 } else {
-                    output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                    // Do not silently accept a response that omits requested validation results.
+                    if (!CollectionUtils.isEmpty(flowsCFG.getPublicationFlowValidations())
+                            && (resDTO.getValidationResponse() == null
+                                    || resDTO.getValidationResponse().getResults() == null)) {
+                        throw new BusinessException("FHIR mapping engine response is missing the requested validation results");
+                    }
+
+                    collectDiagnostics(resDTO, output);
+
+                    // Warnings are returned separately and do not prevent bundle publication.
+                    if (StringUtility.isNullOrEmpty(output.getErrorMessage())) {
+                        output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                    }
                 }
             } else if (!isCdaInput) {
                 TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(inputData, docRef));
@@ -139,6 +161,44 @@ public class FhirSRV implements IFhirSRV {
         }
 
         return output;
+    }
+
+    private void collectDiagnostics(TransformResDTO response, ResourceDTO output) {
+        List<String> errors = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+
+        // Normalization diagnostics can be returned even when no validations were requested.
+        collectIssues("NORMALIZATION", response.getNormalizationIssues(), errors, warnings);
+
+        // Classify each validation issue independently, including mixed-severity results.
+        FhirValidationDTO validationResponse = response.getValidationResponse();
+        if (validationResponse != null && validationResponse.getResults() != null) {
+            for (FhirValidationDTO.ValidationResultDTO result : validationResponse.getResults()) {
+                collectIssues(result.getType(), result.getIssues(), errors, warnings);
+            }
+        }
+
+        output.setErrorMessage(errors.isEmpty() ? null : String.join(", ", errors));
+        output.setWarning(warnings.isEmpty() ? null : String.join(", ", warnings));
+    }
+
+    private void collectIssues(String stage, List<ValidationIssueDTO> issues,
+            List<String> errors, List<String> warnings) {
+
+        if (issues == null) {
+            return;
+        }
+
+        for (ValidationIssueDTO issue : issues) {
+            String diagnostic = stage + " - " + issue.getSeverity() + ": " + issue.getMessage();
+
+            // Only ERROR/FATAL block publication; informational issues need no response warning.
+            if ("ERROR".equalsIgnoreCase(issue.getSeverity()) || "FATAL".equalsIgnoreCase(issue.getSeverity())) {
+                errors.add(diagnostic);
+            } else if ("WARNING".equalsIgnoreCase(issue.getSeverity())) {
+                warnings.add(diagnostic);
+            }
+        }
     }
 
     private DocumentReferenceDTO buildDocumentReferenceDTO(final String encodedInput,

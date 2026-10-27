@@ -755,7 +755,7 @@ public abstract class AbstractCTL {
 			final ValidationInfoDTO rawValRes = validatorClient.validate(cda,workflowInstanceId, jwtSRV.getSystemByIssuer(issuer));
 
 			if (ActivityEnum.VALIDATION.equals(activity)
-					&& Arrays.asList(RawValidationEnum.OK, RawValidationEnum.SEMANTIC_WARNING).contains(rawValRes.getResult())) {
+					&& rawValRes.getResult().isSuccessful()) {
  
 				if(!benchmarkCfg.isBenchmarkEnable()){
 					final String hashedCDA = StringUtility.encodeSHA256B64(cdaWithoutLegalAuthenticator(cda));
@@ -772,6 +772,12 @@ public abstract class AbstractCTL {
 				}
 			}
 
+			// The validator may return OK with non-blocking FHIR validation issues.
+			if (RawValidationEnum.OK.equals(rawValRes.getResult()) && !CollectionUtils.isEmpty(rawValRes.getMessage())) {
+				errorDetail = rawValRes.getMessage().stream()
+						.filter(message -> message != null && message.matches("(?is)(?:[^\\r\\n]+ - )?WARNING:.*"))
+						.collect(java.util.stream.Collectors.joining(","));
+			}
 			if (!RawValidationEnum.OK.equals(rawValRes.getResult())) {
 				final RestExecutionResultEnum result = RestExecutionResultEnum.fromRawResult(rawValRes.getResult());
 				errorDetail = result.getTitle();
@@ -780,7 +786,7 @@ public abstract class AbstractCTL {
 				}
 				
 				
-				if(!RawValidationEnum.SEMANTIC_WARNING.equals(rawValRes.getResult())){
+				if(!rawValRes.getResult().isWarning()){
 					final ErrorResponseDTO error = ErrorResponseDTO.builder()
 							.type(result.getType()).title(result.getTitle())
 							.instance("/validation/error").detail(errorDetail).build();
