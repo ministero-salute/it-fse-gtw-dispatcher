@@ -60,7 +60,14 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	@Override
 	@CircuitBreaker(name = "validationCDA", fallbackMethod = "validateFallback")
 	public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system) {
-	    
+		return validate(cda, workflowInstanceId, system, false);
+	}
+
+	@Override
+	@CircuitBreaker(name = "validationCDA", fallbackMethod = "validateAccreditamentoFallback")
+	public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system,
+			final boolean accreditamento) {
+
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.set("Content-Type", "application/json");
 
@@ -75,7 +82,7 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	    HttpEntity<?> entity = new HttpEntity<>(req, headers);
 
 	    try {
-	        ValidationResDTO response = restTemplate.postForObject(buildValidateUrl(), entity, ValidationResDTO.class);
+	        ValidationResDTO response = restTemplate.postForObject(buildValidateUrl(accreditamento), entity, ValidationResDTO.class);
 	        return response != null ? response.getResult() : null;
 
 	    } catch (HttpClientErrorException ex) {
@@ -86,22 +93,34 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	/**
 	 * Costruisce l'uri dell'API di validazione. La lista delle validazioni aggiuntive
 	 * viene passata come query param solo se valorizzata.
+	 * Quando {@code accreditamento} è {@code true} i parametri {@code validations} e
+	 * {@code includeRemovalReport} vengono omessi: il ms-validator eseguirà solo le
+	 * validazioni CDA (sintattica, semantica Schematron, vocabolari) senza invocare
+	 * il fhir-mapping-engine.
 	 */
-	private String buildValidateUrl() {
+	private String buildValidateUrl(boolean accreditamento) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(msUrlCFG.getValidatorHost() + "/v1/validate");
-		List<String> validations = flowsCFG.getValidationFlowValidations();
-		if (validations != null && !validations.isEmpty()) {
-			builder.queryParam("validations", validations);
+		if (!accreditamento) {
+			List<String> validations = flowsCFG.getValidationFlowValidations();
+			if (validations != null && !validations.isEmpty()) {
+				builder.queryParam("validations", validations);
+			}
+			if (flowsCFG.isIncludeRemovalReport()) {
+				builder.queryParam("includeRemovalReport", true);
+			}
 		}
-		if (flowsCFG.isIncludeRemovalReport()) {
-			builder.queryParam("includeRemovalReport", true);
-		}
-
 		return builder.build().toUriString();
 	}
 
-	// Chiamato quando il CB è OPEN
+	// Chiamato quando il CB è OPEN (firma a 3 args)
 	public ValidationInfoDTO validateFallback(String cda, String workflowInstanceId, SystemTypeEnum system, Throwable t) {
+	    log.error("Circuit breaker OPEN - validator ms non raggiungibile: {}", t.getMessage());
+	    throw new ConnectionRefusedException(msUrlCFG.getValidatorHost(), "Connection refused");
+	}
+
+	// Chiamato quando il CB è OPEN (firma a 4 args con accreditamento)
+	public ValidationInfoDTO validateAccreditamentoFallback(String cda, String workflowInstanceId, SystemTypeEnum system,
+			boolean accreditamento, Throwable t) {
 	    log.error("Circuit breaker OPEN - validator ms non raggiungibile: {}", t.getMessage());
 	    throw new ConnectionRefusedException(msUrlCFG.getValidatorHost(), "Connection refused");
 	}

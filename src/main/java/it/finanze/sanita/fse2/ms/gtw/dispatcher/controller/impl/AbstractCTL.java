@@ -752,7 +752,8 @@ public abstract class AbstractCTL {
 	protected String validate(final String cda, final ActivityEnum activity, final String workflowInstanceId, final String issuer) {
 		String errorDetail = "";
 		try {
-			final ValidationInfoDTO rawValRes = validatorClient.validate(cda,workflowInstanceId, jwtSRV.getSystemByIssuer(issuer));
+			final boolean accreditamento = ActivityEnum.VALIDATION_FOR_ACCREDITAMENTO.equals(activity);
+			final ValidationInfoDTO rawValRes = validatorClient.validate(cda, workflowInstanceId, jwtSRV.getSystemByIssuer(issuer), accreditamento);
 
 			if (ActivityEnum.VALIDATION.equals(activity)
 					&& rawValRes.getResult().isSuccessful()) {

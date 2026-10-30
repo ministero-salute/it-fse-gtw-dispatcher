@@ -20,4 +20,5 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 public interface IValidatorClient {
 	String SYSTEM_TYPE_HEADER = "X-System-Type";
 	ValidationInfoDTO validate(String cda, String workflowInstanceId, SystemTypeEnum system);
+	ValidationInfoDTO validate(String cda, String workflowInstanceId, SystemTypeEnum system, boolean accreditamento);
 }

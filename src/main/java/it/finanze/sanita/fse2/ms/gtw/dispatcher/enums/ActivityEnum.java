@@ -15,7 +15,7 @@ import lombok.Getter;
 
 public enum ActivityEnum {
 
-	VERIFICA("V"), VALIDATION("P");
+	VERIFICA("V"), VALIDATION("P"), VALIDATION_FOR_ACCREDITAMENTO("A");
 
 	@Getter
 	private String code;

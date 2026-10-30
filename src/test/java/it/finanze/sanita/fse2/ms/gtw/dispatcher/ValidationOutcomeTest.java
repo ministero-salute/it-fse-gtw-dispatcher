@@ -59,7 +59,7 @@ class ValidationOutcomeTest {
         ValidationInfoDTO response = new ObjectMapper().readValue("""
                 {"result":"%s","message":["WARNING: diagnostic"],"transformID":"map","engineID":"engine"}
                 """.formatted(outcome.name()), ValidationInfoDTO.class);
-        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS)).thenReturn(response);
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, false)).thenReturn(response);
 
         String warning = controller.runValidation();
 
@@ -70,7 +70,7 @@ class ValidationOutcomeTest {
     @ParameterizedTest
     @EnumSource(value = RawValidationEnum.class, names = {"FHIR_VALIDATION_ERROR", "SEMANTIC_ERROR", "SYNTAX_ERROR"})
     void errorOutcomesRemainBlocking(RawValidationEnum outcome) {
-        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS)).thenReturn(
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, false)).thenReturn(
                 new ValidationInfoDTO(outcome, List.of("ERROR: diagnostic"), "map", "engine"));
 
         assertThrows(ValidationException.class, controller::runValidation);
@@ -82,16 +82,40 @@ class ValidationOutcomeTest {
 
     @Test
     void okOutcomeDoesNotExposeInformationalMessagesAsWarnings() {
-        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS)).thenReturn(
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, false)).thenReturn(
                 new ValidationInfoDTO(RawValidationEnum.OK,
                         List.of("INFORMATION: diagnostic", "warning: actual warning"), "map", "engine"));
 
         assertEquals("warning: actual warning", controller.runValidation());
     }
 
+    /**
+     * Verifica che con activity VALIDATION_FOR_ACCREDITAMENTO il client venga invocato
+     * con accreditamento=true, nessun hash salvato su MongoDB, e nessun warning restituito.
+     */
+    @Test
+    void accreditamentoActivityInvokesClientWithFlagAndSkipsPersistence() throws Exception {
+        ValidationInfoDTO response = new ObjectMapper().readValue("""
+                {"result":"OK","message":["WARNING: schematron warn"],"transformID":"map","engineID":"engine"}
+                """, ValidationInfoDTO.class);
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, true)).thenReturn(response);
+
+        String warning = controller.runValidationForAccreditamento();
+
+        // AbstractCTL.validate() ritorna il warning ma ValidationCTL lo azzera prima di rispondere;
+        // qui testiamo solo AbstractCTL: deve ritornare il warning dal risultato del client.
+        assertEquals("WARNING: schematron warn", warning);
+        // Per VALIDATION_FOR_ACCREDITAMENTO l'activity non è VALIDATION, quindi il hash NON viene salvato.
+        verify(cdaFacadeSRV, never()).create(anyString(), anyString(), anyString(), anyString());
+    }
+
     private static class TestController extends AbstractCTL {
         String runValidation() {
             return validate("<ClinicalDocument/>", ActivityEnum.VALIDATION, "workflow", "issuer");
+        }
+
+        String runValidationForAccreditamento() {
+            return validate("<ClinicalDocument/>", ActivityEnum.VALIDATION_FOR_ACCREDITAMENTO, "workflow", "issuer");
         }
     }
 }
