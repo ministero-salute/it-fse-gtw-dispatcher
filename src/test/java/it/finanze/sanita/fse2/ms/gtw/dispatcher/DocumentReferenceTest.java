@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -29,14 +29,18 @@ import java.util.Base64;
 import org.bson.Document;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.impl.FhirMappingClient;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
@@ -50,7 +54,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IFhirSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.IniEdsInvocationSRV;
@@ -63,52 +67,59 @@ class DocumentReferenceTest extends AbstractTest {
 
 	@Autowired
 	private IFhirSRV documentReferenceSRV;
-	
-	@MockitoBean
-	private FhirMappingClient client;
+
+	@MockitoSpyBean
+	private RestTemplate restTemplate;
+
+	@Autowired
+	private FhirMappingClient fhirMappingClient;
 
 	@MockitoBean
 	private IConfigSRV configSRV;
 
 	@Autowired
 	private IniEdsInvocationSRV iniEdsInvocationSRV;
-	
+
 	@Test
 	@DisplayName("createDocumentReference OK")
 	void createDocumentReferenceOkTest() {
 		String workflowInstanceId = StringUtility.generateUUID();
+		byte[] cdaFile = FileUtility.getFileFromInternalResources(
+				"Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
+		String cda = new String(cdaFile);
+		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId, false);
+		String documentSha = StringUtility.encodeSHA256(cdaFile);
+
 		TransformResDTO res = new TransformResDTO();
 		res.setErrorMessage("");
 		res.setJson(Document.parse("{\"json\" : \"json\"}"));
-		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(res);
-		when(configSRV.isRemoveEds()).thenReturn(true);
-		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
-		String cda = new String(cdaFile);
-		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId);
-		String documentSha = StringUtility.encodeSHA256(cdaFile);
-		ResourceDTO resourceDTO = documentReferenceSRV.createFhirResources(cda,"",reqDTO, documentSha.length(), documentSha, "", "","","","");
+		Mockito.doReturn(res).when(restTemplate).postForObject(
+				anyString(), any(HttpEntity.class), eq(TransformResDTO.class));
+
+		ResourceDTO resourceDTO = documentReferenceSRV.createFhirResources(cda, "", reqDTO, documentSha.length(),
+				documentSha, "", "", "", "", "");
 		assertNotNull(resourceDTO.getDocumentEntryJson());
 		assertNotNull(resourceDTO.getSubmissionSetEntryJson());
 		assertNull(resourceDTO.getErrorMessage());
-		
+
 		final String jwt = generateJwt(cdaFile, true, EventTypeEnum.PUBLICATION);
 		String[] chunks = jwt.substring(Constants.App.BEARER_PREFIX.length()).split("\\.");
-				
+
 		final String payload = new String(Base64.getDecoder().decode(chunks[1]));
 
 		Boolean insert = iniEdsInvocationSRV.insert(workflowInstanceId, resourceDTO,
 				JWTPayloadDTO.extractPayload(payload));
 		assertTrue(insert);
 	}
-	
-	private PublicationCreationReqDTO buildPublicationReqDTO(String workflowInstanceId) {
+
+	private PublicationCreationReqDTO buildPublicationReqDTO(String workflowInstanceId, boolean validationException) {
 		PublicationCreationReqDTO output = new PublicationCreationReqDTO();
 		output.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC001);
 		output.setConservazioneANorma("Conservazione");
 		output.setDataFinePrestazione(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 		output.setHealthDataFormat(HealthDataFormatEnum.CDA);
 		output.setIdentificativoDoc("Identificativo doc");
-		output.setIdentificativoRep("2.16.840.1.113883.2.9.2.080.4.5.1234");
+		output.setIdentificativoRep(validationException ? "error" : "2.16.840.1.113883.2.9.2.080.4.5.1234" );
 		output.setIdentificativoSottomissione("identificativo sottomissione");
 		output.setMode(InjectionModeEnum.ATTACHMENT);
 		output.setAttiCliniciRegoleAccesso(Arrays.asList(EventCodeEnum._94503_0.getCode()));
@@ -123,49 +134,71 @@ class DocumentReferenceTest extends AbstractTest {
 	@DisplayName("createDocumentReference error")
 	void createDocumentReferenceErrorTest() {
 		String workflowInstanceId = StringUtility.generateUUID();
+
 		TransformResDTO res = new TransformResDTO();
 		res.setErrorMessage("errorMessage");
-		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(res);
-		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
+		Mockito.doReturn(res).when(restTemplate).postForObject(
+				anyString(), any(HttpEntity.class), eq(TransformResDTO.class));
+
+		byte[] cdaFile = FileUtility.getFileFromInternalResources(
+				"Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
-		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId);
+		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId, false);
 		String documentSha = StringUtility.encodeSHA256(cdaFile);
-		ResourceDTO resourceDTO = documentReferenceSRV.createFhirResources(cda, "",reqDTO, documentSha.length(), documentSha,
-				"PersonId", "", "","","");
-		ResourceDTO expectedOutputDTO = new ResourceDTO();
-		expectedOutputDTO.setErrorMessage("errorMessage");
-		assertEquals(expectedOutputDTO, resourceDTO);
+		ResourceDTO resourceDTO = documentReferenceSRV.createFhirResources(cda, "", reqDTO, documentSha.length(),
+				documentSha, "PersonId", "", "", "", "");
+
+		assertEquals("errorMessage", resourceDTO.getErrorMessage());
 	}
 
 	@Test
 	@DisplayName("createDocumentReferenceErrorConnectionRefused Test")
 	void createDocumentReferenceConnectionRefusedTest() {
-		String workflowInstanceId = StringUtility.generateUUID();
-		TransformResDTO res = new TransformResDTO();
-		res.setErrorMessage("");
-		res.setJson(Document.parse("{\"json\" : \"json\"}"));
-		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willThrow(ConnectionRefusedException.class);
-		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
+		Mockito.doThrow(new ResourceAccessException("Connection refused")).when(restTemplate).postForObject(
+				anyString(), any(HttpEntity.class), eq(TransformResDTO.class));
+
+		byte[] cdaFile = FileUtility.getFileFromInternalResources(
+				"Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
-		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId);
+		String workflowInstanceId = StringUtility.generateUUID();
+		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId, false);
 		String documentSha = StringUtility.encodeSHA256(cdaFile);
-		assertThrows(ConnectionRefusedException.class, () -> documentReferenceSRV.createFhirResources(cda,"", reqDTO, documentSha.length(), documentSha,
-				"PersonId", "","","",""));
+		assertThrows(BusinessException.class,
+				() -> documentReferenceSRV.createFhirResources(cda, "", reqDTO, documentSha.length(), documentSha,
+						"PersonId", "", "", "", ""));
 	}
 
 	@Test
 	@DisplayName("createDocumentReferenceErrorBusinessException Test")
 	void createDocumentReferenceErrorBusinessException() {
-		String workflowInstanceId = StringUtility.generateUUID();
-		TransformResDTO res = new TransformResDTO();
-		res.setErrorMessage("");
-		res.setJson(Document.parse("{\"json\" : \"json\"}"));
-		given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willThrow(BusinessException.class);
-		byte[] cdaFile = FileUtility.getFileFromInternalResources("Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
+		Mockito.doThrow(new BusinessException("Error")).when(restTemplate).postForObject(
+				anyString(), any(HttpEntity.class), eq(TransformResDTO.class));
+
+		byte[] cdaFile = FileUtility.getFileFromInternalResources(
+				"Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
 		String cda = new String(cdaFile);
-		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId);
+		String workflowInstanceId = StringUtility.generateUUID();
+		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId, false);
 		String documentSha = StringUtility.encodeSHA256(cdaFile);
-		assertThrows(BusinessException.class, () -> documentReferenceSRV.createFhirResources(cda,"", reqDTO, documentSha.length(), documentSha,
-				"PersonId", "", "","",""));
+		assertThrows(BusinessException.class,
+				() -> documentReferenceSRV.createFhirResources(cda, "", reqDTO, documentSha.length(), documentSha,
+						"PersonId", "", "", "", ""));
 	}
+
+	@Test 
+	@DisplayName("createDocumentReferenceValidationException Test")
+	void createDocumentReferenceValidationException(){
+
+		byte[] cdaFile = FileUtility.getFileFromInternalResources(
+				"Files" + File.separator + "Esempio CDA2_Referto Medicina di Laboratorio v6_OK.xml");
+		String cda = new String(cdaFile);
+		String workflowInstanceId = StringUtility.generateUUID();
+		String documentSha = StringUtility.encodeSHA256(cdaFile);
+		PublicationCreationReqDTO reqDTO = buildPublicationReqDTO(workflowInstanceId, true);
+		assertThrows(ValidationException.class,
+				() -> documentReferenceSRV.createFhirResources(cda, "", reqDTO, documentSha.length(), documentSha,
+						"PersonId", "", "", "", ""));
+
+	}
+
 }

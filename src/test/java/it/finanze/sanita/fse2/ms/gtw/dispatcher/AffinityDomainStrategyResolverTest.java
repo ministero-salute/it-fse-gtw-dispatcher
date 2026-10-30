@@ -15,6 +15,8 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStra
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStrategyResolver;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad262.Ad262Strategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.Ad263Strategy;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad264.Ad264Strategy;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,12 +37,13 @@ class AffinityDomainStrategyResolverTest {
         // Create strategies
         AffinityDomainStrategy ad262 = new Ad262Strategy();
         AffinityDomainStrategy ad263 = new Ad263Strategy();
+        AffinityDomainStrategy ad264 = new Ad264Strategy();
         
         // Initialize resolver manually (simulating Spring's @PostConstruct)
         resolver = new AffinityDomainStrategyResolver();
         
         // Use Spring's ReflectionTestUtils to set the strategyList field
-        ReflectionTestUtils.setField(resolver, "strategyList", Arrays.asList(ad262, ad263));
+        ReflectionTestUtils.setField(resolver, "strategyList", Arrays.asList(ad262, ad263, ad264));
         
         // Call init() to populate the strategies map
         resolver.init();
@@ -71,8 +74,8 @@ class AffinityDomainStrategyResolverTest {
     }
 
     @Test
-    @DisplayName("Should resolve AD 2.6.3 for date on or after 2.6.3 effective date")
-    void shouldResolveAd263OnOrAfterEffectiveDate() {
+    @DisplayName("Should resolve AD 2.6.3 for date on effective date")
+    void shouldResolveAd263OnEffectiveDate() {
         // Date on AD 2.6.3 effective date (2026-03-01)
         LocalDate testDate = LocalDate.of(2026, 3, 1);
         
@@ -83,15 +86,39 @@ class AffinityDomainStrategyResolverTest {
     }
 
     @Test
-    @DisplayName("Should resolve AD 2.6.3 for future date")
-    void shouldResolveAd263ForFutureDate() {
-        // Future date after AD 2.6.3
-        LocalDate testDate = LocalDate.of(2027, 1, 1);
+    @DisplayName("Should resolve AD 2.6.3 for date between 2.6.3 and 2.6.4")
+    void shouldResolveAd263ForIntermediateDate() {
+        // Date between AD 2.6.3 (2026-03-01) and AD 2.6.4 (2026-08-04)
+        LocalDate testDate = LocalDate.of(2026, 4, 20);
         
         AffinityDomainStrategy strategy = resolver.resolve(testDate);
         
         assertNotNull(strategy);
         assertEquals("2.6.3", strategy.versionId());
+    }
+
+    @Test
+    @DisplayName("Should resolve AD 2.6.4 for date on effective date")
+    void shouldResolveAd264nEffectiveDate() {
+        // Date on AD 2.6.4 effective date (2026-08-04)
+        LocalDate testDate = LocalDate.of(2026, 8, 4);
+        
+        AffinityDomainStrategy strategy = resolver.resolve(testDate);
+        
+        assertNotNull(strategy);
+        assertEquals("2.6.4", strategy.versionId());
+    }
+
+    @Test
+    @DisplayName("Should resolve AD 2.6.4 for future date")
+    void shouldResolveAd264ForFutureDate() {
+        // Future date after AD 2.6.4
+        LocalDate testDate = LocalDate.of(2027, 1, 1);
+        
+        AffinityDomainStrategy strategy = resolver.resolve(testDate);
+        
+        assertNotNull(strategy);
+        assertEquals("2.6.4", strategy.versionId());
     }
 
     @Test

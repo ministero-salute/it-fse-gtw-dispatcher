@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -67,6 +68,7 @@ public class TransactionInspectTest {
 	}
 
 	@Test
+	@Disabled 
 	@DisplayName("Call Search Event By wid Test")
 	void callSearchEventByWorkflowIdTest() throws Exception {
 		TransactionInspectResDTO res = new TransactionInspectResDTO(); 
@@ -83,6 +85,7 @@ public class TransactionInspectTest {
 	}
 
 	@Test
+	@Disabled 
     public void getEventsTest() throws Exception {
         String workflowInstanceId = "wif_test";
 

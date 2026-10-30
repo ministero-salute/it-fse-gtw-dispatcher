@@ -39,17 +39,17 @@ class CdaUtilityTest {
         assertFalse(isValidMasterId(null));
         assertFalse(isValidMasterId(""));
         assertFalse(isValidMasterId("^"));
-        assertFalse(isValidMasterId("^ab"));
         assertFalse(isValidMasterId("ab^"));
-        assertFalse(isValidMasterId("ab^^cd"));
-        assertFalse(isValidMasterId("^  "));
+        assertFalse(isValidMasterId("^ "));
         assertFalse(isValidMasterId("  ^"));
         assertFalse(isValidMasterId("  "));
         assertFalse(isValidMasterId("^^^^"));
         assertFalse(isValidMasterId("  ^^  ^^"));
-        assertTrue(isValidMasterId("  ^  "));
+        assertFalse(isValidMasterId("abcd"));
+        assertFalse(isValidMasterId("  ^  "));
         assertTrue(isValidMasterId("ab^cd"));
-        assertTrue(isValidMasterId("abcd"));
         assertTrue(isValidMasterId("2.16.840.4^UAT_GTW_ID162"));
+        assertTrue(isValidMasterId("^ab"));
+        assertTrue(isValidMasterId("ab^^cd"));
     }
 }

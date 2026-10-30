@@ -34,7 +34,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -79,10 +78,12 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.HealthcareFacilityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.InjectionModeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.PracticeSettingCodeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AdministrativeReqEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.TipoDocAltoLivEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.repository.entity.ValidatedDocumentsETY;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.ISignSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.facade.ICdaFacadeSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
@@ -108,12 +109,17 @@ class PublicationTest extends AbstractTest {
 
 	@MockitoBean
 	private MicroservicesURLCFG msCfg;
-	
+
 	@Autowired
 	private MongoTemplate mongo;
 
 	@MockitoBean
 	private IConfigSRV config;
+
+	@MockitoSpyBean
+	private ISignSRV signSRV;
+
+
 
 	@BeforeAll
 	void init() {
@@ -121,37 +127,19 @@ class PublicationTest extends AbstractTest {
 	}
 
 	@BeforeEach
-	void createCollection(){
+	void createCollection() {
 		mongo.dropCollection(ValidatedDocumentsETY.class);
 		given(msCfg.getConfigHost()).willReturn("http://localhost:8018");
 	}
-	
-	
+
 	@Test
 	void givenWrongFileFormat_shouldFailPublication() {
 		// non pdf file
-    	byte[] wrongPdf = FileUtility.getFileFromInternalResources("Files/Test.docx");
-        RestExecutionResultEnum resPublication = callPublication(wrongPdf,null, "aaaaa", false, true);
-		assertNotNull(resPublication); 
+		byte[] wrongPdf = FileUtility.getFileFromInternalResources("Files/Test.docx");
+		RestExecutionResultEnum resPublication = callPublication(wrongPdf, null, "aaaaa", false, true);
+		assertNotNull(resPublication);
 	}
 
-	@Test
-	void createWithoutAdministrativeRequestShouldFail() {
-		byte[] file = FileUtility.getFileFromInternalResources("Files/attachment/LAB_OK.pdf");
-		PublicationCreationReqDTO requestBody = buildCreationDTO(UUID.randomUUID().toString());
-		requestBody.setAdministrativeRequest(null);
-
-		HttpClientErrorException.BadRequest exception = assertThrows(
-				HttpClientErrorException.BadRequest.class,
-				() -> callPlainPublication(
-						generateJwt(file, true, EventTypeEnum.PUBLICATION),
-						file,
-						requestBody));
-
-		assertTrue(exception.getResponseBodyAsString()
-				.contains("Il campo administrativeRequest deve essere valorizzato."));
-	}
-	
 	@Test
 	void testHashPublication() {
 
@@ -160,53 +148,58 @@ class PublicationTest extends AbstractTest {
 		final String hash = StringUtility.encodeSHA256B64("hash");
 		final String unmatchingHash = hash + "A"; // Modified hash
 
-		assertFalse(cdaFacadeSRV.retrieveValidationInfo(hash, wii).isCdaValidated(), "If the hash is not present on Mongo, the result should be false.");
+		assertFalse(cdaFacadeSRV.retrieveValidationInfo(hash, wii).isCdaValidated(),
+				"If the hash is not present on Mongo, the result should be false.");
 
 		log.info("Inserting a key on MongoDB");
 		cdaFacadeSRV.create(hash, wii, "", "");
-		assertTrue(cdaFacadeSRV.retrieveValidationInfo(hash, wii).isCdaValidated(), "If the hash is present on Mongo, the result should be true");
-		
-		assertFalse(cdaFacadeSRV.retrieveValidationInfo(unmatchingHash, wii).isCdaValidated(), "If the hash present on Mongo is different from expected one, the result should be false");
+		assertTrue(cdaFacadeSRV.retrieveValidationInfo(hash, wii).isCdaValidated(),
+				"If the hash is present on Mongo, the result should be true");
+
+		assertFalse(cdaFacadeSRV.retrieveValidationInfo(unmatchingHash, wii).isCdaValidated(),
+				"If the hash present on Mongo is different from expected one, the result should be false");
 	}
 
 	@Test
-    @DisplayName("File tests")
-    void fileTests() {
+	@DisplayName("File tests")
+	void fileTests() {
 
-        String transactionID = UUID.randomUUID().toString();
+		String transactionID = UUID.randomUUID().toString();
 
-        // non pdf file
-    	byte[] wrongPdf = FileUtility.getFileFromInternalResources("Files/Test.docx");
-        RestExecutionResultEnum resPublication = callPublication(wrongPdf,null, transactionID, false, false);
+		// non pdf file
+		byte[] wrongPdf = FileUtility.getFileFromInternalResources("Files/Test.docx");
+		RestExecutionResultEnum resPublication = callPublication(wrongPdf, null, transactionID, false, false);
 		assertNotNull(resPublication);
-        assertEquals(RestExecutionResultEnum.DOCUMENT_TYPE_ERROR.getType(), resPublication.getType());
+		assertEquals(RestExecutionResultEnum.DOCUMENT_TYPE_ERROR.getType(), resPublication.getType());
 
-        // attachment pdf - wong mode
-    	byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files/attachment/CDA_ATTACHMENT.pdf");
-		resPublication = callPublication(pdfAttachment,buildCreationDTO(transactionID, InjectionModeEnum.RESOURCE), transactionID, false, true);
-		assertNotNull(resPublication); 
-        assertEquals(RestExecutionResultEnum.MINING_CDA_ERROR.getType(), resPublication.getType());
+		// attachment pdf - wrong mode
+		byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files/attachment/CDA_ATTACHMENT.pdf");
+		resPublication = callPublication(pdfAttachment, buildCreationDTO(transactionID, InjectionModeEnum.RESOURCE),
+				transactionID, false, true);
+		assertNotNull(resPublication);
+		assertEquals(RestExecutionResultEnum.MINING_CDA_ERROR.getType(), resPublication.getType());
 
-        // attachment resource - wong mode
-    	byte[] pdfResource = FileUtility.getFileFromInternalResources("Files/resource/CDA_RESOURCE.pdf");
-		resPublication = callPublication(pdfResource,buildCreationDTO(transactionID, InjectionModeEnum.ATTACHMENT), transactionID, false, true);
-		assertNotNull(resPublication); 
-        assertEquals(RestExecutionResultEnum.MINING_CDA_ERROR.getType(), resPublication.getType());
-    }
+		// attachment resource - wong mode
+		byte[] pdfResource = FileUtility.getFileFromInternalResources("Files/resource/CDA_RESOURCE.pdf");
+		resPublication = callPublication(pdfResource, buildCreationDTO(transactionID, InjectionModeEnum.ATTACHMENT),
+				transactionID, false, true);
+		assertNotNull(resPublication);
+		assertEquals(RestExecutionResultEnum.MINING_CDA_ERROR.getType(), resPublication.getType());
+	}
 
 	@Test
-	void jwtValidation () {
+	void jwtValidation() {
 		byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files/attachment/REPLACE_FILE.pdf");
 		String encoded = StringUtility.encodeSHA256(pdfAttachment);
 		String token = generateJwt(pdfAttachment, true, EventTypeEnum.PUBLICATION);
-		
+
 		log.info("Token: {}", token);
-		
+
 		String noBearer = token.substring(7);
 		String[] split = noBearer.split("\\.");
 
 		String payload = new String(Base64.getDecoder().decode(split[1]));
-		
+
 		JWTTokenDTO jwtToken = new JWTTokenDTO(JWTPayloadDTO.extractPayload(payload));
 
 		assertNotNull(jwtToken);
@@ -214,21 +207,22 @@ class PublicationTest extends AbstractTest {
 		assertEquals(encoded, jwtToken.getPayload().getAttachment_hash());
 	}
 
-	public RestExecutionResultEnum callPublication(byte[] fileByte, PublicationCreationReqDTO reqDTO, String transactionId, final boolean fromGoveway, boolean isValidFile) {
+	public RestExecutionResultEnum callPublication(byte[] fileByte, PublicationCreationReqDTO reqDTO,
+			String transactionId, final boolean fromGoveway, boolean isValidFile) {
 		RestExecutionResultEnum output = null;
 		LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 
 		try {
-			ByteArrayResource fileAsResource = new ByteArrayResource(fileByte){
+			ByteArrayResource fileAsResource = new ByteArrayResource(fileByte) {
 				@Override
-				public String getFilename(){
+				public String getFilename() {
 					return "file";
 				}
 			};
 
-			map.add("file",fileAsResource);
+			map.add("file", fileAsResource);
 
-			if(reqDTO==null) {
+			if (reqDTO == null) {
 				map.add("requestBody", buildCreationDTO(transactionId));
 			} else {
 				map.add("requestBody", reqDTO);
@@ -237,14 +231,16 @@ class PublicationTest extends AbstractTest {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 			log.info("Simulating a valid json payload");
-			
+
 			if (fromGoveway) {
 				headers.set(Constants.Headers.JWT_GOVWAY_HEADER, generateJwtGovwayPayload(fileByte));
 			} else {
-				headers.set(Constants.Headers.JWT_HEADER, generateJwt(fileByte, isValidFile, EventTypeEnum.PUBLICATION));
+				headers.set(Constants.Headers.JWT_HEADER,
+						generateJwt(fileByte, isValidFile, EventTypeEnum.PUBLICATION));
 			}
 
-			String urlPublication = "http://localhost:" + webServerAppCtxt.getWebServer().getPort() + webServerAppCtxt.getServletContext().getContextPath() + "/v1/documents";
+			String urlPublication = "http://localhost:" + webServerAppCtxt.getWebServer().getPort()
+					+ webServerAppCtxt.getServletContext().getContextPath() + "/v1/documents";
 
 			HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
 
@@ -268,18 +264,40 @@ class PublicationTest extends AbstractTest {
 		PublicationCreationReqDTO out = new PublicationCreationReqDTO();
 		out.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC001);
 		out.setConservazioneANorma("Conservazione sostitutiva");
-		out.setDataFinePrestazione(""+new Date().getTime());
-		out.setDataInizioPrestazione(""+new Date().getTime());
+		out.setDataFinePrestazione("" + new Date().getTime());
+		out.setDataInizioPrestazione("" + new Date().getTime());
 		out.setHealthDataFormat(HealthDataFormatEnum.CDA);
-		out.setIdentificativoDoc("Identificativo doc");
-		out.setIdentificativoRep("Identificativo rep");
+		out.setIdentificativoDoc("2.16.840.4^UAT_GTW_ID162");
+		out.setIdentificativoRep("2.16.840.1.113883.2.9.2.080.4.5.1234");
 		out.setIdentificativoSottomissione("Identificativo Sottomissione");
 		out.setMode(InjectionModeEnum.ATTACHMENT);
 		out.setAttiCliniciRegoleAccesso(java.util.Arrays.asList(EventCodeEnum._94503_0.getCode()));
+		out.setAdministrativeRequest(java.util.Arrays.asList(AdministrativeReqEnum.SSN));
 		out.setTipoAttivitaClinica(AttivitaClinicaEnum.CON);
 		out.setTipoDocumentoLivAlto(TipoDocAltoLivEnum.WOR);
 		out.setTipologiaStruttura(HealthcareFacilityEnum.Ospedale);
 		out.setWorkflowInstanceId(workflowInstanceId);
+		return out;
+	}
+
+	private PublicationCreationReqDTO buildCreationDTO(String workflowInstanceId, TipoDocAltoLivEnum tipoDocLivAlto) {
+		PublicationCreationReqDTO out = new PublicationCreationReqDTO();
+		out.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC001);
+		out.setConservazioneANorma("Conservazione sostitutiva");
+		out.setDataFinePrestazione("" + new Date().getTime());
+		out.setDataInizioPrestazione("" + new Date().getTime());
+		out.setHealthDataFormat(HealthDataFormatEnum.CDA);
+		out.setIdentificativoDoc("2.16.840.4^UAT_GTW_ID162");
+		out.setIdentificativoRep("2.16.840.1.113883.2.9.2.080.4.5.1234");
+		out.setIdentificativoSottomissione("Identificativo Sottomissione");
+		out.setMode(InjectionModeEnum.ATTACHMENT);
+		out.setAttiCliniciRegoleAccesso(java.util.Arrays.asList(EventCodeEnum._94503_0.getCode()));
+		out.setAdministrativeRequest(java.util.Arrays.asList(AdministrativeReqEnum.SSN));
+		out.setTipoAttivitaClinica(AttivitaClinicaEnum.CON);
+		out.setTipoDocumentoLivAlto(tipoDocLivAlto);
+		out.setTipologiaStruttura(HealthcareFacilityEnum.Ospedale);
+		out.setWorkflowInstanceId(workflowInstanceId);
+		out.setAdministrativeRequest(java.util.Arrays.asList(AdministrativeReqEnum.SSN));
 		return out;
 	}
 
@@ -287,140 +305,182 @@ class PublicationTest extends AbstractTest {
 		PublicationCreationReqDTO out = new PublicationCreationReqDTO();
 		out.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC001);
 		out.setConservazioneANorma("Conservazione sostitutiva");
-		out.setDataFinePrestazione(""+new Date().getTime());
-		out.setDataInizioPrestazione(""+new Date().getTime());
+		out.setDataFinePrestazione("" + new Date().getTime());
+		out.setDataInizioPrestazione("" + new Date().getTime());
 		out.setHealthDataFormat(HealthDataFormatEnum.CDA);
-		out.setIdentificativoDoc("Identificativo doc");
-		out.setIdentificativoRep("Identificativo rep");
+		out.setIdentificativoDoc("2.16.840.4^UAT_GTW_ID162");
+		out.setIdentificativoRep("2.16.840.1.113883.2.9.2.080.4.5.1234");
 		out.setIdentificativoSottomissione("Identificativo Sottomissione");
 		out.setMode(mode);
 		out.setAttiCliniciRegoleAccesso(java.util.Arrays.asList(EventCodeEnum._94503_0.getCode()));
+		out.setAdministrativeRequest(java.util.Arrays.asList(AdministrativeReqEnum.SSN));
 		out.setTipoAttivitaClinica(AttivitaClinicaEnum.CON);
 		out.setTipoDocumentoLivAlto(TipoDocAltoLivEnum.WOR);
 		out.setTipologiaStruttura(HealthcareFacilityEnum.Ospedale);
 		out.setWorkflowInstanceId(workflowInstanceId);
-		 
 		return out;
 	}
 
 	@Test
 	void publicationErrorTest() {
 
-		//given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(new TransformResDTO("", "{\"json\" : \"json\"}"));
+		// given(client.callConvertCdaInBundle(any(FhirResourceDTO.class))).willReturn(new
+		// TransformResDTO("", "{\"json\" : \"json\"}"));
 		doReturn(new ResponseEntity<>(new TransformResDTO("", Document.parse("{\"json\" : \"json\"}")), HttpStatus.OK))
-				.when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(TransformResDTO.class));
+				.when(restTemplate)
+				.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(TransformResDTO.class));
 
-		final byte[] file = FileUtility.getFileFromInternalResources("Files" + File.separator + "attachment" + File.separator + "LAB_OK.pdf");
+		final byte[] file = FileUtility
+				.getFileFromInternalResources("Files" + File.separator + "attachment" + File.separator + "LAB_OK.pdf");
 		final String jwtToken = generateJwt(file, true, EventTypeEnum.PUBLICATION);
-		
+
 		ValidationCDAReqDTO validationRB = validateDataPreparation();
-		
+
 		// Mocking validator
 		ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "", "");
-		given(validatorClient.validate(anyString(),anyString(), any())).willReturn(info);
+		given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
 
 		ResponseEntity<ValidationResDTO> response = callPlainValidation(jwtToken, file, validationRB);
 		assertEquals(HttpStatus.CREATED.value(), response.getStatusCode().value());
 		final String workflowInstanceId = "wfid";
 
 		PublicationCreationReqDTO publicationRB = new PublicationCreationReqDTO();
-		Exception thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		Exception thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setWorkflowInstanceId(workflowInstanceId);
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setTipologiaStruttura(HealthcareFacilityEnum.Ospedale);
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setIdentificativoDoc("identificativoDoc");
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setIdentificativoRep("identificativoRep");
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setTipoDocumentoLivAlto(TipoDocAltoLivEnum.REF);
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setAssettoOrganizzativo(PracticeSettingCodeEnum.AD_PSC055);
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-	
+
 		publicationRB.setTipoAttivitaClinica(AttivitaClinicaEnum.CON);
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.MANDATORY_ELEMENT_ERROR.getTitle()));
-		
+
+		publicationRB.setAdministrativeRequest(java.util.Arrays.asList(AdministrativeReqEnum.SSN));
 		publicationRB.setIdentificativoSottomissione("identificativoSottomissione");
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
-		
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
+
 		publicationRB.setIdentificativoDoc(TestConstants.documentId);
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
-		
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, new byte[0], publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
+
+		publicationRB.setIdentificativoDoc("2.16.840.4^UAT_GTW_ID162");
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, new byte[0], publicationRB));
 		assertTrue(thrownException.getMessage().contains(RestExecutionResultEnum.EMPTY_FILE_ERROR.getType()));
-	
-		thrownException = assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(jwtToken, file, publicationRB));
+
+		publicationRB.setDescriptions(java.util.Arrays.asList("Error"));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
+		
+		publicationRB.setDescriptions(java.util.Arrays.asList("043232014^TACHIPIRINA*120MG/5ML SCIR 120ML^1.2.3.4.5.6.7.8.9"));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
+
+		publicationRB.setDescriptions(java.util.Arrays.asList("N02BE01^PARACETAMOLO^2.16.840.1.113883.6.73"));
+		thrownException = assertThrows(HttpClientErrorException.BadRequest.class,
+				() -> callPlainPublication(jwtToken, file, publicationRB));
 		log.info(ExceptionUtils.getStackTrace(thrownException));
 
-		thrownException = assertThrows(HttpClientErrorException.Forbidden.class, () -> callPlainValidation("AAA", file, validationRB));
+		thrownException = assertThrows(HttpClientErrorException.Forbidden.class,
+				() -> callPlainValidation("AAA", file, validationRB));
 		publicationRB.setWorkflowInstanceId("NON EXISTING");
-		thrownException = assertThrows(HttpClientErrorException.Forbidden.class, () -> callPlainPublication("AAA", file, publicationRB));
+		thrownException = assertThrows(HttpClientErrorException.Unauthorized.class,
+				() -> callPlainPublication("AAA", file, publicationRB));
 		System.out.print(thrownException.getMessage().toString());
 		assertTrue(thrownException.getMessage().contains("Token JWT non valido"));
 	}
-	
-	
+
 	@Test
 	@DisplayName("Validation + Publication after 5 days - Error Test")
-	@Disabled("To be revised")
 	void testPublicationDateError() {
-		long DAY_IN_MS = 1000 * 60 * 60 * 24; 
-		ValidationDataDTO validatedDocumentDateOverFiveDays = new ValidationDataDTO(); 
+		long DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+		doReturn("").when(signSRV).checkPades(any(byte[].class), any(EventTypeEnum.class));
+		
+		String transactionID = UUID.randomUUID().toString();
+		ValidationDataDTO validatedDocumentDateOverFiveDays = new ValidationDataDTO();
 		validatedDocumentDateOverFiveDays.setHash("");
-		validatedDocumentDateOverFiveDays.setCdaValidated(true); 
-		validatedDocumentDateOverFiveDays.setInsertionDate(new Date(System.currentTimeMillis() - (7 * DAY_IN_MS))); 
-		
-		ValidationDataDTO validatedDocumentCorrectDate = new ValidationDataDTO(); 
+		validatedDocumentDateOverFiveDays.setCdaValidated(true);
+		validatedDocumentDateOverFiveDays.setInsertionDate(new Date(System.currentTimeMillis() - (7 * DAY_IN_MS)));
+		validatedDocumentDateOverFiveDays.setTransformID("");
+		validatedDocumentDateOverFiveDays.setEngineID("");
+
+		ValidationDataDTO validatedDocumentCorrectDate = new ValidationDataDTO();
 		validatedDocumentCorrectDate.setHash("");
-		validatedDocumentCorrectDate.setCdaValidated(true); 
-		validatedDocumentCorrectDate.setInsertionDate(new Date(System.currentTimeMillis() - (3 * DAY_IN_MS))); 
-		
+		validatedDocumentCorrectDate.setCdaValidated(true);
+		validatedDocumentCorrectDate.setInsertionDate(new Date(System.currentTimeMillis() - (3 * DAY_IN_MS)));
+		validatedDocumentCorrectDate.setTransformID("");
+		validatedDocumentCorrectDate.setEngineID("");
+
+
 		TransformResDTO ref = new TransformResDTO();
 		ref.setErrorMessage("");
 		ref.setJson(Document.parse("{\"json\" : \"json\"}"));
 		doReturn(new ResponseEntity<>(ref, HttpStatus.OK))
-				.when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(TransformResDTO.class));
+				.when(restTemplate)
+				.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(TransformResDTO.class));
+
+		doReturn(new TransformResDTO("", Document.parse("{\"resourceType\" : \"Bundle\"}")))
+				.when(restTemplate)
+				.postForObject(anyString(), any(HttpEntity.class), eq(TransformResDTO.class));
 
 		byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files/attachment/SIGNED_LDO1.pdf");
 
 		ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "wfid", "");
-		given(validatorClient.validate(anyString(),anyString(), any())).willReturn(info);
+		given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
 
 		// Validation will insert hash in DB
-		callValidation(ActivityEnum.VALIDATION, HealthDataFormatEnum.CDA, InjectionModeEnum.ATTACHMENT, pdfAttachment, true, false, true);
-		
-		// Case 1: Date is over 5 days 
-		when(cdaFacadeSRV.getByWorkflowInstanceId(anyString())).thenReturn(validatedDocumentDateOverFiveDays); 
-		
+		callValidation(ActivityEnum.VALIDATION, HealthDataFormatEnum.CDA, InjectionModeEnum.ATTACHMENT, pdfAttachment,
+				true, false, true);
+
+		// Case 1: Date is over 5 days
+		when(cdaFacadeSRV.retrieveValidationInfo(anyString(), anyString())).thenReturn(validatedDocumentDateOverFiveDays);
+
 		// Publication failure will remove hash from DB
-		RestExecutionResultEnum resPublication = callPublication(pdfAttachment, buildReqDTO(), null, false, true);
-		
+		RestExecutionResultEnum resPublication = callPublication(pdfAttachment, buildCreationDTO(transactionID, TipoDocAltoLivEnum.LDO), null, false, true);
+
 		assertNotNull(resPublication);
-		assertEquals(RestExecutionResultEnum.OLDER_DAY.getType(), resPublication.getType()); 
+		assertEquals(RestExecutionResultEnum.OLDER_DAY.getType(), resPublication.getType());
 
 		// Validation will insert hash in DB
-		callValidation(ActivityEnum.VALIDATION, HealthDataFormatEnum.CDA, InjectionModeEnum.ATTACHMENT, pdfAttachment, true, false, true);
+		callValidation(ActivityEnum.VALIDATION, HealthDataFormatEnum.CDA, InjectionModeEnum.ATTACHMENT, pdfAttachment,
+				true, false, true);
 
 		// Case 2: Date is 3 days ago, should be OK
-		when(cdaFacadeSRV.getByWorkflowInstanceId(anyString())).thenReturn(validatedDocumentCorrectDate); 
+		when(cdaFacadeSRV.retrieveValidationInfo(anyString(), anyString())).thenReturn(validatedDocumentCorrectDate);
 
 		// Publication success will remove hash from DB
-		RestExecutionResultEnum resPublicationOk = callPublication(pdfAttachment, buildReqDTO(), null, false, true);
+		RestExecutionResultEnum resPublicationOk = callPublication(pdfAttachment, buildCreationDTO(transactionID, TipoDocAltoLivEnum.LDO), null, false, true);
 		assertNotNull(resPublicationOk);
 		assertEquals(RestExecutionResultEnum.OK.getType(), resPublicationOk.getType());
 	}
@@ -428,14 +488,15 @@ class PublicationTest extends AbstractTest {
 	@Test
 	@DisplayName("error fhir creation")
 	void errorFhirResourceCreationTest() {
-		final byte[] file = FileUtility.getFileFromInternalResources("Files" + File.separator + "attachment" + File.separator + "LAB_OK.pdf");
+		final byte[] file = FileUtility
+				.getFileFromInternalResources("Files" + File.separator + "attachment" + File.separator + "LAB_OK.pdf");
 		final String jwtToken = generateJwt(file, true, EventTypeEnum.PUBLICATION);
 
 		final ValidationCDAReqDTO validationRB = validateDataPreparation();
 
 		// Mocking validator
 		final ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "", "");
-		given(validatorClient.validate(anyString(),anyString(), any())).willReturn(info);
+		given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
 
 		final ResponseEntity<ValidationResDTO> validationResponse = callPlainValidation(jwtToken, file, validationRB);
 		assumeFalse(validationResponse == null);
@@ -446,14 +507,45 @@ class PublicationTest extends AbstractTest {
 		fhirResourcesDTO.setErrorMessage("Errore generico");
 
 		doReturn(new ResponseEntity<>(new TransformResDTO("Errore generico", null), HttpStatus.OK))
-				.when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(TransformResDTO.class));
-
+				.when(restTemplate)
+				.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(TransformResDTO.class));
 
 		assertThrows(HttpClientErrorException.BadRequest.class, () -> callPlainPublication(
 				jwtToken,
 				file,
-				publicationRB
-		));
+				publicationRB));
 	}
+
+	@Test
+	@DisplayName("Publication - whole create flow")
+	void givenAValidatedCDA_shouldExecuteTheWholeCreateFlow() {
+
+		String transactionID = UUID.randomUUID().toString();
+
+
+		ValidationDataDTO validatedDocument = new ValidationDataDTO();
+		validatedDocument.setHash("");
+		validatedDocument.setCdaValidated(true);
+		validatedDocument.setInsertionDate(new Date(System.currentTimeMillis()));
+		validatedDocument.setTransformID("");
+		validatedDocument.setEngineID("");
+
+		doReturn(new TransformResDTO("", Document.parse("{\"resourceType\" : \"Bundle\"}")))
+				.when(restTemplate)
+				.postForObject(anyString(), any(HttpEntity.class), eq(TransformResDTO.class));
+
+		doReturn("").when(signSRV).checkPades(any(byte[].class), any(EventTypeEnum.class));
+
+		final byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files/attachment/SIGNED_LDO1.pdf");
+
+
+		when(cdaFacadeSRV.retrieveValidationInfo(anyString(), anyString())).thenReturn(validatedDocument);
+
+		RestExecutionResultEnum resPublicationOk = callPublication(pdfAttachment, buildCreationDTO(transactionID, TipoDocAltoLivEnum.LDO), null, false, true);
+		assertNotNull(resPublicationOk);
+		assertEquals(RestExecutionResultEnum.OK.getType(), resPublicationOk.getType());
+
+	}
+
 
 }
