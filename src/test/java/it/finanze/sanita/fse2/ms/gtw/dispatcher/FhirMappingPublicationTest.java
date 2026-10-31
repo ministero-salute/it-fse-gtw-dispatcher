@@ -73,7 +73,7 @@ class FhirMappingPublicationTest {
         ResourceDTO result = publish();
 
         assertNull(result.getErrorMessage());
-        assertTrue(result.getWarning().contains("normalization - WARNING: sensitive clinical diagnostic"));
+        assertTrue(result.getWarning().contains("NORMALIZATION - WARNING: sensitive clinical diagnostic"));
         assertNotNull(result.getBundleJson());
         assertEquals(List.of("Bundle.entry[0]"), response.getNormalizationIssues().getFirst().getPaths());
         assertFalse(output.getAll().contains("sensitive clinical diagnostic"));
@@ -178,7 +178,7 @@ class FhirMappingPublicationTest {
 
         ResourceDTO result = publish();
 
-        assertEquals("normalization - " + severity + ": sensitive clinical diagnostic", result.getErrorMessage());
+        assertEquals("NORMALIZATION - " + severity + ": sensitive clinical diagnostic", result.getErrorMessage());
         assertNull(result.getWarning());
         assertNull(result.getBundleJson());
     }
