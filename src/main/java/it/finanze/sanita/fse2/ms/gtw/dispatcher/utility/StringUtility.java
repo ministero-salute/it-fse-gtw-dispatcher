@@ -75,14 +75,16 @@ public final class StringUtility {
 	}
 
 	/**
-	 * Returns the encoded String of the SHA-256 algorithm represented in base 64.
-	 * 
-	 * @param objectToEncode String to encode.
-	 * @return String Encoded.
+	 * Returns the SHA-1 digest as a hexadecimal string for DocumentEntry.hash metadata.
+	 * Not intended for authentication or security validation.
+	 *
+	 * @param objectToEncode Bytes to hash.
+	 * @return Hexadecimal SHA-1 digest.
 	 */
 	public static String encodeSHA1(final byte[] objectToEncode) {
 		try {
-			final MessageDigest digest = MessageDigest.getInstance(Constants.App.SHA1_ALGORITHM);
+			// Used only for DocumentEntry.hash metadata interoperability; JWT attachment validation uses SHA-256.
+			final MessageDigest digest = MessageDigest.getInstance(Constants.App.SHA1_ALGORITHM); // NOSONAR - SHA-1 is not used for authentication or security validation.
 			return Hex.encodeHexString(digest.digest(objectToEncode));
 		} catch (final Exception e) {
 			log.error(ERROR_MSG, e);

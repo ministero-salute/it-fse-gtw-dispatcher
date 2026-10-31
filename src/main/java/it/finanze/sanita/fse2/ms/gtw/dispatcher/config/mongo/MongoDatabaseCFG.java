@@ -61,7 +61,8 @@ public class MongoDatabaseCFG {
     private static final String KMS_PROVIDER_AZURE = "azure";
     private static final String KMS_PROVIDER_AWS = "aws";
 
-    private volatile ClientEncryption clientEncryption;
+    // Guard the client lifecycle and encryption with the same monitor.
+    private ClientEncryption clientEncryption;
     private BsonBinary datakeyId;
     private MongoClientSettings mongoClientSettings;
 
@@ -85,7 +86,7 @@ public class MongoDatabaseCFG {
 
     
     @PostConstruct
-    public void init() {
+    public synchronized void init() {
         mongoClientSettings = MongoClientSettings.builder().applyConnectionString(new ConnectionString(mongoPropsCfg.getUri())).build();
         if (mongoPropsCfg.isEncryptionEnabled()) { 
             generateOrRetrieveDataKeyId(cloudProvider);
@@ -130,7 +131,7 @@ public class MongoDatabaseCFG {
         }
     }
 
-    public BsonBinary encrypt(BsonValue bsonValue) {
+    public synchronized BsonBinary encrypt(BsonValue bsonValue) {
         if (!mongoPropsCfg.isEncryptionEnabled()) {
             return bsonValue.asBinary();
         }
@@ -153,6 +154,10 @@ public class MongoDatabaseCFG {
             log.error("Errore nel rebuild di ClientEncryption per AWS", e);
             throw new RuntimeException(e);
         }
+    }
+
+    public synchronized ClientEncryption getClientEncryption() {
+        return clientEncryption;
     }
 
     private ClientEncryption buildClientEncryption(CloudProviderEnum provider) {

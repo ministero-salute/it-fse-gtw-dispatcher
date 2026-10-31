@@ -72,8 +72,11 @@ public class CustomAuthenticateCallbackHandler implements AuthenticateCallbackHa
                     OAuthBearerToken token = getOAuthBearerToken();
                     OAuthBearerTokenCallback oauthCallback = (OAuthBearerTokenCallback) callback;
                     oauthCallback.token(token);
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Interrupted while acquiring OAuth bearer token", e);
+                } catch (ExecutionException | TimeoutException e) {
+                    throw new IOException("Unable to acquire OAuth bearer token", e);
                 }
             } else {
                 throw new UnsupportedCallbackException(callback);
@@ -82,26 +85,25 @@ public class CustomAuthenticateCallbackHandler implements AuthenticateCallbackHa
     }
 
     private OAuthBearerToken getOAuthBearerToken() throws MalformedURLException, InterruptedException, ExecutionException, TimeoutException {
-        if (this.aadClient == null) {
-            synchronized(this) {
-                if (this.aadClient == null) {
-                	IClientCredential credential = null;
-            	    try (FileInputStream certificato = new FileInputStream(new File(pfxPathName))) {
-                		credential = ClientCredentialFactory.createFromCertificate(certificato, this.pwd);	
-                	} catch(Exception ex) {
-                		log.error("Error while try to crate credential from certificate");
-                		throw new BusinessException(ex);
-                	}
-                    this.aadClient = ConfidentialClientApplication.builder(this.appId, credential)
-                            .authority(this.tenantId)
-                            .build();
-                }
-            }
-        }
-
-        IAuthenticationResult authResult = this.aadClient.acquireToken(this.aadParameters).get();
+        IAuthenticationResult authResult = getAadClient().acquireToken(this.aadParameters).get();
         log.info("Token oauth2 acquired");
         return new OAuthBearerTokenImp(authResult.accessToken(), authResult.expiresOnDate());
+    }
+
+    private synchronized ConfidentialClientApplication getAadClient() throws MalformedURLException {
+        if (this.aadClient == null) {
+            IClientCredential credential;
+            try (FileInputStream certificato = new FileInputStream(new File(pfxPathName))) {
+                credential = ClientCredentialFactory.createFromCertificate(certificato, this.pwd);
+            } catch (Exception ex) {
+                log.error("Unable to create credential from certificate");
+                throw new BusinessException(ex);
+            }
+            this.aadClient = ConfidentialClientApplication.builder(this.appId, credential)
+                    .authority(this.tenantId)
+                    .build();
+        }
+        return this.aadClient;
     }
 
     public void close() throws KafkaException {

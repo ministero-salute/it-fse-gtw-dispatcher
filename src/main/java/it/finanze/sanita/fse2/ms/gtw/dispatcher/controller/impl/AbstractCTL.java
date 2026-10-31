@@ -1011,12 +1011,9 @@ public abstract class AbstractCTL {
 	protected DirectFhirDTO getAndValidateFhirFile(final MultipartFile file, InjectionModeEnum mode) throws IOException {
 
 		try {
-			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
-			if (file != null && file.getBytes().length > 0) {
-				result = null;
-			}
-
-			if (result != null) {
+			byte[] inputBytes = file != null ? file.getBytes() : new byte[0];
+			if (file == null || inputBytes.length == 0) {
+				RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
                 String errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
                 final ErrorResponseDTO error = ErrorResponseDTO.builder()
 						.type(result.getType()).title(result.getTitle())
@@ -1024,7 +1021,6 @@ public abstract class AbstractCTL {
 				throw new ValidationException(error);
 			}
 
-			byte[] inputBytes = file.getBytes();
 			String filename = file.getOriginalFilename();
 
 			DirectFhirDTO directFhirDTO = new DirectFhirDTO();
