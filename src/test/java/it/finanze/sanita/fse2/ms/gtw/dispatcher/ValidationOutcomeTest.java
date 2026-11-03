@@ -59,7 +59,7 @@ class ValidationOutcomeTest {
         ValidationInfoDTO response = new ObjectMapper().readValue("""
                 {"result":"%s","message":["WARNING: diagnostic"],"transformID":"map","engineID":"engine"}
                 """.formatted(outcome.name()), ValidationInfoDTO.class);
-        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS)).thenReturn(response);
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, false)).thenReturn(response);
 
         String warning = controller.runValidation();
 
@@ -70,7 +70,7 @@ class ValidationOutcomeTest {
     @ParameterizedTest
     @EnumSource(value = RawValidationEnum.class, names = {"FHIR_VALIDATION_ERROR", "SEMANTIC_ERROR", "SYNTAX_ERROR"})
     void errorOutcomesRemainBlocking(RawValidationEnum outcome) {
-        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS)).thenReturn(
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, false)).thenReturn(
                 new ValidationInfoDTO(outcome, List.of("ERROR: diagnostic"), "map", "engine"));
 
         assertThrows(ValidationException.class, controller::runValidation);
@@ -82,7 +82,7 @@ class ValidationOutcomeTest {
 
     @Test
     void okOutcomeDoesNotExposeInformationalMessagesAsWarnings() {
-        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS)).thenReturn(
+        when(validatorClient.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.TS, false)).thenReturn(
                 new ValidationInfoDTO(RawValidationEnum.OK,
                         List.of("INFORMATION: diagnostic", "warning: actual warning"), "map", "engine"));
 

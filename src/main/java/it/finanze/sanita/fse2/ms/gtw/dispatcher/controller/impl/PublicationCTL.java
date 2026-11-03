@@ -649,7 +649,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			idDoc = CdaUtility.extractIdDoc(docT);
 			//Chiamo ms validator per la validazione
 			String issuer = jwtPayloadToken.getIss();
-			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId,issuer);
+			// Le validazioni FHIR vengono eseguite solo in pubblicazione (se configurate in flows.publication.validations)
+			warning = validateForContextualFlow(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
 
 			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, jwtPayloadToken, EventTypeEnum.VALIDATION_FOR_PUBLICATION);
 
@@ -675,12 +676,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		} catch (final ValidationException e) {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
-
-        // Avoid merging with fhir-mapping warnings to avoid duplications on the response.
-        // This will drop warnings in publication even if validation does not perform additional checks
-        // as per flows.validation.validations property.
+		
 		warning = StringUtility.mergeWarnings(warning,
-				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null,
+				validationResult.getFhirResource() != null ? validationResult.getFhirResource().getWarning() : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {
@@ -721,7 +720,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			String issuer = jwtPayloadToken.getIss();
 
 			//Chiamo ms validator per la validazione
-			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
+			//Le validazioni FHIR vengono eseguite solo in replace (se configurate in flows.publication.validations)
+			warning = validateForContextualFlow(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
 
 			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, jwtPayloadToken, EventTypeEnum.VALIDATION_FOR_REPLACE);
 
@@ -775,11 +775,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-        // Avoid merging with fhir-mapping warnings to avoid duplications on the response.
-        // This will drop warnings in publication even if validation does not perform additional checks
-        // as per flows.validation.validations property.
 		warning = StringUtility.mergeWarnings(warning,
-				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null);
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null,
+				validationResult.getFhirResource() != null ? validationResult.getFhirResource().getWarning() : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {

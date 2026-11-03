@@ -157,7 +157,7 @@ class AbstractControllerIsolationTest extends AbstractCTL {
         info.setTransformID("map");
         info.setEngineID("engine");
         info.setMessage(List.of("WARNING: diagnostic", "information"));
-        when(validator.validate(anyString(), eq("workflow"), any())).thenReturn(info);
+        when(validator.validate(anyString(), eq("workflow"), any(), anyBoolean())).thenReturn(info);
         when(jwt.getSystemByIssuer("issuer")).thenReturn(SystemTypeEnum.NONE);
         assertEquals("WARNING: diagnostic", validate(FhirResourcesIsolationTest.CDA,
                 persist ? ActivityEnum.VALIDATION : ActivityEnum.VERIFICA, "workflow", "issuer"));
@@ -169,13 +169,13 @@ class AbstractControllerIsolationTest extends AbstractCTL {
     void validatorFailuresDoNotPersist(boolean dependencyFailure) {
         when(jwt.getSystemByIssuer("issuer")).thenReturn(SystemTypeEnum.NONE);
         if (dependencyFailure) {
-            when(validator.validate(anyString(), anyString(), any())).thenThrow(new IllegalStateException("offline"));
+            when(validator.validate(anyString(), anyString(), any(), anyBoolean())).thenThrow(new IllegalStateException("offline"));
             assertThrows(BusinessException.class, () -> validate("cda", ActivityEnum.VALIDATION, "workflow", "issuer"));
         } else {
             var info = new ValidationInfoDTO();
             info.setResult(RawValidationEnum.SYNTAX_ERROR);
             info.setMessage(List.of("blocking diagnostic"));
-            when(validator.validate(anyString(), anyString(), any())).thenReturn(info);
+            when(validator.validate(anyString(), anyString(), any(), anyBoolean())).thenReturn(info);
             assertThrows(ValidationException.class, () -> validate("cda", ActivityEnum.VALIDATION, "workflow", "issuer"));
         }
         verifyNoInteractions(facade);
