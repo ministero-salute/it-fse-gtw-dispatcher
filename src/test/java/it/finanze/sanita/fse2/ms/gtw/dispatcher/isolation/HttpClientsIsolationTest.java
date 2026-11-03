@@ -98,7 +98,23 @@ class HttpClientsIsolationTest {
         var result = client.validate("<ClinicalDocument/>", "workflow", extraValidations ? SystemTypeEnum.TS : SystemTypeEnum.NONE, false);
         assertEquals("map", result.getTransformID());
         server.verify();
-        assertThrows(ConnectionRefusedException.class, () -> client.validateFallback("cda", "workflow", SystemTypeEnum.NONE, new IllegalStateException("offline")));
+        assertThrows(ConnectionRefusedException.class, () -> client.validateFallback("cda", "workflow", SystemTypeEnum.NONE, false, new IllegalStateException("offline")));
+    }
+
+    @Test
+    void validatorSkipsFhirValidationsAndRemovalReport() {
+        var client = inject(new ValidatorClient());
+        var flows = new FlowsCFG();
+        ReflectionTestUtils.setField(flows, "validationFlowValidations", java.util.List.of("FHIR"));
+        ReflectionTestUtils.setField(flows, "includeRemovalReport", true);
+        ReflectionTestUtils.setField(client, "flowsCFG", flows);
+        server.expect(requestTo("http://validator.test/v1/validate"))
+                .andExpect(method(HttpMethod.POST)).andExpect(jsonPath("$.cda").value("<ClinicalDocument/>"))
+                .andExpect(jsonPath("$.workflowInstanceId").value("workflow"))
+                .andRespond(withSuccess("{\"result\":{\"result\":\"OK\",\"transformID\":\"map\"}}", MediaType.APPLICATION_JSON));
+        var result = client.validate("<ClinicalDocument/>", "workflow", SystemTypeEnum.NONE, true);
+        assertEquals("map", result.getTransformID());
+        server.verify();
     }
 
     @ParameterizedTest @ValueSource(booleans = {false, true})
