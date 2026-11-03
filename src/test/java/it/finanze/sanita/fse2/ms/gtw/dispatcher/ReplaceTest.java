@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -157,7 +158,7 @@ class ReplaceTest extends AbstractTest {
 	 	mockValidation(pdfAttachment);
 	 	
 	 	ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "", "");
-	 	given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
+	 	given(validatorClient.validate(anyString(), anyString(), any(), anyBoolean())).willReturn(info);
 	 	
 	 	callValidation(ActivityEnum.VALIDATION, HealthDataFormatEnum.CDA, InjectionModeEnum.ATTACHMENT, pdfAttachment, true, false, true);
 		
@@ -191,7 +192,7 @@ class ReplaceTest extends AbstractTest {
 
 	 void mockValidation(byte[] pdfAttachment) {
 	 	ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "", "");
-	 	given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
+	 	given(validatorClient.validate(anyString(), anyString(), any(), anyBoolean())).willReturn(info);
 	 }
 
 	 @Test

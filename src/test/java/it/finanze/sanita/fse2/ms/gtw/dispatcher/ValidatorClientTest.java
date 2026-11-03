@@ -49,7 +49,7 @@ public class ValidatorClientTest {
             eq(ValidationResDTO.class)
         );
         // Perform validation
-        ValidationInfoDTO outcome = client.validate("cda_test", "wif_test", SystemTypeEnum.TS);
+        ValidationInfoDTO outcome = client.validate("cda_test", "wif_test", SystemTypeEnum.TS, false);
         // Assertion
         assertEquals(infoMock.getEngineID(), outcome.getEngineID());
         assertEquals(infoMock.getTransformID(), outcome.getTransformID());
@@ -64,7 +64,7 @@ public class ValidatorClientTest {
             eq(ValidationResDTO.class)
         );
         // Assertion
-        assertThrows(ResourceAccessException.class, () -> client.validate("cda_test", "wif_test", SystemTypeEnum.TS));
+        assertThrows(ResourceAccessException.class, () -> client.validate("cda_test", "wif_test", SystemTypeEnum.TS, false));
     }
 
     @Test
@@ -76,7 +76,7 @@ public class ValidatorClientTest {
             eq(ValidationResDTO.class)
         );
         // Assertion
-        assertThrows(ValidationException.class, () -> client.validate("cda_test", "wif_test", SystemTypeEnum.TS));
+        assertThrows(ValidationException.class, () -> client.validate("cda_test", "wif_test", SystemTypeEnum.TS, false));
     }
 
 }
