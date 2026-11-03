@@ -59,7 +59,7 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	
 	@Override
 	@CircuitBreaker(name = "validationCDA", fallbackMethod = "validateFallback")
-	public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system) {
+	public ValidationInfoDTO validate(final String cda, final String workflowInstanceId, final SystemTypeEnum system, boolean skipFhirValidations) {
 	    
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.set("Content-Type", "application/json");
@@ -75,7 +75,7 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	    HttpEntity<?> entity = new HttpEntity<>(req, headers);
 
 	    try {
-	        ValidationResDTO response = restTemplate.postForObject(buildValidateUrl(), entity, ValidationResDTO.class);
+	        ValidationResDTO response = restTemplate.postForObject(buildValidateUrl(skipFhirValidations), entity, ValidationResDTO.class);
 	        return response != null ? response.getResult() : null;
 
 	    } catch (HttpClientErrorException ex) {
@@ -87,15 +87,18 @@ public class ValidatorClient extends AbstractClient implements IValidatorClient 
 	 * Costruisce l'uri dell'API di validazione. La lista delle validazioni aggiuntive
 	 * viene passata come query param solo se valorizzata.
 	 */
-	private String buildValidateUrl() {
+	private String buildValidateUrl(boolean skipFhirValidations) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(msUrlCFG.getValidatorHost() + "/v1/validate");
 		List<String> validations = flowsCFG.getValidationFlowValidations();
-		if (validations != null && !validations.isEmpty()) {
-			builder.queryParam("validations", validations);
-		}
-		if (flowsCFG.isIncludeRemovalReport()) {
-			builder.queryParam("includeRemovalReport", true);
-		}
+
+		if(!skipFhirValidations){
+			if (validations != null && !validations.isEmpty()) {
+				builder.queryParam("validations", validations);
+			}
+			if (flowsCFG.isIncludeRemovalReport()) {
+				builder.queryParam("includeRemovalReport", true);
+			}
+	    }
 
 		return builder.build().toUriString();
 	}

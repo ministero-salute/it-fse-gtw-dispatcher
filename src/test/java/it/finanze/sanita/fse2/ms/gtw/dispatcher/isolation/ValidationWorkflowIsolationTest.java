@@ -64,7 +64,7 @@ class ValidationWorkflowIsolationTest {
         info.setTransformID("map");
         info.setEngineID("engine");
         info.setMessage(List.of("WARNING: diagnostic"));
-        when(validator.validate(anyString(), anyString(), any())).thenReturn(info);
+        when(validator.validate(anyString(), anyString(), any(), anyBoolean())).thenReturn(info);
     }
 
     @ParameterizedTest @EnumSource(ActivityEnum.class)

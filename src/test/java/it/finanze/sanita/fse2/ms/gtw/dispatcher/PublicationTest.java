@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -338,7 +339,7 @@ class PublicationTest extends AbstractTest {
 
 		// Mocking validator
 		ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "", "");
-		given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
+		given(validatorClient.validate(anyString(), anyString(), any(), anyBoolean())).willReturn(info);
 
 		ResponseEntity<ValidationResDTO> response = callPlainValidation(jwtToken, file, validationRB);
 		assertEquals(HttpStatus.CREATED.value(), response.getStatusCode().value());
@@ -457,7 +458,7 @@ class PublicationTest extends AbstractTest {
 		byte[] pdfAttachment = FileUtility.getFileFromInternalResources("Files/attachment/SIGNED_LDO1.pdf");
 
 		ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "wfid", "");
-		given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
+		given(validatorClient.validate(anyString(), anyString(), any(), anyBoolean())).willReturn(info);
 
 		// Validation will insert hash in DB
 		callValidation(ActivityEnum.VALIDATION, HealthDataFormatEnum.CDA, InjectionModeEnum.ATTACHMENT, pdfAttachment,
@@ -496,7 +497,7 @@ class PublicationTest extends AbstractTest {
 
 		// Mocking validator
 		final ValidationInfoDTO info = new ValidationInfoDTO(RawValidationEnum.OK, new ArrayList<>(), "", "");
-		given(validatorClient.validate(anyString(), anyString(), any())).willReturn(info);
+		given(validatorClient.validate(anyString(), anyString(), any(), anyBoolean())).willReturn(info);
 
 		final ResponseEntity<ValidationResDTO> validationResponse = callPlainValidation(jwtToken, file, validationRB);
 		assumeFalse(validationResponse == null);
