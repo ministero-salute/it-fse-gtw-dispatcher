@@ -73,4 +73,12 @@ public class CollectionNaming {
         return Constants.Collections.ISSUERS;
     }
 
+    @Bean("logCollectorControlBean")
+    public String getLogCollectorControlCollection() {
+        if (profileUtility.isTestProfile()) {
+            return Constants.Profile.TEST_PREFIX + Constants.Collections.LOG_CONTROL_COLLECTION_NAME;
+        }
+        return Constants.Collections.LOG_CONTROL_COLLECTION_NAME;
+    }
+
 }
