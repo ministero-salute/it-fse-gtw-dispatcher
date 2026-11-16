@@ -12,7 +12,13 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad263.enums.*;
@@ -24,6 +30,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Affinity Domain Strategy for version 2.6.3 (effective from March 2026)
@@ -90,6 +97,81 @@ public class Ad263Strategy extends AbstractAffinityDomainStrategy {
         validateField(request.getTipoDocumentoLivAlto(),
                 TipoDocAltoLivAd263Enum::isValidCode,
                 "tipoDocumentoLivAlto", "XDSDocumentEntry.classCode", validationErrors);
+    }
+
+    @Override
+    public PregressoDocumentReferenceDTO validatePublicationPregressoReqDTO(PublicationPregressoReqDTO request,
+            JWTPayloadDTO jwtPayloadToken) {
+        CorrelationDocumentType263Validator.isValid(
+                DocumentType263Enum.getByCode(
+                        StringUtility.extractHl7TypeCode(jwtPayloadToken.getResource_hl7_type())),
+                TipoDocAltoLivAd263Enum.valueOf(request.getTipoDocumentoLivAlto()));
+
+        ValidationResultDTO result = validatePublicationPregressoDTOTemplate(request);
+
+        if (!result.isValid()) {
+            String detail = result.getErrorMessage() != null ? result.getErrorMessage() : "Invalid value in request";
+            final ErrorResponseDTO error = ErrorResponseDTO.builder()
+                    .type(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
+                    .title(RestExecutionResultEnum.VALIDATOR_ERROR.getTitle())
+                    .instance(ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD.getInstance())
+                    .detail(detail)
+                    .build();
+            throw new MetadataValidationException(error);
+        }
+
+        return buildPregressoDocumentReference(request);
+    }
+
+    /**
+     * Validates the pregresso request: mandatory fields and match of the Affinity Domain codes
+     * against the enums of this AD version.
+     */
+    @Override
+    protected void validateValueSetsInternal(PublicationPregressoReqDTO request, List<String> validationErrors) {
+        validatePregressoMandatoryFields(request, validationErrors);
+
+        validateFieldList(request.getAdministrativeRequest(), AdministrativeReqAd263Enum::isValidCode,
+                "administrativeRequest", "XDSDocumentEntry.Slot – administrativeRequest", validationErrors);
+
+        validateField(request.getTipologiaStruttura(), HealthcareFacilityAd263Enum::isValidCode,
+                "tipologiaStruttura", "XDSDocumentEntry.healthcareFacilityTypeCod", validationErrors);
+
+        validateField(request.getAssettoOrganizzativo(),
+                PracticeSettingCodeAd263Enum::isValidCode,
+                "assettoOrganizzativo", "XDSDocumentEntry.practiceSettingCode", validationErrors);
+
+        validateField(request.getTipoAttivitaClinica(),
+                AttivitaClinicaAd263Enum::isValidCode,
+                "tipoAttivitaClinica", "XDSSubmissionSet.contentTypeCode", validationErrors);
+
+        validateField(request.getTipoDocumentoLivAlto(),
+                TipoDocAltoLivAd263Enum::isValidCode,
+                "tipoDocumentoLivAlto", "XDSDocumentEntry.classCode", validationErrors);
+    }
+
+    private PregressoDocumentReferenceDTO buildPregressoDocumentReference(PublicationPregressoReqDTO request) {
+        PregressoDocumentReferenceDTO doc = new PregressoDocumentReferenceDTO();
+
+        String tipologiaStrutturaCode = HealthcareFacilityAd263Enum.valueOf(request.getTipologiaStruttura()).getCode();
+        String assettoOrganizzativoDescription = PracticeSettingCodeAd263Enum.valueOf(request.getAssettoOrganizzativo()).getDescription();
+        String tipoDocumentoLivAltoCode = TipoDocAltoLivAd263Enum.valueOf(request.getTipoDocumentoLivAlto()).getCode();
+
+        doc.setTipologiaStrutturaCode(tipologiaStrutturaCode);
+        doc.setAttiCliniciRegoleAccesso(request.getAttiCliniciRegoleAccesso());
+        doc.setAssettoOrganizzativoDescription(assettoOrganizzativoDescription);
+        doc.setTipoDocumentoLivAltoCode(tipoDocumentoLivAltoCode);
+        doc.setIdentificativoDoc(request.getIdentificativoDoc());
+        doc.setIdentificativoRep(request.getIdentificativoRep());
+        doc.setDataInizioPrestazione(request.getDataInizioPrestazione());
+        doc.setDataFinePrestazione(request.getDataFinePrestazione());
+        if (request.getAdministrativeRequest() != null && !request.getAdministrativeRequest().isEmpty()) {
+            doc.setAdministrativeRequest(request.getAdministrativeRequest().stream()
+                    .map(e -> AdministrativeReqAd263Enum.valueOf(e).name())
+                    .collect(Collectors.toList()));
+        }
+
+        return doc;
     }
 
 }

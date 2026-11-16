@@ -13,6 +13,7 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
@@ -54,7 +55,7 @@ public interface IKafkaSRV {
     void sendEdsUarStatus(String workflowInstanceId, EventStatusEnum eventStatus, String message);
     void sendUpdateRequest(String workflowInstanceId, Object request);
 	void notifyPublisher(final String key, final String kafkaValue, TipoDocAltoLivEnum documentType, DestinationTypeEnum destinationType);
-	void sendPregressoStatus(String traceId, String workflowInstanceId, EventTypeEnum eventType, EventStatusEnum eventStatus, String message, PublicationCreateReplaceMetadataDTO req, JWTPayloadDTO jwtClaimDTO, String callbackUrl);
+	void sendPregressoStatus(String traceId, String workflowInstanceId, EventTypeEnum eventType, EventStatusEnum eventStatus, String message, PublicationPregressoReqDTO req, JWTPayloadDTO jwtClaimDTO, String callbackUrl);
 
 
 }

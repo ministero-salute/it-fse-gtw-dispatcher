@@ -14,7 +14,6 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 
-import java.util.List;
 
 public interface IIniEdsInvocationSRV {
 	
@@ -22,5 +21,7 @@ public interface IIniEdsInvocationSRV {
 
 	Boolean replace(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken,
 			String identificativoDocumento);
+
+	Boolean insertPregresso(String workflowInstanceId, ResourceDTO fhirResourceDTO, JWTPayloadDTO jwtPayloadToken);
 
 }

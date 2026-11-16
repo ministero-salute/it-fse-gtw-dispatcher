@@ -31,6 +31,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.kafka.KafkaTopicCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.KafkaStatusManagerDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.AttivitaClinicaEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
@@ -335,7 +336,7 @@ public class KafkaSRV implements IKafkaSRV {
 
 	@Override
 	public void sendPregressoStatus(String traceId, String workflowInstanceId, EventTypeEnum eventType,  EventStatusEnum eventStatus,
-			String message, PublicationCreateReplaceMetadataDTO req, JWTPayloadDTO jwtClaimDTO, String callbackUrl) {
+			String message, PublicationPregressoReqDTO req, JWTPayloadDTO jwtClaimDTO, String callbackUrl) {
 
 				String idDoc= null;
 				AttivitaClinicaEnum tipoAttivita = null;
@@ -345,7 +346,7 @@ public class KafkaSRV implements IKafkaSRV {
 						idDoc = req.getIdentificativoDoc();
 					}
 					if (req.getTipoAttivitaClinica() != null) {
-						tipoAttivita = req.getTipoAttivitaClinica();
+						tipoAttivita = AttivitaClinicaEnum.valueOf(req.getTipoAttivitaClinica());
 					}
 				sendStatusMessage(traceId, workflowInstanceId, null, eventStatus, message, idDoc, jwtClaimDTO, tipoAttivita, callbackUrl);
 		

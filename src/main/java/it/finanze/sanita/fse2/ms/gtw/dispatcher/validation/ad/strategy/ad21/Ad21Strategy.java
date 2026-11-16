@@ -12,7 +12,13 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AbstractAffinityDomainStrategy;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.AttivitaClinicaAd21Enum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.strategy.ad21.enums.HealthcareFacilityAd21Enum;
@@ -92,4 +98,71 @@ public class Ad21Strategy extends AbstractAffinityDomainStrategy {
                                 TipoDocAltoLivAd21Enum::isValidCode,
                                 "tipoDocumentoLivAlto", "TipoDocAltoLiv", validationErrors);
         }
+
+        @Override
+        public PregressoDocumentReferenceDTO validatePublicationPregressoReqDTO(PublicationPregressoReqDTO request,
+                JWTPayloadDTO jwtPayloadToken) {
+                ValidationResultDTO result = validatePublicationPregressoDTOTemplate(request);
+
+                if (!result.isValid()) {
+                        String detail = result.getErrorMessage() != null ? result.getErrorMessage() : "Invalid value in request";
+                        final ErrorResponseDTO error = ErrorResponseDTO.builder()
+                                .type(RestExecutionResultEnum.VALIDATOR_ERROR.getType())
+                                .title(RestExecutionResultEnum.VALIDATOR_ERROR.getTitle())
+                                .instance(ErrorInstanceEnum.AD_MISSING_MANDATORY_FIELD.getInstance())
+                                .detail(detail)
+                                .build();
+                        throw new MetadataValidationException(error);
+                }
+
+                return buildPregressoDocumentReference(request);
+        }
+
+        /**
+         * Validates the pregresso request: mandatory fields and match of the Affinity Domain codes
+         * against the enums of this AD version.
+         */
+        @Override
+        protected void validateValueSetsInternal(PublicationPregressoReqDTO request, List<String> validationErrors) {
+                validatePregressoMandatoryFields(request, validationErrors);
+
+                validateUnsupportedField(request.getAdministrativeRequest(), "AdministrativeRequest", validationErrors);
+
+                validateField(request.getTipologiaStruttura(),
+                                HealthcareFacilityAd21Enum::isValidCode,
+                                "tipologiaStruttura", "HealthcareFacility", validationErrors);
+
+                validateField(request.getAssettoOrganizzativo(),
+                                PracticeSettingCodeAd21Enum::isValidCode,
+                                "assettoOrganizzativo", "PracticeSettingCode", validationErrors);
+
+                validateField(request.getTipoAttivitaClinica(),
+                                AttivitaClinicaAd21Enum::isValidCode,
+                                "tipoAttivitaClinica", "AttivitaClinica", validationErrors);
+
+                validateField(request.getTipoDocumentoLivAlto(),
+                                TipoDocAltoLivAd21Enum::isValidCode,
+                                "tipoDocumentoLivAlto", "TipoDocAltoLiv", validationErrors);
+        }
+
+        private PregressoDocumentReferenceDTO buildPregressoDocumentReference(PublicationPregressoReqDTO request) {
+                PregressoDocumentReferenceDTO doc = new PregressoDocumentReferenceDTO();
+
+                String tipologiaStrutturaCode = HealthcareFacilityAd21Enum.valueOf(request.getTipologiaStruttura()).getCode();
+                String assettoOrganizzativoDescription = PracticeSettingCodeAd21Enum.valueOf(request.getAssettoOrganizzativo()).getDescription();
+                String tipoDocumentoLivAltoCode = TipoDocAltoLivAd21Enum.valueOf(request.getTipoDocumentoLivAlto()).getCode();
+
+                doc.setTipologiaStrutturaCode(tipologiaStrutturaCode);
+                doc.setAttiCliniciRegoleAccesso(request.getAttiCliniciRegoleAccesso());
+                doc.setAssettoOrganizzativoDescription(assettoOrganizzativoDescription);
+                doc.setTipoDocumentoLivAltoCode(tipoDocumentoLivAltoCode);
+                doc.setIdentificativoDoc(request.getIdentificativoDoc());
+                doc.setIdentificativoRep(request.getIdentificativoRep());
+                doc.setDataInizioPrestazione(request.getDataInizioPrestazione());
+                doc.setDataFinePrestazione(request.getDataFinePrestazione());
+                doc.setAdministrativeRequest(request.getAdministrativeRequest());
+
+                return doc;
+        }
+
 }

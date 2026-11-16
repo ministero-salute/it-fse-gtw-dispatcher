@@ -17,6 +17,10 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStra
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStrategyResolver;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
@@ -73,5 +77,15 @@ public class AffinityDomainValidationSRV implements IAffinityDomainValidationSRV
                     .errorMessage("Affinity Domain request validation failed: " + e.getMessage())
                     .build();
         }
+    }
+
+
+    @Override
+    public PregressoDocumentReferenceDTO validateCreationPregressoMetadataRequest(PublicationPregressoReqDTO metadataReqDTO,
+            LocalDate referenceDate, JWTPayloadDTO jwtPayloadToken) {
+
+        log.info("Validating PublicationPregressoReqDTO against AD resolved for date: {}", referenceDate);
+        AffinityDomainStrategy strategy = strategyResolver.resolve(referenceDate);
+        return strategy.validatePublicationPregressoReqDTO(metadataReqDTO, jwtPayloadToken);
     }
 }

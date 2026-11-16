@@ -12,6 +12,11 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationUpdateReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 
@@ -30,5 +35,16 @@ public interface IAffinityDomainValidationSRV {
      * @return ValidationResultDTO with validation outcome.
      */
     ValidationResultDTO validateUpdateMetadataRequest(UpdateMetadataReqDTO metadataReqDTO, LocalDate referenceDate,
+            JWTPayloadDTO jwtPayloadToken);
+
+    /**
+     * Validates the creation metadata request based on the specific affinity domain resolver.
+     *
+     * @param metadataReqDTO The metadata request DTO to validate.
+     * @param referenceDate  The reference date (retrieved from metadata creation date).
+     * @return the fields needed to build the document reference.
+     * @throws it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException if the request is not valid.
+     */
+    PregressoDocumentReferenceDTO validateCreationPregressoMetadataRequest(PublicationPregressoReqDTO metadataReqDTO, LocalDate referenceDate,
             JWTPayloadDTO jwtPayloadToken);
 }

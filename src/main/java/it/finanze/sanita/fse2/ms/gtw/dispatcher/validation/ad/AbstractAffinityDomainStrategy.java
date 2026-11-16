@@ -11,7 +11,13 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad;
 
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DescriptionEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventCodeEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Abstract base class for Affinity Domain strategy implementations.
@@ -226,4 +234,148 @@ public abstract class AbstractAffinityDomainStrategy implements AffinityDomainSt
         // Default implementation: no value set validation
         // Subclasses should override to provide version-specific validation
     }
+
+    /**
+     * Template method for validating PublicationPregressoReqDTO with common error handling.
+     * 
+     * <p>Implements the common validation flow:
+     * <ol>
+     *   <li>Null check on request object</li>
+     *   <li>Delegate to subclass for value set validation</li>
+     *   <li>Build success or error result</li>
+     * </ol>
+     * 
+     * <p>Concrete strategies should override {@link #validateValueSetsInternal(PublicationPregressoReqDTO, List)}
+     * to provide version-specific value set validation logic.
+     *
+     * @param request The pregresso request to validate
+     * @return ValidationResultDTO with validation results
+     */
+    protected ValidationResultDTO validatePublicationPregressoDTOTemplate(PublicationPregressoReqDTO request) {
+        if (request == null) {
+            log.error("PublicationPregressoReqDTO non puo' essere null per AD version {}", versionId());
+            return buildErrorResult(
+                    ERROR_CODE_MISSING_MANDATORY,
+                    "Request object is null",
+                    Collections.singletonList("request")
+            );
+        }
+
+        log.debug("Validating PublicationPregressoReqDTO against AD version {}", versionId());
+
+        List<String> validationErrors = new ArrayList<>();
+
+        // Delegate to subclass for value set validation
+        validateValueSetsInternal(request, validationErrors);
+
+        // Build and return result
+        if (validationErrors.isEmpty()) {
+            log.debug("PublicationPregressoReqDTO validazione OK per AD {}", versionId());
+            return buildSuccessResult();
+        } else {
+            log.warn("PublicationPregressoReqDTO validazione fallita per AD {}: {} error(s)",
+                            versionId(), validationErrors.size());
+            return buildErrorResult(
+                    ERROR_CODE_INVALID_VALUE_SET,
+                    String.format("Invalid value set for AD %s: %s", 
+                            versionId(), String.join(", ", validationErrors)),
+                    validationErrors
+            );
+        }
+    }
+
+     /**
+     * Hook method for subclasses to implement version-specific value set validation.
+     * 
+     * subclasses should override this method to validate value sets against their version-specific enums.
+     * 
+     * @param request The creation metadata request to validate
+     * @param validationErrors List to collect validation errors (will be modified)
+     */
+    protected void validateValueSetsInternal(PublicationPregressoReqDTO request, List<String> validationErrors) {
+        // Default implementation: no value set validation
+        // Subclasses should override to provide version-specific validation
+    }
+
+    /**
+     * Validates the fields of {@link PublicationPregressoReqDTO} that are mandatory in every AD version
+     * (not null and not empty), plus the format of {@code descriptions} and {@code attiCliniciRegoleAccesso}.
+     *
+     * <p>{@code administrativeRequest} is optional and is not checked here.
+     *
+     * <p>The match of the Affinity Domain codes against the enums of the specific AD version
+     * is left to the concrete strategies.
+     *
+     * @param request The pregresso request to validate
+     * @param validationErrors List to collect validation errors (will be modified)
+     */
+    protected void validatePregressoMandatoryFields(PublicationPregressoReqDTO request,
+            List<String> validationErrors) {
+
+        if (StringUtility.isNullOrEmpty(request.getIdentificativoDoc())) {
+            validationErrors.add("Il campo identificativo documento deve essere valorizzato.");
+        }
+        if (StringUtility.isNullOrEmpty(request.getIdentificativoRep())) {
+            validationErrors.add("Il campo identificativo rep deve essere valorizzato.");
+        }
+        if (StringUtility.isNullOrEmpty(request.getTipoDocumentoLivAlto())) {
+            validationErrors.add("Il campo tipo documento liv alto deve essere valorizzato.");
+        }
+        if (StringUtility.isNullOrEmpty(request.getAssettoOrganizzativo())) {
+            validationErrors.add("Il campo assetto organizzativo deve essere valorizzato.");
+        }
+        if (StringUtility.isNullOrEmpty(request.getTipoAttivitaClinica())) {
+            validationErrors.add("Il campo tipo attivita clinica deve essere valorizzato.");
+        }
+        if (StringUtility.isNullOrEmpty(request.getIdentificativoSottomissione())) {
+            validationErrors.add("Il campo identificativo sottomissione deve essere valorizzato.");
+        }
+        if (StringUtility.isNullOrEmpty(request.getTipologiaStruttura())) {
+            validationErrors.add("Il campo tipologia struttura deve essere valorizzato.");
+        }
+
+        if (request.getDescriptions() != null) {
+            String descriptionsError = validateDescriptions(request.getDescriptions());
+            if (descriptionsError != null) {
+                validationErrors.add(descriptionsError);
+            }
+        }
+
+        if (request.getAttiCliniciRegoleAccesso() != null) {
+            for (String attoClinico : request.getAttiCliniciRegoleAccesso()) {
+                if (EventCodeEnum.fromValue(attoClinico) == null) {
+                    validationErrors.add("Il campo atti clinici " + attoClinico + " non è consentito");
+                }
+            }
+        }
+    }
+
+    private String validateDescriptions(List<String> descriptions) {
+        for (String description : descriptions) {
+            String[] splitDescription = description.split("\\^");
+            if (splitDescription.length != 3) {
+                return "Valorizzare correttamente il campo descriptions rispettando la forma: [CODICE]^[Descrizione]^[OID]";
+            }
+            if (!checkDescriptionOid(splitDescription[2])) {
+                return "Valorizzare correttamente il campo descriptions rispettando i valori di riferimento per gli OID";
+            }
+        }
+        return null;
+    }
+
+    private boolean checkDescriptionOid(String oid) {
+        for (DescriptionEnum desc : DescriptionEnum.values()) {
+            String sanitizedEnumValue = Pattern.quote(desc.getOid()).replace("COD_REGIONE", "(.*)");
+            Matcher matcher = Pattern.compile(sanitizedEnumValue).matcher(oid);
+            if (matcher.matches()) {
+                String region = matcher.groupCount() > 0 ? matcher.group(1) : null;
+                if (StringUtility.isNullOrEmpty(region) || SubjectOrganizationEnum.getCode(region) != null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
 }

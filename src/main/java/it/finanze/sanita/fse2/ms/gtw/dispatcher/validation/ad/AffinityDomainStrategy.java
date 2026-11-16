@@ -14,7 +14,12 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad;
 import java.time.LocalDate;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.UpdateMetadataReqDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.MetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.dto.ValidationResultDTO;
 
@@ -47,5 +52,23 @@ public interface AffinityDomainStrategy {
      * @return ValidationResultDTO with validation results
      */
     ValidationResultDTO validateUpdateMetadataReqDTO(UpdateMetadataReqDTO request, JWTPayloadDTO jwtPayloadToken);
+
+    /**
+     * Validates the PublicationCreationReqDTO against AD version-specific value sets.
+     * This validation ensures that the input request contains valid codes for input metadata such as:
+     * - tipologiaStruttura (HealthcareFacility)
+     * - assettoOrganizzativo (PracticeSetting)
+     * - tipoAttivitaClinica (AttivitaClinica)
+     * - tipoDocumentoLivAlto (TipoDocAltoLiv)
+     * - administrativeRequest
+     *
+     * @param request The creation metadata request DTO to validate
+     * @return the fields needed to build the document reference
+     * @throws it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.MetadataValidationException if the request is not valid
+     */
+    PregressoDocumentReferenceDTO validatePublicationPregressoReqDTO(PublicationPregressoReqDTO request, JWTPayloadDTO jwtPayloadToken);
+
+
+
 
 }

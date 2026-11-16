@@ -29,6 +29,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.DocumentReferenceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirDocumentDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.FhirResourceWithoutEngineDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.ResourceDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.SubmissionSetEntryDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreateReplaceMetadataDTO;
@@ -500,6 +501,7 @@ public class FhirSRV implements IFhirSRV {
        return createBaseResource(cda, authorRole, requestBody, size, hash, organizationId, authorInstitution, sha1, system, true);
     }
     
+    // Method for creating Bundle Fhir without Engine/Transform IDs
     private ResourceDTO createBaseResource(final String inputData, String authorRole, final PublicationCreateReplaceMetadataDTO requestBody,
             final Integer size, final String hash, String organizationId, final String authorInstitution, String sha1,SystemTypeEnum system, boolean isCdaInput) {
 
@@ -552,5 +554,116 @@ public class FhirSRV implements IFhirSRV {
         req.setDocumentReferenceDTO(documentReferenceDTO);
         return req;
     }
+
+    // With Engine/Transform IDs
+    @Override
+    public ResourceDTO createFhirResourcesPregresso(String cda, String authorRole,
+            PregressoDocumentReferenceDTO requestBody, Integer size, String hash, String transformId, String engineId,
+            String organizationId, String authorInstitution, String sha1) {
+        
+        return createBaseResourcePregresso(cda, authorRole, requestBody, size, hash, transformId, engineId, organizationId, authorInstitution, sha1, true);
+    }
+
+    // Without Engine/Transform IDs
+    @Override
+    public ResourceDTO createFhirResourcesPregresso(String cda, String authorRole,
+            PregressoDocumentReferenceDTO requestBody, Integer size, String hash, String organizationId,
+            String authorInstitution, String sha1, SystemTypeEnum system) {
+        
+        return createBaseResourcePregressoNoEngine(cda, authorRole, requestBody, size, hash, organizationId, authorInstitution, sha1, system, true);
+    }
+
+    private ResourceDTO createBaseResourcePregressoNoEngine(final String inputData, String authorRole, final PregressoDocumentReferenceDTO requestBody,
+            final Integer size, final String hash, String organizationId, final String authorInstitution, String sha1,SystemTypeEnum system, boolean isCdaInput) {
+
+        final ResourceDTO output = new ResourceDTO();
+
+        try {
+            final String encodedInput = Base64.getEncoder().encodeToString(inputData.getBytes());
+            final DocumentReferenceDTO docRef = buildDocumentReferencePregressoDTO(encodedInput, requestBody, size, hash);
+            final FhirResourceWithoutEngineDTO fhirReq = buildFhirResourceWithoutEngineDTO(docRef, inputData);
+
+            if (isCdaInput && !configSrv.isRemoveEds()) {
+                TransformResDTO resDTO = client.callConvertCdaInBundleWithoutEngine(fhirReq, system);
+                if (!StringUtility.isNullOrEmpty(resDTO.getErrorMessage())) {
+                    output.setErrorMessage(resDTO.getErrorMessage());
+                } else {
+                    output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                }
+            } else if (!isCdaInput) {
+                TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(inputData, docRef));
+                output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+            }
+
+        } catch (ValidationException e) {
+        	throw e;
+		} catch (Exception ex) {
+            log.error("Errore durante la creazione risorse FHIR: {}", ex.getMessage(), ex);
+            throw new BusinessException("Errore durante la creazione risorse FHIR", ex);
+        }
+
+        return output;
+    }
+
+    private ResourceDTO createBaseResourcePregresso(final String inputData, String authorRole, final PregressoDocumentReferenceDTO requestBody,
+            final Integer size, final String hash, String transformId, String engineId, String organizationId, final String authorInstitution, String sha1, boolean isCdaInput) {
+
+        final ResourceDTO output = new ResourceDTO();
+
+        try {
+            final String encodedInput = Base64.getEncoder().encodeToString(inputData.getBytes());
+            final DocumentReferenceDTO docRef = buildDocumentReferencePregressoDTO(encodedInput, requestBody, size, hash);
+            final FhirResourceDTO fhirReq = buildFhirResourceDTO(docRef, inputData, transformId, engineId);
+
+            if (isCdaInput && !configSrv.isRemoveEds()) {
+                TransformResDTO resDTO = client.callConvertCdaInBundle(fhirReq);
+                if (!StringUtility.isNullOrEmpty(resDTO.getErrorMessage())) {
+                    output.setErrorMessage(resDTO.getErrorMessage());
+                } else {
+                    output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+                }
+            } else if (!isCdaInput) {
+                TransformResDTO resDTO = client.addDocumentReferenceToBundle(new FhirDocumentDTO(inputData, docRef));
+                output.setBundleJson(StringUtility.toJSON(resDTO.getJson()));
+            }
+
+        } catch (ValidationException e) {
+        	throw e;
+		} catch (Exception ex) {
+            log.error("Errore durante la creazione risorse FHIR: {}", ex.getMessage(), ex);
+            throw new BusinessException("Errore durante la creazione risorse FHIR", ex);
+        }
+
+        return output;
+    }
     
+    private DocumentReferenceDTO buildDocumentReferencePregressoDTO(final String encodedInput,
+            final PregressoDocumentReferenceDTO requestBody,
+            final Integer size, final String hash){
+
+                DocumentReferenceDTO documentReferenceDTO = new DocumentReferenceDTO();
+                documentReferenceDTO.setEncodedCDA(encodedInput);
+                documentReferenceDTO.setSize(size);
+                documentReferenceDTO.setHash(hash);
+                documentReferenceDTO.setFacilityTypeCode(requestBody.getTipologiaStrutturaCode());
+
+                if (!CollectionUtils.isEmpty(requestBody.getAttiCliniciRegoleAccesso())) {
+                    documentReferenceDTO.setEventCode(requestBody.getAttiCliniciRegoleAccesso());
+                }
+
+                documentReferenceDTO.setPracticeSettingCode(requestBody.getAssettoOrganizzativoDescription());
+                documentReferenceDTO.setTipoDocumentoLivAlto(requestBody.getTipoDocumentoLivAltoCode());
+                ValidationUtility.repositoryUniqueIdValidation(requestBody.getIdentificativoRep());
+                documentReferenceDTO.setRepositoryUniqueID(requestBody.getIdentificativoRep());
+                documentReferenceDTO.setServiceStartTime(requestBody.getDataInizioPrestazione());
+                documentReferenceDTO.setServiceStopTime(requestBody.getDataFinePrestazione());
+                documentReferenceDTO.setIdentificativoDoc(requestBody.getIdentificativoDoc());
+
+                if (requestBody != null && requestBody.getAdministrativeRequest() != null && !requestBody.getAdministrativeRequest().isEmpty()) {
+                    documentReferenceDTO.setAdministrativeRequestEnum(requestBody.getAdministrativeRequest());	
+                }
+                
+                return documentReferenceDTO;
+
+            }
 }

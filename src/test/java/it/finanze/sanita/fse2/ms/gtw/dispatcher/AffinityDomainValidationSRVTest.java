@@ -12,6 +12,7 @@
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationPregressoReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl.AffinityDomainValidationSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.AffinityDomainUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.validation.ad.AffinityDomainStrategy;
@@ -242,6 +243,13 @@ class AffinityDomainValidationSRVTest {
                     .valid(true)
                     .adVersion("TEST")
                     .build();
+        }
+
+        @Override
+        public it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.PregressoDocumentReferenceDTO validatePublicationPregressoReqDTO(PublicationPregressoReqDTO request,
+                JWTPayloadDTO jwtPayloadToken) {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'validatePublicationPregressoReqDTO'");
         }
     }
 }

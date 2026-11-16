@@ -129,4 +129,68 @@ public class IniEdsInvocationSRV implements IIniEdsInvocationSRV {
 		}
 		return output;
 	}
+
+	@Override
+	public Boolean insertPregresso(String workflowInstanceId, ResourceDTO fhirResourceDTO,
+			JWTPayloadDTO jwtPayloadToken) {
+
+			Boolean output = false;
+			try {
+
+				IniEdsInvocationETY etyToSave = buildETYPregresso(workflowInstanceId, fhirResourceDTO.getBundleJson(), fhirResourceDTO.getSubmissionSetEntryJson(),
+						fhirResourceDTO.getDocumentEntryJson(), StringUtility.toJSON(jwtPayloadToken), null,
+						jwtPayloadToken.getIss(), jwtPayloadToken.getPerson_id(),
+						jwtPayloadToken.getSubject_organization_id());
+
+				etyToSave = iniInvocationRepo.insert(etyToSave);
+				output = !StringUtility.isNullOrEmpty(etyToSave.getId());
+			} catch(Exception ex) {
+				log.error("Error while insert ini invocation item : " , ex);
+				throw new BusinessException("Error while insert ini invocation item : " , ex);
+			}
+			return output;
+		
+	}
+
+	private IniEdsInvocationETY buildETYPregresso(final String workflowInstanceId, final String bundleJson, final String submissionSetEntryJson,
+			final String documentEntryJson, final String tokenEntryJson, final String rifIni, final String issuer,
+			final String fiscalCode, final String rde) {
+		IniEdsInvocationETY out = new IniEdsInvocationETY();
+
+		out.setWorkflowInstanceId(workflowInstanceId);
+		
+		if(!StringUtility.isNullOrEmpty(bundleJson)) {
+			out.setData(Document.parse(bundleJson));
+		}
+
+		out.setIssuer(issuer);
+
+		if (!StringUtility.isNullOrEmpty(rifIni)) {
+			out.setRiferimentoIni(rifIni);
+		}
+
+		out.setFiscalCode(fiscalCode);
+		out.setRde(rde);
+
+		List<Document> metadata = new ArrayList<>();
+		
+		Document submissionSetEntryDoc = null;
+		Document documentEntryDoc = null;
+		Document tokenEntry = null;
+
+		if(!mongoPropsCfg.isEncryptionEnabled()){
+			tokenEntry = new Document("tokenEntry", new Document("payload",Document.parse(tokenEntryJson)));
+		} else {
+			BsonBinary encryptedTokenEntry = mongoCfg.encrypt(new BsonString(tokenEntryJson));
+			tokenEntry = new Document("tokenEntry", new Document("payload",encryptedTokenEntry));	
+		}
+		
+		metadata.add(tokenEntry);
+		metadata.add(submissionSetEntryDoc);
+		metadata.add(documentEntryDoc);
+		
+
+		out.setMetadata(metadata);
+		return out;
+	}
 }
