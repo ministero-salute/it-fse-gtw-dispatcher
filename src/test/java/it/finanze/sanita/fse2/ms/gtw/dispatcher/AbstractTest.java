@@ -18,9 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.*;
+import org.bson.Document;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
@@ -38,6 +40,7 @@ import com.google.gson.Gson;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.routes.IniClientRoutes;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.CDACFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.FlowsCFG;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTHeaderDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.JWTPayloadDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.PublicationCreationReqDTO;
@@ -45,6 +48,9 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.ValidationCDAReqDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ErrorResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ValidationResDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.FhirValidationDTO.ValidationResultDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.client.TransformResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CfUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.FileUtility;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.JsonUtility;
@@ -54,6 +60,20 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractTest {
+
+	@Autowired
+	private FlowsCFG flowsCFG;
+
+	protected TransformResDTO successfulMappingResponse(Document bundle) {
+		FhirValidationDTO validations = new FhirValidationDTO();
+		validations.setResults(flowsCFG.getPublicationFlowValidations().stream().map(type -> {
+			ValidationResultDTO result = new ValidationResultDTO();
+			result.setType(type);
+			result.setIssues(List.of());
+			return result;
+		}).toList());
+		return new TransformResDTO("", bundle, validations);
+	}
 
 	@Autowired
 	private RestTemplate restTemplate;
@@ -202,6 +222,8 @@ public abstract class AbstractTest {
 	protected String generateJwtPayload(final String documentHash, final String personId, final String subject, final String docType, EventTypeEnum eventType) {
 		String action = ActionEnum.CREATE.name();
 		String purposeOfUse = PurposeOfUseEnum.TREATMENT.name();
+		String subjectRole = "APR";
+		String locality = "GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE";
 		if (UPDATE.equals(eventType)) {
 			action = ActionEnum.UPDATE.name();
 			purposeOfUse = PurposeOfUseEnum.UPDATE.name();
@@ -215,14 +237,19 @@ public abstract class AbstractTest {
 		}
 		else if(VALIDATION.equals(eventType)){
 
+		} else if (UPDATE_OSCURAMENTO.equals(eventType)){
+			action = ActionEnum.UPDATE.name();
+			purposeOfUse = PurposeOfUseEnum.SYSADMIN.name();
+			subjectRole = RoleEnum.NOR.name();
+			locality = "------";
 		}
 
 		String applicationId = "ApplicationId";
 		String applicationVendor = "ApplicationVendor";
 		String applicationVersion = "ApplicationVersion";
 		final JWTPayloadDTO jwtPayload = new JWTPayloadDTO("080", 1540890704, 1540918800, "1540918800", 
-		"fse-gateway", subject, "080", "Regione Emilia-Romagna", "GTW_NAME^^^^^&2.16.840.1.113883.2.9.4.1.3&ISO^^^^GTW_STRUCTURE",
-		"APR", personId, true, purposeOfUse, docType, action, documentHash,
+		"fse-gateway", subject, "080", "Regione Emilia-Romagna", locality,
+		subjectRole, personId, true, purposeOfUse, docType, action, documentHash,
 		applicationId,applicationVendor,applicationVersion,false);
 		return Base64.getEncoder().encodeToString(new Gson().toJson(jwtPayload).getBytes());
 	}

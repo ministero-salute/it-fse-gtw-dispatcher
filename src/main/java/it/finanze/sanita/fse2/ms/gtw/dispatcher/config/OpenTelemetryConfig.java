@@ -10,16 +10,24 @@ import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Configuration
 public class OpenTelemetryConfig {
 
-	@Autowired
+	@Autowired(required = false)
 	private AutoConfiguredOpenTelemetrySdk autoConfiguredOpenTelemetrySdk;
 
 	@PostConstruct
 	public void init() {
-		GlobalOpenTelemetry.set(autoConfiguredOpenTelemetrySdk.getOpenTelemetrySdk());
+		if (autoConfiguredOpenTelemetrySdk != null) {
+			try {
+				GlobalOpenTelemetry.set(autoConfiguredOpenTelemetrySdk.getOpenTelemetrySdk());
+			} catch (IllegalStateException e) {
+				log.debug("GlobalOpenTelemetry already set (likely a second Spring context in tests), skipping.", e);
+			}
+		}
 	}
 
 	@Bean

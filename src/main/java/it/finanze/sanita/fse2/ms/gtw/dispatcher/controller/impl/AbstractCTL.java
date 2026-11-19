@@ -25,7 +25,6 @@ import static it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.CdaUtility.isVali
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -103,6 +102,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RawValidationEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.RestExecutionResultEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ResultLogEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SubjectOrganizationEnum;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.SystemTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.UpdateFlowTypeEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.ConnectionRefusedException;
@@ -750,12 +750,27 @@ public abstract class AbstractCTL {
 	}
 
 	protected String validate(final String cda, final ActivityEnum activity, final String workflowInstanceId, final String issuer) {
+		return doValidate(cda, activity, workflowInstanceId, issuer, false);
+	}
+
+	/**
+	 * Validazione per i flussi contestuali
+	 */
+	protected String validateForContextualFlow(final String cda, final ActivityEnum activity, final String workflowInstanceId, final String issuer) {
+		return doValidate(cda, activity, workflowInstanceId, issuer, true);
+	}
+
+	/**
+	 * @param skipFhirValidations se true il validator non esegue le validazioni FHIR ed il removal report.
+	 */
+	private String doValidate(final String cda, final ActivityEnum activity, final String workflowInstanceId, final String issuer, final boolean skipFhirValidations) {
 		String errorDetail = "";
 		try {
-			final ValidationInfoDTO rawValRes = validatorClient.validate(cda,workflowInstanceId, jwtSRV.getSystemByIssuer(issuer));
+			final SystemTypeEnum system = jwtSRV.getSystemByIssuer(issuer);
+			final ValidationInfoDTO rawValRes = validatorClient.validate(cda, workflowInstanceId, system, skipFhirValidations);
 
 			if (ActivityEnum.VALIDATION.equals(activity)
-					&& Arrays.asList(RawValidationEnum.OK, RawValidationEnum.SEMANTIC_WARNING).contains(rawValRes.getResult())) {
+					&& rawValRes.getResult().isSuccessful()) {
  
 				if(!benchmarkCfg.isBenchmarkEnable()){
 					final String hashedCDA = StringUtility.encodeSHA256B64(cdaWithoutLegalAuthenticator(cda));
@@ -772,15 +787,21 @@ public abstract class AbstractCTL {
 				}
 			}
 
+			// The validator may return OK with non-blocking FHIR validation issues.
+			if (RawValidationEnum.OK.equals(rawValRes.getResult()) && !CollectionUtils.isEmpty(rawValRes.getMessage())) {
+				errorDetail = rawValRes.getMessage().stream()
+						.filter(message -> message != null && message.matches("(?is)(?:[^\\r\\n]+ - )?WARNING:.*"))
+						.collect(java.util.stream.Collectors.joining(", "));
+			}
 			if (!RawValidationEnum.OK.equals(rawValRes.getResult())) {
 				final RestExecutionResultEnum result = RestExecutionResultEnum.fromRawResult(rawValRes.getResult());
 				errorDetail = result.getTitle();
 				if (!CollectionUtils.isEmpty(rawValRes.getMessage())) {
-					errorDetail = String.join(",", rawValRes.getMessage());
+					errorDetail = String.join(", ", rawValRes.getMessage());
 				}
 				
 				
-				if(!RawValidationEnum.SEMANTIC_WARNING.equals(rawValRes.getResult())){
+				if(!rawValRes.getResult().isWarning()){
 					final ErrorResponseDTO error = ErrorResponseDTO.builder()
 							.type(result.getType()).title(result.getTitle())
 							.instance("/validation/error").detail(errorDetail).build();
@@ -1005,12 +1026,9 @@ public abstract class AbstractCTL {
 	protected DirectFhirDTO getAndValidateFhirFile(final MultipartFile file, InjectionModeEnum mode) throws IOException {
 
 		try {
-			RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
-			if (file != null && file.getBytes().length > 0) {
-				result = null;
-			}
-
-			if (result != null) {
+			byte[] inputBytes = file != null ? file.getBytes() : new byte[0];
+			if (file == null || inputBytes.length == 0) {
+				RestExecutionResultEnum result = RestExecutionResultEnum.EMPTY_FILE_ERROR;
                 String errorInstance = ErrorInstanceEnum.EMPTY_FILE.getInstance();
                 final ErrorResponseDTO error = ErrorResponseDTO.builder()
 						.type(result.getType()).title(result.getTitle())
@@ -1018,7 +1036,6 @@ public abstract class AbstractCTL {
 				throw new ValidationException(error);
 			}
 
-			byte[] inputBytes = file.getBytes();
 			String filename = file.getOriginalFilename();
 
 			DirectFhirDTO directFhirDTO = new DirectFhirDTO();

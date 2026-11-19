@@ -13,9 +13,11 @@ package it.finanze.sanita.fse2.ms.gtw.dispatcher.utility;
 
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -38,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 public final class StringUtility {
 
 	private static final String ERROR_MSG = "Errore in fase di calcolo sha";
-	private static final ObjectMapper mapper = new ObjectMapper();
 
 	/**
 	 * Private constructor to avoid instantiation.
@@ -74,14 +75,16 @@ public final class StringUtility {
 	}
 
 	/**
-	 * Returns the encoded String of the SHA-256 algorithm represented in base 64.
-	 * 
-	 * @param objectToEncode String to encode.
-	 * @return String Encoded.
+	 * Returns the SHA-1 digest as a hexadecimal string for DocumentEntry.hash metadata.
+	 * Not intended for authentication or security validation.
+	 *
+	 * @param objectToEncode Bytes to hash.
+	 * @return Hexadecimal SHA-1 digest.
 	 */
 	public static String encodeSHA1(final byte[] objectToEncode) {
 		try {
-			final MessageDigest digest = MessageDigest.getInstance(Constants.App.SHA1_ALGORITHM);
+			// Used only for DocumentEntry.hash metadata interoperability; JWT attachment validation uses SHA-256.
+			final MessageDigest digest = MessageDigest.getInstance(Constants.App.SHA1_ALGORITHM); // NOSONAR - SHA-1 is not used for authentication or security validation.
 			return Hex.encodeHexString(digest.digest(objectToEncode));
 		} catch (final Exception e) {
 			log.error(ERROR_MSG, e);
@@ -259,4 +262,21 @@ public final class StringUtility {
             throw new BusinessException("Errore durante l'estrazione del code dal jwt", ex);
         }
     }
+
+    public static String mergeWarnings(String... warnings) {
+
+        String merged = Arrays.stream(warnings)
+                .filter(warning -> !StringUtility.isNullOrEmpty(warning))
+                .distinct()
+                .collect(Collectors.joining(", "));
+
+        if (merged.isEmpty()) {
+            return null;
+        }
+        if (merged.length() > Constants.App.MAX_SIZE_WARNING) {
+            return merged.substring(0, Constants.App.MAX_SIZE_WARNING - 3) + "...";
+        }
+        return merged;
+    }
+
 }

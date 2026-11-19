@@ -35,7 +35,7 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.SignerUtility;
 class SignTest {
     
     @Test
-    @Disabled
+    @Disabled("Manual document-signature check for ad hoc use; excluded from automated regression runs. Enable locally when inspecting a signed document.")
     void validSignatureTest() throws Exception {
         byte[] fileByte = FileUtility.getFileFromInternalResources("Files/attachment/CDA_OK_SIGNED.pdf");
 
@@ -54,7 +54,7 @@ class SignTest {
     }
 
     @Test
-    @Disabled
+    @Disabled("Manual document-signature check for ad hoc use; excluded from automated regression runs. Enable locally when inspecting an unsigned document.")
     void invalidSignatureTest() throws Exception {
         byte[] fileByte = FileUtility.getFileFromInternalResources("Files/attachment/LAB_OK.pdf");
 

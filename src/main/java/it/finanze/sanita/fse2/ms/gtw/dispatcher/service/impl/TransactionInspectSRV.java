@@ -11,6 +11,7 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher.service.impl;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
@@ -47,12 +48,17 @@ public class TransactionInspectSRV implements ITransactionInspectSRV {
 	@Override
 	public TransactionInspectResDTO callSearchEventByWorkflowInstanceId(final String workflowInstanceId) {
 		TransactionInspectResDTO out = statusCheckClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
+		if (out == null) {
+			out = new TransactionInspectResDTO();
+		}
+		out.setTransactionData(out.getTransactionData() != null
+				? new ArrayList<>(out.getTransactionData()) : new ArrayList<>());
 		
-		String issuerBenchmark =  (out!=null && out.getTransactionData()!=null && !out.getTransactionData().isEmpty()) ? out.getTransactionData().get(0).getIssuer() : "";
+		String issuerBenchmark = !out.getTransactionData().isEmpty() ? out.getTransactionData().get(0).getIssuer() : "";
 		
-		if(configSRV.isAuditIniEnable() && !issuerBenchmark.contains(Constants.App.BENCHMARK_ISSUER)) {
+		if(configSRV.isAuditIniEnable() && (issuerBenchmark == null || !issuerBenchmark.contains(Constants.App.BENCHMARK_ISSUER))) {
 			IniAuditsDto auditsIniDto = iniClient.callSearchEventByWorkflowInstanceId(workflowInstanceId);
-			if(auditsIniDto!=null && !auditsIniDto.getAudit().isEmpty()) {
+			if(auditsIniDto!=null && auditsIniDto.getAudit()!=null && !auditsIniDto.getAudit().isEmpty()) {
 				out.getTransactionData().addAll(auditsIniDto.getAudit());
 			}
 		}

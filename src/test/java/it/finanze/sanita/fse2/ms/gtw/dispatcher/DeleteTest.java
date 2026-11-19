@@ -11,23 +11,23 @@
  */
 package it.finanze.sanita.fse2.ms.gtw.dispatcher;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.http.HttpEntity;
@@ -41,18 +41,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.client.IIniClient;
+import com.fasterxml.jackson.databind.JsonNode;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.DeleteRequestDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.request.IniReferenceRequestDTO;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.config.Constants.Misc;
+import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.GetDocumentMetadataDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.EdsResponseDTO;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniReferenceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.IniTraceResponseDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.exceptions.BusinessException;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.service.IConfigSRV;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.utility.StringUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -69,11 +65,13 @@ class DeleteTest extends AbstractTest {
 	@MockitoSpyBean
 	RestTemplate restTemplate;
 
+	@MockitoSpyBean 
+	@Qualifier ("restTemplateIni")
+	RestTemplate restTemplateIni;
+
 	@MockitoBean
 	IConfigSRV config;
 
-	@MockitoBean
-	IIniClient iniClient;
 
 	@BeforeAll
 	void init() {
@@ -84,28 +82,23 @@ class DeleteTest extends AbstractTest {
 	@DisplayName("Delete of a document")
 	void givenAnIdentifier_shouldExecuteDeletion() {
 
-		final String idDocument = StringUtility.generateUUID();
+		String idDocument = "2.16.840.4^UAT_GTW_ID162";
+
 		mockEdsClient(HttpStatus.OK);
 		mockIniClient(HttpStatus.OK, true);
-		IniReferenceResponseDTO mockIniReference = new IniReferenceResponseDTO();
-		mockIniReference.setUuid(new ArrayList<>());
-		mockIniReference.setAdministrativeRequest(new ArrayList<>());
-		mockIniReference.setDocumentType("testDocument");
-		when(iniClient.reference(any(IniReferenceRequestDTO.class), anyString())).thenReturn(mockIniReference);
-		IniTraceResponseDTO mockIniTrace = new IniTraceResponseDTO();
-		mockIniTrace.setMessage("");
-		when(iniClient.delete(any(DeleteRequestDTO.class))).thenReturn(mockIniTrace);
+		final ResponseEntity<JsonNode> response = callDelete(idDocument);
+		JsonNode body = response.getBody();
 
-		final ResponseEntity<EdsResponseDTO> response = callDelete(idDocument);
-		final EdsResponseDTO body = response.getBody();
-
+		assertEquals(response.getStatusCode(), HttpStatus.OK);
 		assertNotNull(body, "A response body should have been returned");
+		assertTrue(body.path("warning").isMissingNode());
 	}
 
 	@Test
 	@DisplayName("INI Error returned")
 	void whenIniFails_anErrorShouldBeReturned() {
-		final String idDocument = StringUtility.generateUUID();
+
+		String idDocument = "2.16.840.4^UAT_GTW_ID162";
 
 		mockIniClient(HttpStatus.INTERNAL_SERVER_ERROR, false);
 		mockEdsClient(HttpStatus.OK);
@@ -115,7 +108,8 @@ class DeleteTest extends AbstractTest {
 	@Test
 	@DisplayName("Not found INI Error returned")
 	void whenIniFailsForNotFound_anErrorShouldBeReturned() {
-		final String idDocument = StringUtility.generateUUID();
+
+		String idDocument = "2.16.840.4^UAT_GTW_ID162";
 
 		mockIniClient(HttpStatus.NOT_FOUND, false);
 		mockEdsClient(HttpStatus.OK);
@@ -123,95 +117,102 @@ class DeleteTest extends AbstractTest {
 	}
 
 	@Test
-	@DisplayName("Generic INI Error returned")
-	void whenIniFailsForGenericHttp_anErrorShouldBeReturned() {
-		final String idDocument = StringUtility.generateUUID();
+	@DisplayName("INI Warning returned")
+	void whenIniFailsForGenericHttp_aWarningShouldBeReturned() {
+
+		String idDocument = "2.16.840.4^UAT_GTW_ID162";
 
 		mockIniClient(HttpStatus.BAD_REQUEST, false);
 		mockEdsClient(HttpStatus.OK);
-		assertThrows(HttpServerErrorException.InternalServerError.class, () -> callDelete(idDocument));
+		final ResponseEntity<JsonNode> response = callDelete(idDocument);
+		JsonNode body = response.getBody();
+
+		assertEquals(response.getStatusCode(), HttpStatus.ACCEPTED);
+		assertNotNull(body, "A response body should have been returned");
+		assertFalse(body.path("warning").isMissingNode());
+		assertEquals(body.path("warning").asText(), Misc.WARN_ASYNC_TRANSACTION);
 	}
 
 	@Test
 	@DisplayName("EDS Error returned")
 	void whenEdsFails_anErrorShouldBeReturned() {
 
-		final String idDocument = StringUtility.generateUUID();
+		String idDocument = "2.16.840.4^UAT_GTW_ID162";
 
 		mockIniClient(HttpStatus.OK, true);
 		mockEdsClient(HttpStatus.INTERNAL_SERVER_ERROR);
-		assertThrows(BusinessException.class, () -> callDelete(idDocument));
+		assertThrows(HttpClientErrorException.NotFound.class, () -> callDelete(idDocument));
 	}
 
 	void mockIniClient(final HttpStatus status, boolean esito) {
 		log.info("Mocking INI client");
 		IniTraceResponseDTO response = new IniTraceResponseDTO();
-		IniReferenceResponseDTO referenceResponse = new IniReferenceResponseDTO();
+		response.setSpanID(StringUtility.generateUUID());
+		response.setTraceID(StringUtility.generateUUID());
+		GetDocumentMetadataDTO metadata = new GetDocumentMetadataDTO();
+		// "TRUE" is required to make the controller call EDS at all.
+		metadata.setEdsPublished("TRUE");
+		metadata.setDocumentType("('11502-2^^2.16.840.1.113883.6.1')");
+		metadata.setAuthorInstitution("GTW_STRUCTURE");
+		metadata.setAdministrativeRequest(Arrays.asList("P99"));
+
 		if (status.is2xxSuccessful() && esito) {
-			response.setSpanID(StringUtility.generateUUID());
-			response.setTraceID(StringUtility.generateUUID());
+			metadata.setErrorMessage(null);
+			metadata.setUuid(StringUtility.generateUUID());
 			response.setEsito(true);
 			response.setMessage(null);
-			referenceResponse.setSpanID(StringUtility.generateUUID());
-			referenceResponse.setTraceID(StringUtility.generateUUID());
-			referenceResponse.setErrorMessage(null);
-			referenceResponse.setUuid(Arrays.asList(StringUtility.generateUUID()));
-			Mockito.doReturn(new ResponseEntity<>(referenceResponse, status)).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
-			Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(metadata, HttpStatus.OK)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(GetDocumentMetadataDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
 		} else if (status.equals(HttpStatus.NOT_FOUND) && !esito) {
-			referenceResponse.setSpanID(StringUtility.generateUUID());
-			referenceResponse.setTraceID(StringUtility.generateUUID());
-			referenceResponse.setErrorMessage("Not found on INI");
-			referenceResponse.setUuid(null);
-			Mockito.doReturn(new ResponseEntity<>(referenceResponse, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
+			// INI answers 200 with an error message in the body: it is the body, not the status,
+			// that makes the controller raise an IniException (mapped to 404).
+			metadata.setErrorMessage("Not found on INI");
+			metadata.setUuid(null);
+			Mockito.doReturn(new ResponseEntity<>(metadata, HttpStatus.OK)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(GetDocumentMetadataDTO.class));
 		} else if (status.equals(HttpStatus.BAD_REQUEST) && !esito) {
-			referenceResponse.setSpanID(StringUtility.generateUUID());
-			referenceResponse.setTraceID(StringUtility.generateUUID());
-			referenceResponse.setErrorMessage(null);
-			referenceResponse.setUuid(Arrays.asList(StringUtility.generateUUID()));
-			response.setSpanID(StringUtility.generateUUID());
-			response.setTraceID(StringUtility.generateUUID());
+			// Metadata retrieval succeeds, the delete on INI answers esito=false:
+			// the transaction is taken over asynchronously and a warning is returned.
+			metadata.setErrorMessage(null);
+			metadata.setUuid(StringUtility.generateUUID());
 			response.setEsito(false);
 			response.setMessage("Generic error from INI");
-			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
-			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
-		} else if (status.is4xxClientError()) {
-			Mockito.doThrow(new RestClientException("")).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
-			Mockito.doThrow(new RestClientException("")).when(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
-		} else {
-			Mockito.doThrow(new BusinessException("")).when(restTemplate).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), ArgumentMatchers.eq(IniReferenceResponseDTO.class));
-			Mockito.doThrow(new BusinessException("")).when(restTemplate).exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), ArgumentMatchers.eq(IniTraceResponseDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(metadata, HttpStatus.OK)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(GetDocumentMetadataDTO.class));
+			Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(IniTraceResponseDTO.class));
+		} else if (status.is5xxServerError()) {
+			// A RestClientResponseException is what AbstractClient turns into a ServerResponseException,
+			// which the handler propagates with the very same status code.
+			Mockito.doThrow(new HttpServerErrorException(status)).when(restTemplateIni)
+					.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(GetDocumentMetadataDTO.class));
 		}
 	}
 
 
 	void mockEdsClient(final HttpStatus status) {
 		log.info("Mocking EDS client");
-
-		if (status.is2xxSuccessful()) {
-			EdsResponseDTO response = new EdsResponseDTO();
-			response.setEsito(status.is2xxSuccessful());
-			response.setMessageError(status.is2xxSuccessful() ? null : "Test error");
-			Mockito.doReturn(new ResponseEntity<>(response, status)).when(restTemplate)
-					.exchange(anyString(), eq(HttpMethod.DELETE), eq(null), ArgumentMatchers.eq(EdsResponseDTO.class));
-		} else if (status.is4xxClientError()) {
-			Mockito.doThrow(new RestClientException("")).when(restTemplate)
-					.exchange(anyString(), eq(HttpMethod.DELETE), eq(null), ArgumentMatchers.eq(EdsResponseDTO.class));
-		} else {
-			Mockito.doThrow(new BusinessException("")).when(restTemplate)
-					.exchange(anyString(), eq(HttpMethod.DELETE), any(), ArgumentMatchers.eq(EdsResponseDTO.class));
-		}
+		EdsResponseDTO response = new EdsResponseDTO();
+		response.setEsito(status.is2xxSuccessful());
+		response.setMessageError(status.is2xxSuccessful() ? null : "Test error");
+		// The failure is carried by esito/messageError in the body, so the client returns normally
+		// and it is the controller that raises the EDS error.
+		Mockito.doReturn(new ResponseEntity<>(response, HttpStatus.OK)).when(restTemplate)
+				.exchange(anyString(), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(EdsResponseDTO.class));
 	}
 
-	ResponseEntity<EdsResponseDTO> callDelete(final String documentId) {
+	ResponseEntity<JsonNode> callDelete(final String documentId) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		headers.set(Constants.Headers.JWT_HEADER, generateJwt(null, false, EventTypeEnum.DELETE));
 
-		final String urlReplace = "http://localhost:" + webServerAppCtxt.getWebServer().getPort() + webServerAppCtxt.getServletContext().getContextPath() + "/v1/documents/" + documentId;
+		final String urlReplace = "http://localhost:" + webServerAppCtxt.getWebServer().getPort()
+				+ webServerAppCtxt.getServletContext().getContextPath() + "/v1/documents/" + documentId;
 
 		HttpEntity<?> requestEntity = new HttpEntity<>(null, headers);
-		return restTemplate.exchange(urlReplace, HttpMethod.DELETE, requestEntity, EdsResponseDTO.class);
+		return restTemplate.exchange(urlReplace, HttpMethod.DELETE, requestEntity, JsonNode.class);
 	}
 
 }

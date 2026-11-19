@@ -86,7 +86,6 @@ import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.PublicationResDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.dto.response.ResponseWifDTO;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ActivityEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DestinationTypeEnum;
-import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.DocumentMetadataKeyEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.ErrorInstanceEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventStatusEnum;
 import it.finanze.sanita.fse2.ms.gtw.dispatcher.enums.EventTypeEnum;
@@ -226,6 +225,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
+		warning = StringUtility.mergeWarnings(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","create","traceId", traceInfoDTO.getTraceID(),"wif", requestBody.getWorkflowInstanceId(),"idDoc", requestBody.getIdentificativoDoc());
 
@@ -324,6 +324,7 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		if (validationInfo.getJsonObj().getMode() == null) {
 			warning = Misc.WARN_EXTRACTION_SELECTION;
 		}
+		warning = StringUtility.mergeWarnings(warning, validationInfo.getFhirResource().getWarning());
 
 		log.info("[EXIT] {}() with arguments {}={}, {}={}, {}={}","replace","traceId", traceInfoDTO.getTraceID(),"wif", validationInfo.getValidationData().getWorkflowInstanceId(),"idDoc", idDoc);
 
@@ -472,7 +473,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 					throw new ValidationException(error);
 				
 			}			
- 		} catch(Exception ex) {
+		} catch (ValidationException ex) {
+			throw ex;
+		} catch(Exception ex) {
  			final ErrorResponseDTO error = ErrorResponseDTO.builder()
 					.type(GENERIC_ERROR.getType())
 					.title(GENERIC_ERROR.getTitle())
@@ -676,7 +679,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			idDoc = CdaUtility.extractIdDoc(docT);
 			//Chiamo ms validator per la validazione
 			String issuer = jwtPayloadToken.getIss();
-			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId,issuer);
+			// Le validazioni FHIR vengono eseguite solo in pubblicazione (se configurate in flows.publication.validations)
+			warning = validateForContextualFlow(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
 
 			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, jwtPayloadToken, EventTypeEnum.VALIDATION_FOR_PUBLICATION);
 
@@ -702,11 +706,10 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 		} catch (final ValidationException e) {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateOperationPublication, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
-
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
-		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
-			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
-		}
+		
+		warning = StringUtility.mergeWarnings(warning,
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null,
+				validationResult.getFhirResource() != null ? validationResult.getFhirResource().getWarning() : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {
@@ -747,7 +750,8 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			String issuer = jwtPayloadToken.getIss();
 
 			//Chiamo ms validator per la validazione
-			warning = validate(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
+			//Le validazioni FHIR vengono eseguite solo in replace (se configurate in flows.publication.validations)
+			warning = validateForContextualFlow(validationResult.getCda(), ActivityEnum.VALIDATION, workflowInstanceId, issuer);
 
 			kafkaSRV.sendValidationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, EventStatusEnum.SUCCESS,null, jwtPayloadToken, EventTypeEnum.VALIDATION_FOR_REPLACE);
 
@@ -801,10 +805,9 @@ public class PublicationCTL extends AbstractCTL implements IPublicationCTL {
 			errorHandlerSRV.publicationValidationExceptionHandler(startDateReplacenOperation, validationResult.getValidationData(), jwtPayloadToken, validationResult.getJsonObj(), traceInfoDTO, e, true, getDocumentType(validationResult.getDocument()));
 		}
 
-		warning = StringUtility.isNullOrEmpty(warning) ? null : warning;
-		if(warning != null && warning.length() >= Constants.App.MAX_SIZE_WARNING) {
-			warning = warning.substring(0, Constants.App.MAX_SIZE_WARNING-3) + "...";
-		}
+		warning = StringUtility.mergeWarnings(warning,
+				validationResult.getJsonObj().getMode() == null ? Misc.WARN_EXTRACTION_SELECTION : null,
+				validationResult.getFhirResource() != null ? validationResult.getFhirResource().getWarning() : null);
 
 		String fhirBundle = null;
 		if (fhirCFG.isEnableBundleInResponse() && validationResult.getFhirResource() != null && issuerSRV.isFhirBundleEnabledForIssuer(jwtPayloadToken.getIss())) {

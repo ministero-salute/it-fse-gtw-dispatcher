@@ -91,13 +91,6 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         String errorInstance = ErrorInstanceEnum.NO_INFO.getInstance();
         EventStatusEnum errorEventStatus = RestExecutionResultEnum.GENERIC_ERROR.getEventStatusEnum();
         
-        if (e.getError() != null) {
-            errorMessage = e.getError().getDetail();
-            capturedErrorType = e.getError().getType();
-            errorInstance = e.getError().getInstance();
-            errorEventStatus = RestExecutionResultEnum.get(capturedErrorType).getEventStatusEnum();
-        }
-        
         if (e != null && e.getError() != null) {
             errorMessage = e.getError().getDetail();
             capturedErrorType = e.getError().getType();
@@ -109,11 +102,12 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
             }
         }
 
+        String workflowInstanceId = validationInfo != null ? validationInfo.getWorkflowInstanceId() : null;
         if(isPublication) {
-        	kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
+            kafkaSRV.sendPublicationStatus(traceInfoDTO.getTraceID(), workflowInstanceId, errorEventStatus,
                     errorMessage, jsonObj, jwtPayloadToken, null);
         } else {
-        	kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), validationInfo.getWorkflowInstanceId(), errorEventStatus,
+            kafkaSRV.sendReplaceStatus(traceInfoDTO.getTraceID(), workflowInstanceId, errorEventStatus,
                     errorMessage, jsonObj, jwtPayloadToken, null);
         }
         
@@ -128,10 +122,10 @@ public class ErrorHandlerSRV implements IErrorHandlerSRV {
         }
         
         if(isPublication) {
-        	logger.error(Constants.App.LOG_TYPE_CONTROL,validationInfo.getWorkflowInstanceId(),errorMessage + " " + validationInfo.getWorkflowInstanceId(), OperationLogEnum.PUB_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(), documentType,
+            logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,errorMessage + " " + workflowInstanceId, OperationLogEnum.PUB_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(), documentType,
         			jwtPayloadToken,idDoc);
         } else {
-        	logger.error(Constants.App.LOG_TYPE_CONTROL,validationInfo.getWorkflowInstanceId(),errorMessage + " " + validationInfo.getWorkflowInstanceId(), OperationLogEnum.REPLACE_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(), documentType, 
+            logger.error(Constants.App.LOG_TYPE_CONTROL,workflowInstanceId,errorMessage + " " + workflowInstanceId, OperationLogEnum.REPLACE_CDA2, ResultLogEnum.KO, startDateOperation, errorType.getErrorCategory(), documentType,
         			jwtPayloadToken,idDoc);
         }
         throw new ValidationPublicationErrorException(errorType,StringUtility.sanitizeMessage(errorMessage), errorInstance);
