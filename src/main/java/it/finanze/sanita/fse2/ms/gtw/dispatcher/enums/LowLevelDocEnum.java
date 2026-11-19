@@ -22,8 +22,8 @@ public enum LowLevelDocEnum {
 	SCAN("ScanDocument", "Scansione Documento Cartaceo"),
 	FHIR_TACCUINO("FHIRDocumentTaccuino", "Documento on-demand contenente i dati di Taccuino"),
 	EROGATO_SISTEMATS("SistemaTS-Prestazione","Erogato Sistema TS"),
-	EROGATO_SISTEMATS_FARMACEUTICA("2.16.840.1.113883.2.9.10.1.13.1.1", "Erogato SistemaTS farmaceutica"),
-	EROGATO_SISTEMATS_SPECIALISTICA("2.16.840.1.113883.2.9.10.1.13.1.2", "Erogato SistemaTS specialistica"),
+	EROGATO_SISTEMATS_FARMACEUTICA("2.16.840.1.113883.2.9.10.1.13.1.1", "Erogato Sistema TS farmaceutica"),
+	EROGATO_SISTEMATS_SPECIALISTICA("2.16.840.1.113883.2.9.10.1.13.1.2", "Erogato Sistema TS specialistica"),
 	PRESCRIZIONE_SISTEMATS("SistemaTS-Prescrizione", "Prescrizione Sistema TS"),
 	PRESCRIZIONE_FARMACEUTICA_SISTEMATS("2.16.840.1.113883.2.9.10.1.2.1", "Prescrizione farmaceutica Sistema TS"),
 	PRESCRIZIONE_SPECIALISTICA_SISTEMATS("2.16.840.1.113883.2.9.10.1.2.2", "Prescrizione specialistica Sistema TS"),
@@ -39,7 +39,21 @@ public enum LowLevelDocEnum {
 	VERBALE_PRONTO_SOCCORSO("2.16.840.1.113883.2.9.10.1.6.1", "Verbale di Pronto Soccorso"),
 	REFERTO_SPECIALISTICA_AMBULATORIALE("2.16.840.1.113883.2.9.10.1.9.1", "Referto di Specialistica Ambulatoriale"),
 	DOCUMENTO_GENERICO("2.16.840.1.113883.2.9.10.1.12.1", "Documento generico"),
-	REFERTO_DI_ANATOMIA_PATOLOGICA("2.16.840.1.113883.2.9.10.1.8.1", "Referto di Anatomia Patologica");
+	REFERTO_DI_ANATOMIA_PATOLOGICA("2.16.840.1.113883.2.9.10.1.8.1", "Referto di Anatomia Patologica"),
+	EROGAZIONE_FARMACEUTICA_NON_SSN("2.16.840.1.113883.2.9.10.1.13.2.1", "Erogazione Farmaceutica non a carico SSN"),
+	PRESCRIZIONE_FARMACEUTICA_NON_SSN("2.16.840.1.113883.2.9.10.1.3.1", "Prescrizione Farmaceutica non a carico SSN"),
+	LETTERA_INVITO_VACCINAZIONE("2.16.840.1.113883.2.9.10.1.15.1", "Lettera di invito per Vaccinazione"),
+	LETTERA_INVITO_SCREENING("2.16.840.1.113883.2.9.10.1.14.1", "Lettera di invito per screening o ad altri percorsi di prevenzione"),
+	REFERTO_TELEVISITA("2.16.840.1.113883.2.9.10.1.16.1.1", "Referto di Televisita"),
+	RELAZIONE_FINALE_TELEMONITORAGGIO("2.16.840.1.113883.2.9.10.1.16.3.1", "Relazione finale di telemonitoraggio"),
+	RELAZIONE_FINALE_TELEASSISTENZA("2.16.840.1.113883.2.9.10.1.16.4.1", "Relazione finale di teleassistenza"),
+	RELAZIONE_TELECONSULTO("2.16.840.1.113883.2.9.10.1.16.2.1", "Relazione di teleconsulto"),
+	CARTELLA_CLINICA("2.16.840.1.113883.2.9.10.1.18.1", "Cartella Clinica"),
+	TESSERA_PORTATORE_IMPIANTO("2.16.840.1.113883.2.9.10.1.17.1", "Tessera portatore di impianto"),
+	FHIR_TELEVISITA("FHIRDocumentTelevisita", "Bundle contenente i dati FHIR relativi al Referto di Televisita"),
+	FHIR_TELECONSULTO("FHIRDocumentTeleconsulto", "Bundle contenente i dati FHIR relativi alla Relazione collaborativa di Teleconsulto"),
+	FHIR_TELEMONITORAGGIO("FHIRDocumentTelemonitoraggio", "Bundle contenente i dati FHIR relativi alla Relazione Finale di Telemonitoraggio"),
+	FHIR_TELEASSISTENZA("FHIRDocumentTeleassistenza", "Bundle contenente i dati FHIR relativi alla Relazione Finale di Teleassistenza");
 	
 	
 	
