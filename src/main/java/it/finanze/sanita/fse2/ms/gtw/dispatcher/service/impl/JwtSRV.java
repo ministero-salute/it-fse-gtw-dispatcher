@@ -46,12 +46,24 @@ public class JwtSRV extends AbstractService implements IJwtSRV {
 
 	@Override
 	public void validatePayloadForValidation(JWTPayloadDTO payload) {
+		// Specifiche Interfacce REST Gateway, par. 16.3.12, Tabella 62 (action-id):
+		// per il servizio di validazione e' ammesso il solo valore CREATE.
+		validatePayloadForValidationLike(payload, Set.of(ActionEnum.CREATE));
+	}
+
+	@Override
+	public void validatePayloadForFhirPublication(JWTPayloadDTO payload) {
+		// La replace FHIR usa UPDATE (Tabella 55), la create usa CREATE.
+		validatePayloadForValidationLike(payload, Set.of(ActionEnum.CREATE, ActionEnum.UPDATE));
+	}
+
+	private void validatePayloadForValidationLike(JWTPayloadDTO payload, Set<ActionEnum> expectedActions) {
 		performCommonValidation(payload);
 		checkNull(payload.getPatient_consent(), "patient_consent");
 		checkNull(payload.getSubject_application_id(), "subject_application_id");
 		checkNull(payload.getSubject_application_vendor(), "subject_application_vendor");
 		checkNull(payload.getSubject_application_version(), "subject_application_version");
-		validateActionCoherence(payload, Set.of(ActionEnum.CREATE, ActionEnum.UPDATE));
+		validateActionCoherence(payload, expectedActions);
 		validatePurposeOfUseCoherence(payload, Set.of(PurposeOfUseEnum.TREATMENT));
 		checkNull(payload.getResource_hl7_type(), "resource_hl7_type");
 	}

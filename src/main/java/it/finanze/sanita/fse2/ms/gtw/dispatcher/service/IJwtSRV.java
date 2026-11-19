@@ -45,11 +45,20 @@ public interface IJwtSRV {
 	void validatePayloadForReplace(JWTPayloadDTO payload);
 
 	/**
-	 * Validate the payload of the JWT token for the feeding operation.
+	 * Validate the payload of the JWT token for the validation operation (CDA and FHIR).
+	 * Expected: action_id=CREATE, purpose_of_use=TREATMENT
 	 *
 	 * @param payload The payload of the JWT token.
 	 */
 	void validatePayloadForValidation(JWTPayloadDTO payload);
+
+	/**
+	 * Validate the payload of the JWT token for the FHIR create/replace operations.
+	 * Expected: action_id=CREATE or UPDATE, purpose_of_use=TREATMENT
+	 *
+	 * @param payload The payload of the JWT token.
+	 */
+	void validatePayloadForFhirPublication(JWTPayloadDTO payload);
 
 	/**
 	 * Validate the payload of the JWT token for the update-oscuramento operation.
