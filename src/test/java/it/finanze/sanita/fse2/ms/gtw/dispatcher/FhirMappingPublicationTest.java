@@ -201,7 +201,7 @@ class FhirMappingPublicationTest {
 
     private ResourceDTO publish() {
         return service.createFhirResources("<ClinicalDocument/>", "", request, 1, "hash",
-                "transform", "engine", "080", "institution", "sha1");
+                "transform", "engine", "080", "institution", "sha1", "person");
     }
 
     private TransformResDTO responseWithValidation(String severity) {
